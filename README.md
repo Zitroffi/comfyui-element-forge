@@ -275,6 +275,9 @@ template apps open: no graph to touch, every job goes into ComfyUI's queue, no e
 2. **Position & Track** – click where the effect belongs (Shift-click: point B), choose what it follows (point, object,
    scene or screen) and check the track. On a silhouette without texture (all black against a bright wall) a hand that
    crosses the body can be lost by every kind of track; the track check shows it before anything is generated.
+   Under *Object*, **In front of the effect** lets the object's mask hide the effect (a person in front of a portal).
+   Advanced adds **Base stays on the point** for an effect at a point: a flame or ball that jitters at its base stays
+   fixed on the tracked point.
 3. **Effect** – effect and style, strength, the description (with **Enhance**), Advanced for the emitter. Several
    effects per clip in the strip at the top (**＋ Effect**); each is its own run with its own versions.
 4. **Scene & finish** – live on the finished run: light, glow, colour, placement, brightness and depth blur of the clip.
