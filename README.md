@@ -19,13 +19,9 @@ Add fire, lightning, smoke and particles to your own footage in ComfyUI. Track e
 
 Use the app for a guided workflow, or connect the nodes in your own graph. AI effects are generated locally with **LTX-2.5**; selected particle styles run without AI generation.
 
-<p align="center">
-  <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/katana-charge.mp4">
-    <img src="docs/assets/examples/katana-charge.gif" alt="Electricity following a moving katana" width="640">
-  </a>
-</p>
+https://github.com/user-attachments/assets/468b014c-f544-41fe-b26f-fd6da37d78a3
 
-<p align="center"><em>Electricity follows the blade through the shot. Click the image for the full clip.</em><br><sub>AI-generated effects; stock footage.</sub></p>
+<p align="center"><em>The release video.</em> <a href="https://youtu.be/Cz7dW70VSNg">Watch it on YouTube</a><br><sub>AI-generated effects; stock footage.</sub></p>
 
 ## What you can do
 

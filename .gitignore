@@ -1,6 +1,6 @@
 __pycache__/
 *.pyc
-# PrismML's libraries and downloads of the Install button / setup_bonsai.py
+.pytest_cache/
+.DS_Store
 runtime/
 downloads/
-.DS_Store
