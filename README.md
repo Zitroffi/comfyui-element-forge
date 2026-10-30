@@ -83,34 +83,26 @@ The effects below are AI-generated with LTX-2.5, except the fireflies, which are
 <table>
   <tr>
     <td align="center" width="50%">
-      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/orb.mp4">
-        <img src="docs/assets/examples/orb.jpg" alt="Energy around a moving ball" width="160"><br>
-        <strong>Energy around a moving ball</strong>
-      </a><br>
-      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/orb.gif">GIF preview</a>
+      <img src="docs/assets/examples/orb.gif" alt="Energy around a moving ball" width="160"><br>
+      <strong>Energy around a moving ball</strong><br>
+      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/orb.mp4">Download MP4</a>
     </td>
     <td align="center" width="50%">
-      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/rose-flame.mp4">
-        <img src="docs/assets/examples/rose-flame.jpg" alt="Flame following a rose" width="160"><br>
-        <strong>Flame following a rose</strong>
-      </a><br>
-      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/rose-flame.gif">GIF preview</a>
+      <img src="docs/assets/examples/rose-flame.gif" alt="Flame following a rose" width="160"><br>
+      <strong>Flame following a rose</strong><br>
+      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/rose-flame.mp4">Download MP4</a>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/dress-sparks.mp4">
-        <img src="docs/assets/examples/dress-sparks.jpg" alt="Sparks from a spinning dress" width="160"><br>
-        <strong>Sparks from a spinning dress</strong>
-      </a><br>
-      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/dress-sparks.gif">GIF preview</a>
+      <img src="docs/assets/examples/dress-sparks.gif" alt="Sparks from a spinning dress" width="160"><br>
+      <strong>Sparks from a spinning dress</strong><br>
+      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/dress-sparks.mp4">Download MP4</a>
     </td>
     <td align="center" width="50%">
-      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/fireflies.mp4">
-        <img src="docs/assets/examples/fireflies.jpg" alt="Fireflies over a lake" width="160"><br>
-        <strong>Fireflies over a lake</strong>
-      </a><br>
-      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/fireflies.gif">GIF preview</a>
+      <img src="docs/assets/examples/fireflies.gif" alt="Fireflies over a lake" width="160"><br>
+      <strong>Fireflies over a lake</strong><br>
+      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/fireflies.mp4">Download MP4</a>
     </td>
   </tr>
 </table>
