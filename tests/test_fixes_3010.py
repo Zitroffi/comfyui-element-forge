@@ -112,4 +112,35 @@ check("lock_base" in an.EFAppEffect.INPUT_TYPES()["optional"], "App-mode effect 
 js = open(os.path.join(PACK, "web", "efa", "panel.js"), encoding="utf-8").read()
 check('"lock_base"' in js and 'mode !== "advanced"' in js[js.index("function lockBaseRow"):js.index("function objectGroup")],
       "panel: the switch only in Advanced, with its short note")
+check(st._light_gain("lightning", "climb_arcs") == 40.0 and st._light_gain("fire", "flame") == 1.0, "light gain: lightning 40, fire 1")
+check(st._light_albedo_exposure("lightning", "climb", False) == 2.0 and st._light_albedo_exposure("lightning", "climb", True) == 0.0
+      and st._light_albedo_exposure("fire", "flame", False) == 0.0, "albedo exposure: lightning +2 by day, 0 at night and for fire")
+g = {"1": {"class_type": "EFDepthLight", "inputs": {"strength": 0.9, "max_light": 0.8}}}
+cvm0 = importlib.import_module(pack.__name__ + ".element_forge.app.compact_values")
+cvm0.tune_look(g, {"light_strength": 1.0, "albedo_exposure": 2.0})
+check(g["1"]["inputs"].get("albedo_exposure") == 2.0 and g["1"]["inputs"]["strength"] == 0.9, "tune_look: albedo exposure set")
+check(st._light_color("lightning", "climb") == "#b4c2ff" and st._light_color("fire", "flame") == "", "light colour: lightning blue-white, fire its own")
+g = {"1": {"class_type": "EFDepthLight", "inputs": {"strength": 0.9, "max_light": 0.8, "color": "", "color_amount": 0.0}}}
+cvm0.tune_look(g, {"light_color": "#b4c2ff"})
+check(g["1"]["inputs"]["color"] == "#b4c2ff" and g["1"]["inputs"]["color_amount"] == 1.0, "tune_look: fixed light colour")
+cvm = importlib.import_module(pack.__name__ + ".element_forge.app.compact_values")
+g = {"1": {"class_type": "EFDepthLight", "inputs": {"strength": 0.9, "max_light": 0.8}}}
+cvm.tune_look(g, {"light_strength": 25.0})
+check(abs(g["1"]["inputs"]["strength"] - 22.5) < 1e-6 and abs(g["1"]["inputs"]["max_light"] - 4.0) < 1e-6, "tune_look: strength x25, cap x5")
+g = {"1": {"class_type": "EFDepthLight", "inputs": {"strength": 0.9, "max_light": 0.8}}}
+cvm.tune_look(g, {"light_strength": 0.5})
+check(abs(g["1"]["inputs"]["strength"] - 0.45) < 1e-6 and g["1"]["inputs"]["max_light"] == 0.8, "tune_look: weaker light keeps the cap")
+for _sty in ("aura", "aura_drawn"):
+    _sets = cvm.style_def(st.presets(), "magic", _sty)["settings"]
+    check(_sets.get("Depth offset (+ = element nearer, less hidden)") == 1.0, f"magic/{_sty}: depth holdout off")
+import numpy as np
+lm = importlib.import_module(pack.__name__ + ".element_forge.compositing.light3d")
+tm = importlib.import_module(pack.__name__ + ".element_forge.compositing.temporal")
+pl_ = torch.full((2, 16, 16, 3), 0.6)
+light_ = torch.zeros(2, 16, 16, 3); light_[0, ..., 2] = 2.0; light_[1, ..., 2] = 0.2
+comp_ = lm.linear_to_srgb(lm.srgb_to_linear(pl_) + light_)
+check(float(comp_.max()) > 1.0, "light comp: not clipped at 1")
+_, out_ = tm.EFDeflicker().deflicker(light_, pl_, 0, 1.0, level_radius=1, comp=comp_)
+b, r = float(out_[0, 8, 8, 2]), float(out_[0, 8, 8, 0])
+check(b >= r, f"deflicker swap under a flash: blue stays above red ({b:.2f} vs {r:.2f}), no yellow")
 print(f"{ok} checks passed")

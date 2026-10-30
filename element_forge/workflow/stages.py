@@ -86,6 +86,26 @@ def _particle_style(kind, style):
     return bool((st.get("settings") or {}).get("Particles")) or st.get("variant") == "climb"
 
 
+def _light_gain(kind, style):
+    eff = next((e for e in presets().get("effects", []) if e["id"] == kind), {})
+    st = cv.style_def(presets(), kind, style) or {}
+    return float(st.get("light_gain", eff.get("light_gain", 1.0)))
+
+
+def _light_color(kind, style):
+    eff = next((e for e in presets().get("effects", []) if e["id"] == kind), {})
+    st = cv.style_def(presets(), kind, style) or {}
+    return str(st.get("light_color", eff.get("light_color", "")) or "")
+
+
+def _light_albedo_exposure(kind, style, night):
+    if night:
+        return 0.0
+    eff = next((e for e in presets().get("effects", []) if e["id"] == kind), {})
+    st = cv.style_def(presets(), kind, style) or {}
+    return float(st.get("light_albedo_exposure", eff.get("light_albedo_exposure", 0.0)))
+
+
 _graph_settings = None
 
 
@@ -893,7 +913,8 @@ def chain_values(b):
     models.pop("id", None)
     if sh.get("depth"):
         models["depth"] = sh["depth"]
-    look = {"light_strength": lg.get("light strength", 1.0), "glow_exposure": lg.get("glow exposure", 0.0)}
+    look = {"light_strength": lg.get("light strength", 1.0) * _light_gain(kind, style), "glow_exposure": lg.get("glow exposure", 0.0),
+            "albedo_exposure": _light_albedo_exposure(kind, style, sh.get("night")), "light_color": _light_color(kind, style)}
     return st.get("variant") or "app", mode, v, models or None, look
 
 

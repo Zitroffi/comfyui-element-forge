@@ -309,8 +309,15 @@ def run_id(variant, mode, values, look):
 
 def tune_look(graph, look):
     s, e = float(look.get("light_strength", 1.0)), float(look.get("glow_exposure", 0.0))
+    a, col = float(look.get("albedo_exposure", 0.0)), str(look.get("light_color") or "")
     for nd in graph.values():
+        if nd["class_type"] == "EFDepthLight" and a != 0.0:
+            nd["inputs"]["albedo_exposure"] = a
+        if nd["class_type"] == "EFDepthLight" and col:
+            nd["inputs"]["color"], nd["inputs"]["color_amount"] = col, 1.0
         if nd["class_type"] == "EFDepthLight" and s != 1.0 and isinstance(nd["inputs"].get("strength"), (int, float)):
             nd["inputs"]["strength"] = nd["inputs"]["strength"] * s
+            if s > 1.0 and isinstance(nd["inputs"].get("max_light"), (int, float)):
+                nd["inputs"]["max_light"] = nd["inputs"]["max_light"] * s ** 0.5
         if nd["class_type"] == "EFGlow" and e != 0.0 and isinstance(nd["inputs"].get("exposure"), (int, float)):
             nd["inputs"]["exposure"] = nd["inputs"]["exposure"] + e

@@ -156,6 +156,9 @@
    "id": "lightning",
    "name": "Lightning",
    "text": "Electric arcs between two points or along an object",
+   "light_gain": 40.0,
+   "light_albedo_exposure": 2.0,
+   "light_color": "#b4c2ff",
    "styles": [
     {
      "id": "between",
@@ -517,6 +520,7 @@
       "Particles": true,
       "Particle preset": "aura",
       "Particle emitter": "object contour",
+      "Depth offset (+ = element nearer, less hidden)": 1.0,
       "Particles: start video (seed)": false,
       "Light": false
      },
@@ -569,6 +573,7 @@
       "Particles": true,
       "Particle preset": "aura",
       "Particle emitter": "object contour",
+      "Depth offset (+ = element nearer, less hidden)": 1.0,
       "Particles: start video (seed)": false,
       "Light": false,
       "Particles: direct look (no LTX, pro)": true

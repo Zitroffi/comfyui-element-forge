@@ -236,7 +236,7 @@ class EFDepthLight:
                 E = E * rc[..., None]
             lt = abi * E
             lights_out[i] = lt.cpu()
-            comps[i] = linear_to_srgb((srgb_to_linear(pli.clamp(0, 1)) + lt + (lyi.clamp(min=0) if add_element else 0)).clamp(0, 1)).clamp(0, 1).cpu()
+            comps[i] = linear_to_srgb((srgb_to_linear(pli.clamp(0, 1)) + lt + (lyi.clamp(min=0) if add_element else 0)).clamp(min=0)).cpu()
             normals_out[i] = (nrm * flip * 0.5 + 0.5).clamp(0, 1).cpu()
 
         dev = pick_device(device)
