@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import torch
 
-from .track import srgb_to_linear
+from ..tracking.track import srgb_to_linear
 
 LUMA = np.array([0.2126, 0.7152, 0.0722], np.float32)
 ACESCG_TO_REC709 = np.array([[1.70505, -0.62179, -0.08326],

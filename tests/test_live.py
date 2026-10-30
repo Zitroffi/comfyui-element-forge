@@ -27,11 +27,11 @@ comfy.utils, comfy.model_management = cu, mm
 sys.modules.update({"comfy": comfy, "comfy.utils": cu, "comfy.model_management": mm})
 PACK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(PACK))
-sys.modules[os.path.basename(PACK) + ".bonsai"] = types.ModuleType("bonsai")
+sys.modules[os.path.basename(PACK) + ".element_forge.bonsai.bonsai"] = types.ModuleType("bonsai")
 pack = importlib.import_module(os.path.basename(PACK))
-LV = importlib.import_module(os.path.basename(PACK) + ".live")
-PN = importlib.import_module(os.path.basename(PACK) + ".particles_node")
-pt = importlib.import_module(os.path.basename(PACK) + ".particles")
+LV = importlib.import_module(os.path.basename(PACK) + ".element_forge.app.live")
+PN = importlib.import_module(os.path.basename(PACK) + ".element_forge.simulation.particles_node")
+pt = importlib.import_module(os.path.basename(PACK) + ".element_forge.simulation.particles")
 ok = 0
 
 
@@ -103,7 +103,7 @@ check(abs(arr["x"][j] / 8 - s3["rec"]["x"][i, pid]) <= 1 / 16 + 1e-6 and abs(arr
       "position in 1/8 px: at most 1/16 px off")
 check(LV.pack(head, None)[4:].strip().startswith(b"{") and b'"arrays": []' in LV.pack(head, None), "answer without arrays: the page has this simulation")
 import cv2
-DS = importlib.import_module(os.path.basename(PACK) + ".dissolve")
+DS = importlib.import_module(os.path.basename(PACK) + ".element_forge.simulation.dissolve")
 H, W, n = 72, 96, 14
 yy, xx = np.mgrid[0:H, 0:W]
 plate = np.stack([np.stack([xx / W, yy / H, np.full_like(xx, 0.4, dtype=np.float64)], -1)] * n).astype(np.float32)

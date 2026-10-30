@@ -26,7 +26,7 @@ fp = types.SimpleNamespace(models_dir=os.path.join(TMP, "models"), folder_names_
                            get_folder_paths=lambda kind: [os.path.join(TMP, "models", kind)])
 DEFAULTS = {"runtime": "", "model": "", "mmproj": "", "context": 4096, "image_max_tokens": 1024, "keep_seconds": 120,
             "mmproj_on_gpu": False}
-g = load_funcs("bonsai.py", {"settings", "_register_folder"},
+g = load_funcs("element_forge/bonsai/bonsai.py", {"settings", "_register_folder"},
                {"json": json, "os": os, "SETTINGS": cfg_path, "DEFAULTS": DEFAULTS, "folder_paths": fp})
 with open(cfg_path, "w", encoding="utf-8-sig") as f:
     f.write('{"model": "Ternary-Bonsai-2-27B-PTQ1_0.gguf", "keep_seconds": 30}')
@@ -41,7 +41,7 @@ try:
 except RuntimeError as e:
     assert "bonsai.json" in str(e) and "line 2" in str(e), e
 print("bonsai.json with a typo: the file and the line are named")
-src = open(os.path.join(HERE, "bonsai.py"), encoding="utf-8").read()
+src = open(os.path.join(HERE, "element_forge/bonsai/bonsai.py"), encoding="utf-8").read()
 st = next(n for n in ast.parse(src).body if isinstance(n, ast.FunctionDef) and n.name == "status")
 assert any(isinstance(h, ast.ExceptHandler) for n in ast.walk(st) for h in getattr(n, "handlers", [])), "status() catches nothing"
 print("bonsai status: catches a broken bonsai.json")
@@ -56,7 +56,7 @@ assert fp.folder_names_and_paths["LLM"][1] == {".gguf"}
 print("LLM folder: other packs keep their endings")
 
 sys.modules["folder_paths"] = types.SimpleNamespace(get_output_directory=lambda: TMP, get_input_directory=lambda: TMP)
-spec = importlib.util.spec_from_file_location("ef_elements_test", os.path.join(HERE, "elements.py"))
+spec = importlib.util.spec_from_file_location("ef_elements_test", os.path.join(HERE, "element_forge/generation/elements.py"))
 el = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(el)
 rgba = torch.zeros((2, 8, 8, 4))
@@ -81,7 +81,7 @@ class FreeName:
     @classmethod
     def INPUT_TYPES(cls): return {"required": {"model": ("STRING", {"default": "x.pth"})}}
 sys.modules["nodes"] = types.SimpleNamespace(NODE_CLASS_MAPPINGS={"OldLoader": OldLoader, "ComboLoader": ComboLoader, "FreeName": FreeName})
-m = load_funcs("app_routes.py", {"missing_for"}, {"MODEL_EXT": (".safetensors", ".gguf", ".pth")})["missing_for"]
+m = load_funcs("element_forge/app/app_routes.py", {"missing_for"}, {"MODEL_EXT": (".safetensors", ".gguf", ".pth")})["missing_for"]
 graph = {"1": {"class_type": "OldLoader", "inputs": {"vae_name": "gone-vae.safetensors"}},
          "2": {"class_type": "ComboLoader", "inputs": {"lora_name": "ltx-2.5-22b-ic-lora-alpha-gen-0.9.safetensors", "strength": 1.0}},
          "3": {"class_type": "ComboLoader", "inputs": {"lora_name": "have-lora.safetensors", "strength": 1.0}},
@@ -91,7 +91,7 @@ r = m(graph)
 assert r == {"nodes": ["NotInstalled"], "models": ["gone-vae.safetensors", "ltx-2.5-22b-ic-lora-alpha-gen-0.9.safetensors"]}, r
 print("start check: missing IC-LoRA (COMBO loader) and VAE named, present LoRA and free names pass")
 
-ec = load_funcs("__init__.py", {"edge_contact"}, {"torch": torch})["edge_contact"]
+ec = load_funcs("element_forge/generation/unmult.py", {"edge_contact"}, {"torch": torch})["edge_contact"]
 a = torch.zeros((20, 200, 100))
 a[:, 60:150, 40:60] = 1.0
 a[10:, 0:80, 35:65] = 0.6
@@ -106,7 +106,7 @@ thin[:, :, 0:3] = 0.02
 t = ec(thin)
 assert t["sides"]["top"]["frames"] == 10 and t["sides"]["left"]["frames"] == 0 and 0.08 < t["threshold"] < 0.1, t
 print("edge contact: smoke leaving the top counted in 10 of 20 frames (30 % of the edge), a centred flame nowhere")
-spec = importlib.util.spec_from_file_location("ef_light3d_test", os.path.join(HERE, "light3d.py"))
+spec = importlib.util.spec_from_file_location("ef_light3d_test", os.path.join(HERE, "element_forge/compositing/light3d.py"))
 l3 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(l3)
 plate = torch.full((2, 48, 64, 3), 0.3)

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from .track import linear_to_srgb, srgb_to_linear, to_np, to_t
+from ..tracking.track import linear_to_srgb, srgb_to_linear, to_np, to_t
 
 
 class EFNightGrade:

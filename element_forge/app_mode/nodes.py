@@ -39,11 +39,7 @@ _FALLBACK_STYLES = [
 def _preset_candidates():
     here = os.path.dirname(os.path.abspath(__file__))
     real = os.path.dirname(os.path.realpath(__file__))
-    out = []
-    for base in (here, real):
-        out.append(os.path.join(base, "..", "comfyui-element-forge", "app_presets.json"))
-        out.append(os.path.join(base, "..", "..", "..", "release", "comfyui-element-forge", "app_presets.json"))
-    return out
+    return [os.path.join(base, "..", "app", "app_presets.json") for base in (here, real)]
 
 
 def load_effect_styles():

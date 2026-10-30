@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 globalThis.location = { protocol: "http:", host: "127.0.0.1:9" };
 globalThis.WebSocket = class { close() {} send() {} };
-const presets = JSON.parse(readFileSync(new URL("../app_presets.json", import.meta.url), "utf-8"));
+const presets = JSON.parse(readFileSync(new URL("../element_forge/app/app_presets.json", import.meta.url), "utf-8"));
 globalThis.fetch = async () => ({ ok: true, json: async () => ({ ...presets, missing: {} }) });
 
 const P = await import("../web/efa/ui/presets.js");

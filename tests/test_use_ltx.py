@@ -5,7 +5,7 @@ import os
 import types
 
 PACK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-src = open(os.path.join(PACK, "app_routes.py"), encoding="utf-8").read()
+src = open(os.path.join(PACK, "element_forge/app/app_routes.py"), encoding="utf-8").read()
 tree = ast.parse(src)
 keep = [n for n in tree.body if (isinstance(n, ast.FunctionDef) and n.name in ("use_ltx", "use_depthcrafter", "depthcrafter_half_loaded"))
         or (isinstance(n, ast.Assign) and any(getattr(t, "id", "") in ("LTX_ATTENTION", "CLEAN_PLATE_STRENGTH", "DEPTHCRAFTER_FILES") for t in n.targets))]
@@ -16,7 +16,7 @@ GGUF = ["ltx-2.5-22b-distilled-transformer-bf16-Q4_K_M.gguf"]
 TE = ["gemma4-12b-with-proj-ltx-2.5-bf16.safetensors", "gemma4_e2b_it_int8_convrot.safetensors"]
 ns = {"folder_paths": types.SimpleNamespace(get_filename_list=lambda kind: FILES if kind == "diffusion_models" else GGUF if kind == "unet_gguf" else TE if kind == "text_encoders" else [],
                                               folder_names_and_paths={"unet_gguf": None}, models_dir=MODELS), "os": os}
-ns["LTX_ATTENTION"] = ast.literal_eval(re.search(r"^LTX_ATTENTION = (.+)$", open(os.path.join(PACK, "compact_values.py"), encoding="utf-8").read(), re.M).group(1))
+ns["LTX_ATTENTION"] = ast.literal_eval(re.search(r"^LTX_ATTENTION = (.+)$", open(os.path.join(PACK, "element_forge/app/compact_values.py"), encoding="utf-8").read(), re.M).group(1))
 exec(compile(ast.Module(body=keep, type_ignores=[]), "use_ltx", "exec"), ns)
 use_ltx = ns["use_ltx"]
 

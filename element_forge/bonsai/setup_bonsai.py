@@ -34,7 +34,7 @@ MODEL_SHA = {
     "Ternary-Bonsai-2-27B-mmproj-Q8_0.gguf": "6807ede61d570bb86ba34b756a0fa109edc33668604de867c6ea6d8f1d631903",
 }
 MODEL_SIZE = {"Ternary-Bonsai-2-27B-PTQ1_0.gguf": 5946648928, "Ternary-Bonsai-2-27B-mmproj-Q8_0.gguf": 629246976}
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RUNTIME = os.path.join(HERE, "runtime")
 
 
@@ -138,7 +138,7 @@ def copy_tree(src, target):
 
 
 def check_runtime(target):
-    sys.path.insert(0, HERE)
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     for mod in ("prism_rt", "bonsai_rt"):
         try:
             return __import__(mod).is_runtime(target)

@@ -94,13 +94,13 @@ for f in ("element_forge.json", "element_forge_app.json", "element_forge_climb.j
     an_ids = [k for k, v in g.items() if v["class_type"] == "EFAnchor" and v["inputs"].get("lock_base") == [lid, 0]]
     check(g[lid]["inputs"]["value"] is False and an_ids, f"{f}: base lock off by default, wired to the anchor")
 
-st = importlib.import_module(pack.__name__ + ".stages")
+st = importlib.import_module(pack.__name__ + ".element_forge.workflow.stages")
 check(st.FRONT == FRONT, "stages: the setting's name")
 lay = st.EFForgePlace().build({"id": "e"}, size=-1.0, side=st.STYLE, **{"depth offset": 0.0, "blend": st.STYLE, "object in front": True})[0]
 check(lay["place"]["front"] is True, "EF Place: object in front is kept in the layer")
 lay2 = st.EFForgePlace().build({"id": "e"}, size=-1.0, side=st.STYLE, **{"depth offset": 0.0, "blend": st.STYLE, "lock base": True})[0]
 check(lay2["place"]["lock"] is True and st.LOCK == LOCK, "EF Place: lock base is kept in the layer")
-an = importlib.import_module(pack.__name__ + ".app_mode.nodes")
+an = importlib.import_module(pack.__name__ + ".element_forge.app_mode.nodes")
 on, off = an.apply_effect({}, {"object_in_front": True}), an.apply_effect({}, {"object_in_front": False})
 check(on.get(FRONT) is True and FRONT not in off, "App-mode effect: the setting only when on")
 check("object_in_front" in an.EFAppEffect.INPUT_TYPES()["optional"], "App-mode effect node: the widget, optional (old workflows load)")

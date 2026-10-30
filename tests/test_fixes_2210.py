@@ -15,7 +15,7 @@ def load_func(fname, name, extra):
     return g[name]
 
 
-pick_object = load_func("follow_crop.py", "pick_object", {"np": np, "cv2": cv2})
+pick_object = load_func("element_forge/tracking/follow_crop.py", "pick_object", {"np": np, "cv2": cv2})
 
 
 def frame(size):
@@ -31,7 +31,7 @@ for which in ("all", "largest", "nearest"):
         assert out[1].sum() == frame(seq[1]).sum(), (which, seq)
 print("follow_crop small bits: ok")
 
-src = open(os.path.join(HERE, "elements.py"), encoding="utf-8").read()
+src = open(os.path.join(HERE, "element_forge/generation/elements.py"), encoding="utf-8").read()
 assert "start_frame %= n" in src
 for n, start, frames, want in [(5, 0, 0, 5), (5, 3, 0, 2), (5, 5, 0, 5), (5, 7, 0, 3), (5, 7, 8, 8), (5, 12, 4, 4)]:
     s = start % n
@@ -40,7 +40,7 @@ for n, start, frames, want in [(5, 0, 0, 5), (5, 3, 0, 2), (5, 5, 0, 5), (5, 7, 
 print("load_element start_frame: ok")
 
 
-src = open(os.path.join(HERE, "track.py"), encoding="utf-8").read()
+src = open(os.path.join(HERE, "element_forge/tracking/track.py"), encoding="utf-8").read()
 assert "np.clip(rgba, 0, 1, out=rgba)" in src
 rng = np.random.default_rng(0)
 rgba_out = [rng.normal(0.5, 0.6, (8, 6, 4)).astype(np.float32) for _ in range(5)]
@@ -48,7 +48,7 @@ old = np.clip(np.stack(rgba_out), 0, 1)
 rgba = np.stack(rgba_out); np.clip(rgba, 0, 1, out=rgba)
 assert np.array_equal(old, rgba) and rgba.dtype == old.dtype
 print("effect_layer stack/clip: ok")
-src = open(os.path.join(HERE, "bonsai.py"), encoding="utf-8").read()
+src = open(os.path.join(HERE, "element_forge/bonsai/bonsai.py"), encoding="utf-8").read()
 ast.parse(src)
 assert "Windows only" not in src and "the release for this system" in src and "LIB_NAMES" in src
 print("bonsai message: ok")

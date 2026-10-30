@@ -5,7 +5,7 @@ import subprocess
 
 PACK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APP_CASES = os.path.join(PACK, "tests", "compact_cases.mjs")
-spec = importlib.util.spec_from_file_location("compact_values", os.path.join(PACK, "compact_values.py"))
+spec = importlib.util.spec_from_file_location("compact_values", os.path.join(PACK, "element_forge/app/compact_values.py"))
 cv = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cv)
 ok = 0
@@ -25,7 +25,7 @@ def same(a, b):
     return a == b
 
 
-with open(os.path.join(PACK, "app_presets.json"), encoding="utf-8") as f:
+with open(os.path.join(PACK, "element_forge", "app", "app_presets.json"), encoding="utf-8") as f:
     presets = json.load(f)
 cases = json.loads(subprocess.run(["node", APP_CASES], cwd=PACK, capture_output=True,
                                   text=True, encoding="utf-8", check=True).stdout)

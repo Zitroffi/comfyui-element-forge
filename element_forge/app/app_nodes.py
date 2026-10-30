@@ -12,8 +12,8 @@ import torch.nn.functional as F
 
 import folder_paths
 
-from .light3d import linear_to_srgb, srgb_to_linear
-from .post import EFGlow
+from ..compositing.light3d import linear_to_srgb, srgb_to_linear
+from ..compositing.post import EFGlow
 
 LUMA = torch.tensor([0.2126, 0.7152, 0.0722])
 LOG_A, LOG_MAX = 16.0, 64.0
@@ -672,7 +672,7 @@ class EFFinishStack:
 
     def stack(self, layers, common, out_folder, write_exr, fps, chunk, write_layers=False, comp_name="Element Forge shot",
               format="mp4", frame_start=0, frame_end=-1, hdr=False):
-        from .video_out import CompWriter, srgb_encode, true_hdr
+        from ..output.video_out import CompWriter, srgb_encode, true_hdr
         if hdr and format != "h265":
             raise ValueError("HDR is written as H.265 10 bit: choose format h265")
         L = json.loads(layers) if isinstance(layers, str) else layers

@@ -12,18 +12,19 @@ import torch
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 tempfile.tempdir = os.environ.get("TEMP") or tempfile.gettempdir()
 
-pkg = types.ModuleType("efpack")
-pkg.__path__ = [HERE]
-sys.modules["efpack"] = pkg
-src = open(os.path.join(HERE, "app_nodes.py"), encoding="utf-8").read()
-an = types.ModuleType("efpack.app_nodes")
+for name, sub in (("efpack", ""), ("efpack.app", "app"), ("efpack.output", "output")):
+    pkg = types.ModuleType(name)
+    pkg.__path__ = [os.path.join(HERE, "element_forge", sub) if sub else os.path.join(HERE, "element_forge")]
+    sys.modules[name] = pkg
+src = open(os.path.join(HERE, "element_forge/app/app_nodes.py"), encoding="utf-8").read()
+an = types.ModuleType("efpack.app.app_nodes")
 an.__dict__.update({"np": np, "Fraction": __import__("fractions").Fraction})
 exec(compile(ast.Module([n for n in ast.parse(src).body if isinstance(n, ast.FunctionDef) and n.name in ("_mp4_stream", "_mp4_frame", "_exr_layer")], []),
              "app_nodes", "exec"), an.__dict__)
-sys.modules["efpack.app_nodes"] = an
-spec = importlib.util.spec_from_file_location("efpack.video_out", os.path.join(HERE, "video_out.py"))
+sys.modules["efpack.app.app_nodes"] = an
+spec = importlib.util.spec_from_file_location("efpack.output.video_out", os.path.join(HERE, "element_forge/output/video_out.py"))
 vo = importlib.util.module_from_spec(spec)
-sys.modules["efpack.video_out"] = vo
+sys.modules["efpack.output.video_out"] = vo
 spec.loader.exec_module(vo)
 
 n = bad = 0

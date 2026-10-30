@@ -15,7 +15,7 @@ from .json_grammar import schema_to_grammar
 from .setup_bonsai import MODEL_FILES
 
 SETTINGS = os.path.join(folder_paths.get_user_directory(), "element-forge", "bonsai.json")
-PACK_RUNTIME = os.path.join(os.path.dirname(os.path.abspath(__file__)), "runtime")
+PACK_RUNTIME = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "runtime")
 DEFAULTS = {"runtime": "", "model": "", "mmproj": "", "context": 4096, "image_max_tokens": 1024, "keep_seconds": 120, "mmproj_on_gpu": False}
 FROM_SETTINGS = "(bonsai.json)"
 

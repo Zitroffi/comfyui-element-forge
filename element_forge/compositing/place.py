@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 import torch
 
-from .particles import snap_to_edges
-from .track import linear_to_srgb, srgb_to_linear, to_np, to_t, warp_down
+from ..simulation.particles import snap_to_edges
+from ..tracking.track import linear_to_srgb, srgb_to_linear, to_np, to_t, warp_down
 
 
 def base_point(a, core_thr, base_fraction, side="bottom"):

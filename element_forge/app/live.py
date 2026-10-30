@@ -15,9 +15,9 @@ import folder_paths
 import server
 
 from . import app_routes as AR
-from . import dissolve as DS
-from . import particles as pt
-from . import particles_node as PN
+from ..simulation import dissolve as DS
+from ..simulation import particles as pt
+from ..simulation import particles_node as PN
 
 PARTICLES = "230"
 MOTION = "252"
@@ -442,7 +442,7 @@ def _plate_points(pts, cr, n):
 
 async def compute_motion(graph, body, ctx, t0):
     import nodes
-    from . import motion as MO
+    from ..tracking import motion as MO
     if MOTION not in graph:
         raise ValueError("this workflow has no EF Motion Tracks")
     cls = nodes.NODE_CLASS_MAPPINGS["EFMotionTracks"]
@@ -484,7 +484,7 @@ def _needs(m):
 
 async def compute_shape(graph, ctx):
     import nodes
-    from . import guides as GD
+    from ..generation import guides as GD
     if SHAPE not in graph:
         raise ValueError("this workflow has no object shape guide")
     cls = nodes.NODE_CLASS_MAPPINGS["EFGuide"]

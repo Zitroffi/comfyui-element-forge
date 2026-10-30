@@ -46,7 +46,7 @@ class CompWriter:
             self.c = av.open(os.path.join(folder, name), "w")
             self.files.append(name)
             if fmt == "mp4":
-                from .app_nodes import _mp4_stream
+                from ..app.app_nodes import _mp4_stream
                 self.st = _mp4_stream(self.c, fps, self.w, self.h)
                 return
             codec, pix = ("prores_ks", "yuv422p10le") if fmt == "prores" else ("libx265", "yuv420p10le")
@@ -71,7 +71,7 @@ class CompWriter:
     def add(self, C, frames):
         C = C[:, : self.h, : self.w, :3].float()
         if self.fmt == "exr":
-            from .app_nodes import _exr_layer
+            from ..app.app_nodes import _exr_layer
             for k, i in enumerate(frames):
                 name = FORMATS["exr"][0].replace("#####", f"{int(i) + 1:05d}")
                 _exr_layer(os.path.join(self.folder, name), C[k].numpy())
@@ -98,7 +98,7 @@ class CompWriter:
         from av.video.reformatter import ColorRange, Colorspace
         for k in range(q.shape[0]):
             if self.fmt == "mp4":
-                from .app_nodes import _mp4_frame
+                from ..app.app_nodes import _mp4_frame
                 fr = _mp4_frame(q[k])
             else:
                 fr = av.VideoFrame.from_ndarray(np.ascontiguousarray(q[k]), format="rgb48le").reformat(

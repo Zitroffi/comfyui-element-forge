@@ -157,7 +157,7 @@ dep = torch.zeros(2, 64, 48, 3)
 dep[:, 30:50, 10:30] = torch.linspace(0.4, 0.8, 20)[None, None, :, None]
 mk = torch.zeros(2, 64, 48)
 mk[:, 30:50, 10:30] = 1.0
-ctrl, att = importlib.import_module(os.path.basename(PACK) + ".guide").object_shape(dep.numpy().mean(-1), mk.numpy(), 0.1, 0.0, 0.35)
+ctrl, att = importlib.import_module(os.path.basename(PACK) + ".element_forge.generation.guide").object_shape(dep.numpy().mean(-1), mk.numpy(), 0.1, 0.0, 0.35)
 ctrl, att = np.stack(ctrl), np.stack(att)
 assert np.abs(ctrl[0, 5, 5]).max() == 0 and ctrl[0, 40, 12, 0] >= 0.35 - 1e-4 and ctrl[0, 40, 28, 0] > 0.9, (ctrl[0, 40, 12], ctrl[0, 40, 28])
 assert att[0, 40, 7] == 1 and att[0, 40, 3] == 0, (att[0, 40, 7], att[0, 40, 3])
@@ -242,12 +242,12 @@ inner = (slice(2, -2), slice(12, -12), slice(12, -12))
 corr = np.corrcoef(c[inner].ravel(), truth[inner].ravel())[0, 1]
 assert corr > 0.95, corr
 ce, comp_sw = DF.deflicker(torch.from_numpy(pas), torch.from_numpy(pl_d), 0, 1.0, 0, 6, 0.0001,
-                           comp=torch.from_numpy(pack.linear_to_srgb(torch.from_numpy(pas + 0.1)).numpy()))
+                           comp=torch.from_numpy(importlib.import_module(pack.__name__ + ".element_forge.generation.unmult").linear_to_srgb(torch.from_numpy(pas + 0.1)).numpy()))
 ce = ce.numpy()
 line, nxt = ce[:, 14:84, 28, 0].mean(), ce[:, 14:84, 30, 0].mean()
 line0, nxt0 = pas[:, 14:84, 28, 0].mean(), pas[:, 14:84, 30, 0].mean()
 assert abs(line - nxt) < 0.3 * abs(line0 - nxt0), (line - nxt, line0 - nxt0)
-assert np.abs(comp_sw.numpy() - pack.linear_to_srgb(torch.from_numpy(ce + 0.1)).numpy()).max() < 2e-3
+assert np.abs(comp_sw.numpy() - importlib.import_module(pack.__name__ + ".element_forge.generation.unmult").linear_to_srgb(torch.from_numpy(ce + 0.1)).numpy()).max() < 2e-3
 print("deflicker ok: level spread %.3f -> %.3f, structure corr %.3f, grid step %.4f -> %.4f"
       % (np.std(m_b) / m_b.mean(), np.std(m_a) / m_a.mean(), corr, line0 - nxt0, line - nxt))
 el_rgba = torch.zeros(2, 32, 64, 4)

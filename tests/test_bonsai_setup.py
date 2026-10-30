@@ -11,7 +11,7 @@ import threading
 import zipfile
 
 PACK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-spec = importlib.util.spec_from_file_location("setup_bonsai", os.path.join(PACK, "setup_bonsai.py"))
+spec = importlib.util.spec_from_file_location("setup_bonsai", os.path.join(PACK, "element_forge/bonsai/setup_bonsai.py"))
 SB = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(SB)
 n = bad = 0

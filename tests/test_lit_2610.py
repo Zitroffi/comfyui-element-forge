@@ -42,9 +42,9 @@ mm = types.ModuleType("comfy.model_management")
 mm.throw_exception_if_processing_interrupted = lambda: None
 comfy.utils, comfy.model_management = cu, mm
 sys.modules.update({"comfy": comfy, "comfy.utils": cu, "comfy.model_management": mm})
-sys.modules[os.path.basename(PACK) + ".bonsai"] = types.ModuleType("bonsai")
+sys.modules[os.path.basename(PACK) + ".element_forge.bonsai.bonsai"] = types.ModuleType("bonsai")
 importlib.import_module(os.path.basename(PACK))
-AN = importlib.import_module(os.path.basename(PACK) + ".app_nodes")
+AN = importlib.import_module(os.path.basename(PACK) + ".element_forge.app.app_nodes")
 
 h, w = 4, 6
 P = torch.full((1, h, w, 3), 0.1)

@@ -42,6 +42,8 @@ BASE = dict(
     collide="none", restitution=0.4, friction=0.7, land_fade=2.0, land_tol=0.06,
     children=None,
     depth_offset=0.0, depth_spread=0.0, depth_spread_near=False, depth_softness=0.02,
+    depth_far=0.0,
+    fly=0.0,
     sprite="soft", shutter=0.0, trail=0,
     colors=[[0.0, [1.0, 1.0, 1.0]], [1.0, [1.0, 1.0, 1.0]]], color_var=0.1,
     glow=1.0, guide_style="lines",
@@ -502,6 +504,7 @@ class Emitter:
             dd = self.depth.d[0] if self.depth else None
             if dd is not None:
                 self.zlo, self.zhi = float(np.quantile(dd, 0.05)), float(np.quantile(dd, 0.995))
+                self.zhi = self.zlo + (self.zhi - self.zlo) * (1.0 - float(np.clip(P.get("depth_far", 0.0), 0.0, 0.95)))
                 self.zref = float(np.median(dd))
             else:
                 self.zlo = self.zhi = self.zref = 1.0
@@ -679,6 +682,19 @@ def flock_accel(x, y, vx, vy, unit, P, ps, rng):
     return P["flock"] * ax, P["flock"] * ay
 
 
+def _dolly(P, cam, dep, n, W, H):
+    if P.get("fly", 0) <= 0 or not dep or n < 2:
+        return None
+    sc = np.array([math.sqrt(abs(np.linalg.det(m[:2, :2]))) for m in cam.m])
+    m = cam.m[-1]
+    if abs(sc[-1] - 1.0) < 0.02:
+        return None
+    foe = np.linalg.solve(np.eye(2) - m[:2, :2], m[:2, 2])
+    foe = np.clip(foe, [0.0, 0.0], [W, H])
+    zb = max(float(np.median(dep.d[0])), 1e-3)
+    return foe, zb, P["fly"] * (1.0 - 1.0 / sc), sc
+
+
 def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
     n, fps, W, H, cam, dep = em.n, em.fps, em.W, em.H, em.cam, em.depth
     rng = np.random.default_rng(seed)
@@ -703,6 +719,7 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
     off = float(hash_u(0, seed=seed))
     kept = lambda ids, ns: ids[np.mod(ids * 0.6180339887498949 + off + 0.5 * ns, 1.0) < keep_q]
     zr = max(em.zref, 1e-3)
+    dolly = _dolly(P, cam, dep, n, W, H)
     noise = CurlNoise(rng, P["turbulence"], P["turb_scale"], P["turb_speed"])
     frng = np.random.default_rng(seed + 7919)
     tgt = None if target is None else Emitter._path(target, n, None)
@@ -716,7 +733,7 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
     kind = np.zeros(cap, np.int8)
     used = 0
     rec = {k: np.full((n, cap), np.nan if k == "x" else 0.0, np.float32)
-           for k in ("x", "y", "z", "vx", "vy", "size", "alpha", "vis", "age", "rot")}
+           for k in ("x", "y", "z", "vx", "vy", "size", "alpha", "vis", "age", "rot") + (("zd",) if dolly is not None else ())}
     stats = dict(spawned=0, children=0, landed=0, bounced=0, killed_by_target=0, capacity=max_alive, capped=0)
 
     def grow(need):
@@ -881,6 +898,12 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
             if len(a):
                 sx, sy = cam.to_screen(st["x"][a], st["y"][a], i)
                 z = st["z"][a]
+                if dolly is not None:
+                    foe, zb, tz, sc = dolly
+                    den = 1.0 - tz[i] * z / zb
+                    kd = 1.0 / np.maximum(den, 0.05)
+                    sx = foe[0] + (sx - foe[0]) * kd / sc[i]
+                    sy = foe[1] + (sy - foe[1]) * kd / sc[i]
                 sz = sfac(z)
                 fx, fy = noise(st["x"][a] / ps, st["y"][a] / ps, t)
                 age = np.clip((t - st["born"][a]) / st["life"][a], 0, 1)
@@ -894,6 +917,10 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
                         hz = hz * (P["size"] / np.maximum(st["size0"][a], 1e-3)) ** (0.5 * P["flicker_size"])
                     al *= 1 - P["flicker"] * 0.5 * (1 + np.sin(2 * np.pi * hz * t + st["phase"][a]))
                 size = st["size0"][a] * (P["size_start"] + (P["size_end"] - P["size_start"]) * age) * sz * ps
+                if dolly is not None:
+                    size = size * kd
+                    al = al * np.clip((den - 0.05) / 0.15, 0, 1)
+                    rec["zd"][i, a] = z * kd
                 vis = np.clip((z - dep.at(i, sx, sy)) / max(P["depth_softness"], 1e-4) + 1.0, 0, 1) if dep else 1.0
                 still = lt.astype(np.float64)
                 rec["x"][i, a], rec["y"][i, a], rec["z"][i, a] = sx, sy, z
@@ -1752,7 +1779,7 @@ def render_frames(P, rec, em, paths, raster, style, premask=True, edge=0.08, edg
             coc = None
             if style == "seed" and P.get("dof", 0) > 0:
                 foc = P["focus"] if P.get("focus", -1) >= 0 else float(em.zref)
-                coc = P["dof"] * min(em.W, em.H) / REF * k * np.abs(rec["z"][i, a] - foc)
+                coc = P["dof"] * min(em.W, em.H) / REF * k * np.abs(rec["zd" if "zd" in rec else "z"][i, a] - foc)
                 if not own or wisp:
                     rs_e = np.sqrt(rs ** 2 + coc ** 2)
                     al = al * (rs / np.maximum(rs_e, 1e-6)) ** 2

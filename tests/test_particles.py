@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 
 PACK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-spec = importlib.util.spec_from_file_location("ef_particles", os.path.join(PACK, "particles.py"))
+spec = importlib.util.spec_from_file_location("ef_particles", os.path.join(PACK, "element_forge/simulation/particles.py"))
 pt = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(pt)
 
@@ -580,4 +580,33 @@ check(n_b > 1.2 * n_a and t_b > 1.1 * t_a and Pd["fork_depth"] == 2 and Pd["fine
       and Pd["branches"] == 4 and Pd["climb_pitch"] == 0.03 and pt.BASE["fork_depth"] == 1,
       f"lightning climb, old look (the preset since 29.10.): {n_b} strokes instead of {n_a} without it (forks fork again), small "
       f"jags {t_b:.2f} instead of {t_a:.2f} px off the stroke; other presets keep the defaults")
+def fly_run(fly):
+    mats = []
+    for i in range(N):
+        s_ = 1.0 + 0.3 * i / (N - 1)
+        mats.append(np.array([[s_, 0, (1 - s_) * W / 2], [0, s_, (1 - s_) * H / 2], [0, 0, 1]]))
+    Pf2 = pt.params("fireflies", {"fly": fly, "depth_spread": 0.3, "depth_spread_near": True, "speed": 0.0, "turbulence": 0.0,
+                                  "life": 10.0, "fade_in": 0.0, "fade_out": 0.0, "flicker": 0.0})
+    em2 = pt.Emitter("whole frame", N, FPS, W, H, Pf2, np.random.default_rng(1), depth=pt.Depth(np.full((N, H, W), 0.3, np.float32), W, H),
+                     cam=pt.Camera(N, mats))
+    r = pt.simulate(Pf2, em2, seed=1)
+    k = np.isfinite(r["x"][0]) & np.isfinite(r["x"][-1]) & (r["alpha"][0] > 0)
+    zoom = np.hypot(r["x"][-1][k] - W / 2, r["y"][-1][k] - H / 2) / np.maximum(np.hypot(r["x"][0][k] - W / 2, r["y"][0][k] - H / 2), 1)
+    far, near = r["z"][0][k] < 0.32, r["z"][0][k] > 0.5
+    return zoom, far, near, r["size"][-1][k] / np.maximum(r["size"][0][k], 1e-6)
+zf, far_f, near_f, gf = fly_run(1.0)
+z0, far_0, near_0, g0 = fly_run(0.0)
+check(abs(np.median(zf[far_f]) - 1.3) < 0.05 and np.median(zf[near_f]) > 1.6 and np.median(gf[near_f]) > 1.6
+      and abs(np.median(z0[near_0]) - 1.3) < 0.05 and np.allclose(g0, 1.0, atol=0.01),
+      f"fly through: at the scene's depth the zoom of the plate ({np.median(zf[far_f]):.2f}), nearer particles spread "
+      f"{np.median(zf[near_f]):.2f}x and grow {np.median(gf[near_f]):.2f}x; fly 0 all as the plate ({np.median(z0[near_0]):.2f}), sizes kept")
+dfar = np.tile(np.linspace(0.05, 1.0, W, dtype=np.float32)[None, None], (N, H, 1))
+def far_run(far):
+    Pd = pt.params("fireflies", {"depth_far": far, "rate": 200.0})
+    emd = pt.Emitter("whole frame", N, FPS, W, H, Pd, np.random.default_rng(1), depth=pt.Depth(dfar, W, H))
+    rd = pt.simulate(Pd, emd, seed=1)
+    return rd["z"][-1][np.isfinite(rd["x"][-1])]
+zd0, zd6 = far_run(0.0), far_run(0.6)
+check(zd0.max() > 0.8 and zd6.max() < 0.5 and len(zd6) > 20,
+      f"depth_far 0.6: farthest 40 % of the depths only (max {zd6.max():.2f}, without {zd0.max():.2f})")
 print(f"{ok} checks passed")

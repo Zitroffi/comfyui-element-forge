@@ -11,9 +11,11 @@ from PIL import Image
 
 import folder_paths
 
-from . import compact_values as cv
+from ..app import compact_values as cv
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+PACK_ROOT = os.path.dirname(os.path.dirname(HERE))
+PRESETS = os.path.join(PACK_ROOT, "element_forge", "app", "app_presets.json")
 CATEGORY = "Element Forge"
 OPTIONS = "Element Forge/Options"
 TOOLS = "Element Forge/Tools"
@@ -62,7 +64,7 @@ _stage_map = None
 def presets():
     global _presets
     if _presets is None:
-        with open(os.path.join(HERE, "app_presets.json"), encoding="utf-8") as f:
+        with open(PRESETS, encoding="utf-8") as f:
             _presets = json.load(f)
     return _presets
 
@@ -70,7 +72,7 @@ def presets():
 def stage_map():
     global _stage_map
     if _stage_map is None:
-        with open(os.path.join(HERE, "api_workflows", "element_forge.stages.json"), encoding="utf-8") as f:
+        with open(os.path.join(PACK_ROOT, "api_workflows", "element_forge.stages.json"), encoding="utf-8") as f:
             _stage_map = json.load(f)["nodes"]
     return _stage_map
 
@@ -92,9 +94,9 @@ def _choices(setting, fallback):
     try:
         import nodes
         if _graph_settings is None:
-            with open(os.path.join(HERE, "api_workflows", "element_forge_app.json"), encoding="utf-8") as f:
+            with open(os.path.join(PACK_ROOT, "api_workflows", "element_forge_app.json"), encoding="utf-8") as f:
                 g = json.load(f)
-            with open(os.path.join(HERE, "api_workflows", "element_forge.settings.json"), encoding="utf-8") as f:
+            with open(os.path.join(PACK_ROOT, "api_workflows", "element_forge.settings.json"), encoding="utf-8") as f:
                 sets = json.load(f)["settings"]
             _graph_settings = {k: (g[t[0]]["class_type"], t[1]) for k, t in
                                ((k, t[0] if isinstance(t[0], list) else t) for k, t in sets.items()) if t[0] in g}
@@ -201,7 +203,7 @@ class _File:
 
 
 def _clip_info(name, path, still=None):
-    from .app_routes import clip_meta, still_meta
+    from ..app.app_routes import clip_meta, still_meta
     m = still_meta(path, still) if still is not None else clip_meta(path)
     out = {"name": name, "width": m["width"], "height": m["height"], "frames": m["frames"], "fps": m["fps"], "seconds": m["seconds"]}
     if still is not None:
@@ -210,7 +212,7 @@ def _clip_info(name, path, still=None):
 
 
 def _ground(path, x, y, still=False):
-    from .app_routes import first_frame
+    from ..app.app_routes import first_frame
     im = first_frame(path).convert("RGB")
     a = np.asarray(im, dtype=np.float32)
     h, w = a.shape[:2]
@@ -705,7 +707,7 @@ class EFForgeLTX:
 class EFForgeLibraryElement:
     @classmethod
     def INPUT_TYPES(cls):
-        from .elements import _elements
+        from ..generation.elements import _elements
         names = _elements()
         return {"required": {"element": (names or ["(no saved elements yet)"], {"tooltip": "An element saved before (EF Export 'save element', the app's 'Save the element')."})}}
 
@@ -744,7 +746,7 @@ class EFForgeFromImages:
 
     def build(self, images, fps, alpha=None):
         import torch
-        from .elements import EFSaveElement, _elements, _split
+        from ..generation.elements import EFSaveElement, _elements, _split
         if alpha is not None:
             a = alpha if alpha.dim() == 3 else alpha.unsqueeze(0)
             n = min(images.shape[0], a.shape[0]) if a.shape[0] > 1 else images.shape[0]
@@ -925,7 +927,7 @@ def _alpha_of(g, ref):
 
 
 def build_chain(b, wants=(), dry=False):
-    from . import app_routes as ar
+    from ..app import app_routes as ar
     ex = b.get("export")
     variant, mode, values, ltx, look = chain_values(b)
     if ex and ex.get("check only"):

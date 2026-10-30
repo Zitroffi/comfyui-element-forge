@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 import cv2
 import numpy as np
 
-from .track import linear_to_srgb, srgb_to_linear, to_np, to_t
+from ..tracking.track import linear_to_srgb, srgb_to_linear, to_np, to_t
 
 LUMA = np.array([0.2126, 0.7152, 0.0722], np.float32)
 

@@ -5,7 +5,7 @@ import sys
 import torch
 
 PACK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-spec = importlib.util.spec_from_file_location("memory_guard", os.path.join(PACK, "memory_guard.py"))
+spec = importlib.util.spec_from_file_location("memory_guard", os.path.join(PACK, "element_forge/memory_guard.py"))
 mg = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mg)
 GB = mg.GB

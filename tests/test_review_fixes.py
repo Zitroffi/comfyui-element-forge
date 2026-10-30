@@ -31,7 +31,7 @@ PACK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(PACK))
 pack = importlib.import_module(os.path.basename(PACK))
 M = pack.NODE_CLASS_MAPPINGS
-an = importlib.import_module(pack.__name__ + ".app_nodes")
+an = importlib.import_module(pack.__name__ + ".element_forge.app.app_nodes")
 
 KEEP = os.environ.get("EF_TEST_KEEP_GOING") == "1"
 ok, failed = 0, []

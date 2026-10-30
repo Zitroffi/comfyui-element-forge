@@ -4,7 +4,7 @@ import json
 import os
 
 PACK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-spec = importlib.util.spec_from_file_location("app_graph", os.path.join(PACK, "app_graph.py"))
+spec = importlib.util.spec_from_file_location("app_graph", os.path.join(PACK, "element_forge/app/app_graph.py"))
 ag = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ag)
 ok = 0

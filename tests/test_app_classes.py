@@ -16,7 +16,7 @@ comfy.utils = cu; sys.modules["comfy"] = comfy; sys.modules["comfy.utils"] = cu
 mm = types.ModuleType("comfy.model_management"); mm.throw_exception_if_processing_interrupted = lambda: None
 comfy.model_management = mm; sys.modules["comfy.model_management"] = mm
 PACK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-APP = PACK if os.path.isfile(os.path.join(PACK, "app_mode", "nodes.py")) else None
+APP = PACK if os.path.isfile(os.path.join(PACK, "element_forge", "app_mode", "nodes.py")) else None
 sys.path.insert(0, os.path.dirname(PACK))
 pack = importlib.import_module(os.path.basename(PACK))
 M = pack.NODE_CLASS_MAPPINGS
@@ -40,12 +40,12 @@ for f in glob.glob(os.path.join(PACK, "api_workflows", "*.json")):
         for v in g.values():
             if v["class_type"].startswith("EF"):
                 need.setdefault(v["class_type"], set()).add(os.path.basename(f))
-for name in ("app_routes.py", "stages.py", "live.py", "analysis.py", "app_nodes.py"):
+for name in ("element_forge/app/app_routes.py", "element_forge/workflow/stages.py", "element_forge/app/live.py", "element_forge/tracking/analysis.py", "element_forge/app/app_nodes.py"):
     src = open(os.path.join(PACK, name), encoding="utf-8").read()
     for c in re.findall(r"[\"']class_type[\"']\s*:\s*[\"'](EF[A-Za-z]+)[\"']", src):
         need.setdefault(c, set()).add(name)
 if APP:
-    for f in glob.glob(os.path.join(APP, "web", "**", "*.js"), recursive=True) + [os.path.join(APP, "app_mode", "nodes.py")]:
+    for f in glob.glob(os.path.join(APP, "web", "**", "*.js"), recursive=True) + [os.path.join(APP, "element_forge", "app_mode", "nodes.py")]:
         src = open(f, encoding="utf-8").read()
         for c in re.findall(r"class_type[\"']?\s*:\s*[\"'](EF[A-Za-z]+)[\"']", src):
             if not c.startswith("EFApp"):

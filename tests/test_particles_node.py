@@ -114,7 +114,7 @@ from simpleeval import simple_eval
 val = lambda a, b, c: int(simple_eval(rnd, names={"a": a, "b": b, "c": c}, functions={"max": max, "round": round}))
 check((val(480, False, False), val(480, True, False), val(672, True, False), val(700, False, True), val(10, True, False))
       == (480, 512, 640, 704, 64), "generate size rounding: 32 without guide, 64 with guide or inpaint, never below one step")
-ptm = importlib.import_module(os.path.basename(PACK) + ".particles")
+ptm = importlib.import_module(os.path.basename(PACK) + ".element_forge.simulation.particles")
 Hh, Wh = 120, 160
 dmap = np.full((1, Hh, Wh), 0.2, np.float32); dmap[:, :, :60] = 0.9
 rg = np.random.default_rng(2)
@@ -133,7 +133,7 @@ lm, = VLM().make(lat, mk, grow=0, floor=0.0)
 nm = lm["noise_mask"]
 check(tuple(nm.shape) == (1, 1, 3, 8, 8) and float(nm[0, 0, 2, 0, 0]) == 1.0 and float(nm[0, 0, 1].max()) == 0.0
       and float(nm[0, 0, 2, 4, 4]) == 0.0, "video latent mask: 5D, union over the 8 pixel frames of a latent frame")
-ptn = importlib.import_module(os.path.basename(PACK) + ".particles")
+ptn = importlib.import_module(os.path.basename(PACK) + ".element_forge.simulation.particles")
 oc = EFParticles().run(plate, "cracks", "point A", track=trA, **args)
 of = EFParticles().run(plate, "frost", "point A", track=trA, **args)
 ou = EFParticles().run(plate, "frost", "point A", track=trA, inpaint_sigmas="0.95, 0.5, 0.0", **args)
@@ -364,7 +364,7 @@ for i_ in range(n):
 y0_ = H * 0.75
 tA_ = {"plate_size": [W, H], "frames": n, "point_track_px": [[W * 0.3 + H * 0.08, y0_]] * n}
 tB_ = {"plate_size": [W, H], "frames": n, "point_track_px": [[W * 0.7 - H * 0.08, y0_]] * n}
-pt_ = sys.modules[pack.__name__ + ".particles"]
+pt_ = sys.modules[pack.__name__ + ".element_forge.simulation.particles"]
 ea_, eb_ = pt_.ends_on_objects(hm_, n, W, H, a0=tA_["point_track_px"][0])
 def boly_(settings):
     o_ = EFParticles().run(torch.from_numpy(np.full((n, H, W, 3), 0.1, np.float32)), "lightning", "line A-B", track=tA_, track_b=tB_,
@@ -408,7 +408,7 @@ ar_, al_ = _cx(aura_(90.0)), _cx(aura_(270.0))
 old_ = abs(_cx(aura_(90.0, settings={"direction_mode": "outward"})) - _cx(aura_(270.0, settings={"direction_mode": "outward"})))
 check(ar_ > al_ + 4 and old_ < 1, f"aura with the arrow: to the right x {ar_:.1f}, to the left x {al_:.1f} "
       f"(outward as before: {old_:.2f} px apart, the arrow did nothing)")
-pt_ = sys.modules[pack.__name__ + ".particles"]
+pt_ = sys.modules[pack.__name__ + ".element_forge.simulation.particles"]
 calls_, keep_ = [0], pt_.interrupted
 
 
@@ -430,7 +430,7 @@ except _Stopped:
     stopped_ = True
 finally:
     pt_.interrupted = keep_
-pn_ = sys.modules[pack.__name__ + ".particles_node"]
+pn_ = sys.modules[pack.__name__ + ".element_forge.simulation.particles_node"]
 check(stopped_ and calls_[0] == 6 and keep_ is pn_._check and pn_._stop_check is mm.throw_exception_if_processing_interrupted,
       "Stop: the particle node asks ComfyUI's stop check while it works and ends at the next check")
 seen_ = []

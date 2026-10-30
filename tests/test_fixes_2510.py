@@ -14,7 +14,7 @@ def load_funcs(fname, names, extra):
     return g
 
 
-crop_box = load_funcs("app_routes.py", {"crop_box"}, {})["crop_box"]
+crop_box = load_funcs("element_forge/app/app_routes.py", {"crop_box"}, {})["crop_box"]
 im = Image.new("RGB", (1280, 720))
 assert crop_box(im, [100, 50, 512, 512]).size == (512, 512)
 assert crop_box(im, [1000, 400, 512, 512]).size == (280, 320)
@@ -29,7 +29,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-g = load_funcs("app_nodes.py", {"focus_depth", "fill_focus", "_gauss", "depth_blur"},
+g = load_funcs("element_forge/app/app_nodes.py", {"focus_depth", "fill_focus", "_gauss", "depth_blur"},
                {"np": np, "torch": torch, "F": F, "math": math, "DOF_STEPS": 4, "DOF_SHARP": 0.02, "DOF_AROUND": 0.03, "DOF_NEAR": 95})
 el = np.zeros((40, 60, 4), np.float32); el[10:20, 10:20, 3] = 1
 dep = np.full((40, 60, 4), 0.2, np.float32); dep[10:20, 10:20, 0] = 0.8

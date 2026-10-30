@@ -11,14 +11,15 @@ from aiohttp import web
 import folder_paths
 import server
 
-from . import analysis as AN
-from . import bonsai
-from . import bonsai_rt
-from . import setup_bonsai as SB
+from ..tracking import analysis as AN
+from ..bonsai import bonsai
+from ..bonsai import bonsai_rt
+from ..bonsai import setup_bonsai as SB
 from .app_graph import without_unused
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-API_WORKFLOWS = os.path.join(HERE, "api_workflows")
+PACK_ROOT = os.path.dirname(os.path.dirname(HERE))
+API_WORKFLOWS = os.path.join(PACK_ROOT, "api_workflows")
 VIDEO_EXT = (".mp4", ".mov", ".webm", ".mkv", ".m4v", ".avi")
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp")
 STILL_FPS, STILL_SECONDS = 24.0, 3.0

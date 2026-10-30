@@ -5,7 +5,7 @@ import numpy as np
 
 import folder_paths
 
-from .track import srgb_to_linear, to_np
+from ..tracking.track import srgb_to_linear, to_np
 
 
 class EFSaveEXR:

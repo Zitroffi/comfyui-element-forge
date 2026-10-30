@@ -28,7 +28,7 @@ comfy.model_management = mm; sys.modules["comfy.model_management"] = mm
 PACK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(PACK))
 pack = importlib.import_module(os.path.basename(PACK))
-an = importlib.import_module(pack.__name__ + ".app_nodes")
+an = importlib.import_module(pack.__name__ + ".element_forge.app.app_nodes")
 ok = 0
 
 

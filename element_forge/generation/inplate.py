@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from .track import to_np, to_t
+from ..tracking.track import to_np, to_t
 
 
 class EFInPlateGuides:

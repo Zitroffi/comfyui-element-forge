@@ -3,11 +3,11 @@ import numpy as np
 import torch
 
 try:
-    from .particles import contrast_blend, streak_detail
+    from ..simulation.particles import contrast_blend, streak_detail
 except ImportError:
     import importlib.util as _ilu
     import os as _os
-    _sp = _ilu.spec_from_file_location("_ef_particles", _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "particles.py"))
+    _sp = _ilu.spec_from_file_location("_ef_particles", _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), "simulation", "particles.py"))
     _pm = _ilu.module_from_spec(_sp)
     _sp.loader.exec_module(_pm)
     contrast_blend, streak_detail = _pm.contrast_blend, _pm.streak_detail
