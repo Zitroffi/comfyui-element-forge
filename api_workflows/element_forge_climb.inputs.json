@@ -1,0 +1,164 @@
+{
+ "shot": "element_forge_climb",
+ "title": "Lightning climbing an object: a charge crawls along the clicked object and jumps from its tips (one workflow, app passes)",
+ "api_file": "element_forge_climb.json",
+ "reference_run": "p7w-krone-duenn-prompt (with LTX), q7o / q7t (without LTX)",
+ "server": "ComfyUI >= 0.41.2 with comfyui-element-forge, ComfyUI-GGUF; queue via /prompt",
+ "node_classes": "EF",
+ "inputs": [
+  {
+   "node": "101",
+   "input": "file",
+   "label": "Clip (ComfyUI input folder)",
+   "type": "video_file",
+   "default": "efc_night_plate.mp4"
+  },
+  {
+   "node": "108",
+   "input": "a_x",
+   "label": "Point on the object x (plate px, frame 0)",
+   "type": "int",
+   "default": 450
+  },
+  {
+   "node": "108",
+   "input": "a_y",
+   "label": "Point on the object y (plate px, frame 0)",
+   "type": "int",
+   "default": 532
+  },
+  {
+   "node": "109",
+   "input": "value",
+   "label": "Object word (optional, helps the click)",
+   "type": "text",
+   "default": "thin stick"
+  },
+  {
+   "node": "110",
+   "input": "value",
+   "label": "Object word: all alike objects (e.g. all sticks of a crown; off = the clicked one)",
+   "type": "bool",
+   "default": true
+  },
+  {
+   "node": "123",
+   "input": "value",
+   "label": "Lightning look: without LTX (drawn bolts, no AI run)",
+   "type": "bool",
+   "default": false
+  },
+  {
+   "node": "104",
+   "input": "value",
+   "label": "Effect prompt (with LTX)",
+   "type": "text",
+   "default": "Raw electrical discharge filmed at night with a high-speed camera: jagged, branching lightning bolts and crackling arcs against a pure black background. Irregular zigzag filaments that split again and again into thin forks, white-hot cores with violet-blue edges, sparks jumping between points, every bolt a different shape, flickering violently from frame to frame. No glowing tubes, no neon, no straight rods, no light sabers: only real lightning. Everything else is completely black, static camera, photorealistic."
+  },
+  {
+   "node": "126",
+   "input": "value",
+   "label": "Starts at (s)",
+   "type": "float",
+   "default": 0.0
+  },
+  {
+   "node": "334",
+   "input": "depth_offset",
+   "label": "Element depth offset (+ = nearer, less hidden)",
+   "type": "float",
+   "default": 0.3
+  },
+  {
+   "node": "223",
+   "input": "value",
+   "label": "Particle pro: extra (JSON, e.g. {\"width\": 1.0, \"glow\": 1.2})",
+   "type": "text",
+   "default": ""
+  },
+  {
+   "node": "102",
+   "input": "value",
+   "label": "Frames from the start of the clip",
+   "type": "int",
+   "default": 81
+  },
+  {
+   "node": "145",
+   "input": "value",
+   "label": "Seed",
+   "type": "int",
+   "default": 42
+  },
+  {
+   "node": "805",
+   "input": "value",
+   "label": "Particle seed",
+   "type": "int",
+   "default": 42
+  }
+ ],
+ "output_prefixes": [
+  {
+   "node": "222",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/track_check"
+  },
+  {
+   "node": "475",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/comp"
+  },
+  {
+   "node": "852",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/mask"
+  },
+  {
+   "node": "483",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/plate"
+  },
+  {
+   "node": "484",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/element"
+  },
+  {
+   "node": "485",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/light"
+  },
+  {
+   "node": "486",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/glow"
+  },
+  {
+   "node": "487",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/depth"
+  },
+  {
+   "node": "488",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/normals"
+  }
+ ],
+ "run_placeholder": "{run} in every filename_prefix is replaced by the run name (one folder per run)",
+ "element_names": [],
+ "outputs": {
+  "folder": "<ComfyUI output>/element-forge/{run}/",
+  "exr": [
+   "plate_#####.exr (linear)",
+   "element_#####.exr (linear, comp Add)",
+   "light_#####.exr (linear)",
+   "glow_#####.exr (linear, comp Add above the element)",
+   "depth_#####.exr (Video Depth Anything, near = 1)",
+   "normals_#####.exr (MoGe, OpenGL convention)"
+  ],
+  "mp4": [
+   "comp_*.mp4 (the lightning as the workflow makes it)"
+  ]
+ }
+}

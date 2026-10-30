@@ -1,0 +1,889 @@
+{
+ "id": "3528d82d-6edc-50e9-a2ef-ee04ebdec6fb",
+ "revision": 0,
+ "last_node_id": 903,
+ "last_link_id": 890,
+ "config": {},
+ "extra": {
+  "ds": {
+   "scale": 0.55,
+   "offset": [
+    3060,
+    610
+   ]
+  },
+  "linearMode": true,
+  "linearData": {
+   "inputs": [
+    [
+     "902",
+     "ef_stage"
+    ]
+   ],
+   "outputs": [
+    "475"
+   ]
+  },
+  "element_forge_app": {
+   "built_by": "tools/build_five_nodes.py",
+   "nodes": "five (EF App Run expands when queued)"
+  }
+ },
+ "version": 0.4,
+ "nodes": [
+  {
+   "id": 101,
+   "type": "LoadVideo",
+   "pos": [
+    -2900,
+    80
+   ],
+   "size": [
+    400,
+    130
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "file",
+     "name": "file",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "file"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "VIDEO",
+     "name": "VIDEO",
+     "type": "VIDEO",
+     "links": [
+      884
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "LoadVideo"
+   },
+   "widgets_values": [
+    "my_clip.mp4",
+    "image"
+   ],
+   "title": "Clip"
+  },
+  {
+   "id": 901,
+   "type": "EFAppEffect",
+   "pos": [
+    -2460,
+    80
+   ],
+   "size": [
+    400,
+    640
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "effect_style",
+     "name": "effect_style",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "effect_style"
+     }
+    },
+    {
+     "localized_name": "mode",
+     "name": "mode",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "mode"
+     }
+    },
+    {
+     "localized_name": "strength",
+     "name": "strength",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "strength"
+     }
+    },
+    {
+     "localized_name": "describe",
+     "name": "describe",
+     "type": "STRING",
+     "link": null,
+     "widget": {
+      "name": "describe"
+     }
+    },
+    {
+     "localized_name": "look_words",
+     "name": "look_words",
+     "type": "STRING",
+     "link": null,
+     "widget": {
+      "name": "look_words"
+     }
+    },
+    {
+     "localized_name": "motion_words",
+     "name": "motion_words",
+     "type": "STRING",
+     "link": null,
+     "widget": {
+      "name": "motion_words"
+     }
+    },
+    {
+     "localized_name": "contact_words",
+     "name": "contact_words",
+     "type": "STRING",
+     "link": null,
+     "widget": {
+      "name": "contact_words"
+     }
+    },
+    {
+     "localized_name": "prompt_override",
+     "name": "prompt_override",
+     "type": "STRING",
+     "link": null,
+     "widget": {
+      "name": "prompt_override"
+     }
+    },
+    {
+     "localized_name": "object_word",
+     "name": "object_word",
+     "type": "STRING",
+     "link": null,
+     "widget": {
+      "name": "object_word"
+     }
+    },
+    {
+     "localized_name": "seed",
+     "name": "seed",
+     "type": "INT",
+     "link": null,
+     "widget": {
+      "name": "seed"
+     }
+    },
+    {
+     "localized_name": "night",
+     "name": "night",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "night"
+     }
+    },
+    {
+     "localized_name": "sticks_to",
+     "name": "sticks_to",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "sticks_to"
+     }
+    },
+    {
+     "localized_name": "own_mask",
+     "name": "own_mask",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "own_mask"
+     }
+    },
+    {
+     "localized_name": "all_alike",
+     "name": "all_alike",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "all_alike"
+     }
+    },
+    {
+     "localized_name": "follows_motion",
+     "name": "follows_motion",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "follows_motion"
+     }
+    },
+    {
+     "localized_name": "draw_path",
+     "name": "draw_path",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "draw_path"
+     }
+    },
+    {
+     "localized_name": "sharper_2x",
+     "name": "sharper_2x",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "sharper_2x"
+     }
+    },
+    {
+     "localized_name": "how_it_goes_in",
+     "name": "how_it_goes_in",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "how_it_goes_in"
+     }
+    },
+    {
+     "localized_name": "shot_sentence",
+     "name": "shot_sentence",
+     "type": "STRING",
+     "link": null,
+     "widget": {
+      "name": "shot_sentence"
+     }
+    },
+    {
+     "localized_name": "particle_seed",
+     "name": "particle_seed",
+     "type": "INT",
+     "link": null,
+     "widget": {
+      "name": "particle_seed"
+     }
+    },
+    {
+     "localized_name": "preroll",
+     "name": "preroll",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "preroll"
+     }
+    },
+    {
+     "localized_name": "emitter_values",
+     "name": "emitter_values",
+     "type": "STRING",
+     "link": null,
+     "widget": {
+      "name": "emitter_values"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "effect",
+     "name": "effect",
+     "type": "EF_EFFECT",
+     "links": [
+      885,
+      887,
+      889
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFAppEffect"
+   },
+   "widgets_values": [
+    "fire/flame",
+    "basic",
+    "normal",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    42,
+    "fixed",
+    false,
+    "style default",
+    false,
+    false,
+    false,
+    false,
+    false,
+    "style default",
+    "",
+    42,
+    -2.0,
+    ""
+   ],
+   "title": "Element Forge · Effect"
+  },
+  {
+   "id": 902,
+   "type": "EFAppStage",
+   "pos": [
+    -2020,
+    80
+   ],
+   "size": [
+    760,
+    860
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "shot",
+     "name": "shot",
+     "type": "STRING",
+     "link": null,
+     "widget": {
+      "name": "shot"
+     }
+    },
+    {
+     "localized_name": "video",
+     "name": "video",
+     "type": "VIDEO",
+     "link": 884
+    },
+    {
+     "localized_name": "effect",
+     "name": "effect",
+     "type": "EF_EFFECT",
+     "link": 885
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "shot",
+     "name": "shot",
+     "type": "STRING",
+     "links": [
+      886
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFAppStage"
+   },
+   "widgets_values": [
+    "{}"
+   ],
+   "title": "Element Forge · Canvas & Timeline"
+  },
+  {
+   "id": 903,
+   "type": "EFAppValues",
+   "pos": [
+    -1220,
+    80
+   ],
+   "size": [
+    360,
+    120
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "shot",
+     "name": "shot",
+     "type": "STRING",
+     "link": 886
+    },
+    {
+     "localized_name": "effect",
+     "name": "effect",
+     "type": "EF_EFFECT",
+     "link": 887
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "settings",
+     "name": "settings",
+     "type": "EF_SETTINGS",
+     "links": [
+      888
+     ]
+    },
+    {
+     "localized_name": "run_prefix",
+     "name": "run_prefix",
+     "type": "STRING",
+     "links": []
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFAppValues"
+   },
+   "widgets_values": [],
+   "title": "Element Forge · Settings from canvas"
+  },
+  {
+   "id": 475,
+   "type": "EFAppRun",
+   "pos": [
+    -780,
+    80
+   ],
+   "size": [
+    420,
+    520
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "settings",
+     "name": "settings",
+     "type": "EF_SETTINGS",
+     "link": 888
+    },
+    {
+     "localized_name": "effect",
+     "name": "effect",
+     "type": "EF_EFFECT",
+     "link": 889
+    },
+    {
+     "localized_name": "exr_passes",
+     "name": "exr_passes",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "exr_passes"
+     }
+    },
+    {
+     "localized_name": "track_check",
+     "name": "track_check",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "track_check"
+     }
+    },
+    {
+     "localized_name": "models",
+     "name": "models",
+     "type": "EF_MODELS",
+     "link": 890,
+     "shape": 7
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "folder",
+     "name": "folder",
+     "type": "STRING",
+     "links": []
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFAppRun"
+   },
+   "widgets_values": [
+    true,
+    true
+   ],
+   "title": "Element Forge · Run"
+  },
+  {
+   "id": 705,
+   "type": "MarkdownNote",
+   "pos": [
+    -2900,
+    -500
+   ],
+   "size": [
+    1280,
+    450
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "properties": {},
+   "widgets_values": [
+    "## Element Forge – App\n\nSwitch to **App mode** (top right): the bar on the left, the canvas in the middle. Step by step:\n\n1. **Clip** – your video in ComfyUI's `input` folder (a picture works too: drop it onto the canvas).\n2. **Effect** – choose what to add. Particle styles start a quick preview right away (no AI).\n3. **Canvas & Timeline** – the steps of the app: under *Position & Track* click where the effect sits and\n   *Check the track*; then *Effect*, *Scene & finish* and *Output*.\n4. **Settings from canvas** – turns the canvas into the settings of the one workflow.\n5. **Run** – press Run. When queued, this node becomes the full graph of the chosen style (app, climb or dissolve),\n   the same as the standalone app. The comp shows on it; passes (EXR) and the track check go to\n   `output/element-forge/<run>/`. Unchanged steps come from ComfyUI's cache.\n"
+   ],
+   "title": "How to use"
+  },
+  {
+   "id": 706,
+   "type": "EFAppModels",
+   "pos": [
+    -1580,
+    -500
+   ],
+   "size": [
+    860,
+    424
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "ltx_2_5_22b_distilled_transformer_comfy_int8_con",
+     "name": "ltx_2_5_22b_distilled_transformer_comfy_int8_con",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "ltx_2_5_22b_distilled_transformer_comfy_int8_con"
+     }
+    },
+    {
+     "localized_name": "gemma4_12b_with_proj_ltx_2_5_comfy_int8_convrot",
+     "name": "gemma4_12b_with_proj_ltx_2_5_comfy_int8_convrot",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "gemma4_12b_with_proj_ltx_2_5_comfy_int8_convrot"
+     }
+    },
+    {
+     "localized_name": "ltx_2_5_video_vae_conv_bf16",
+     "name": "ltx_2_5_video_vae_conv_bf16",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "ltx_2_5_video_vae_conv_bf16"
+     }
+    },
+    {
+     "localized_name": "ltx_2_5_audio_vae_bf16",
+     "name": "ltx_2_5_audio_vae_bf16",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "ltx_2_5_audio_vae_bf16"
+     }
+    },
+    {
+     "localized_name": "ltx_2_5_latent_spatial_upscaler_x2_bf16_1_0",
+     "name": "ltx_2_5_latent_spatial_upscaler_x2_bf16_1_0",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "ltx_2_5_latent_spatial_upscaler_x2_bf16_1_0"
+     }
+    },
+    {
+     "localized_name": "ltx_2_3_22b_ic_lora_union_control_ref0_5",
+     "name": "ltx_2_3_22b_ic_lora_union_control_ref0_5",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "ltx_2_3_22b_ic_lora_union_control_ref0_5"
+     }
+    },
+    {
+     "localized_name": "ltx_2_3_22b_ic_lora_motion_track_control_ref0_5",
+     "name": "ltx_2_3_22b_ic_lora_motion_track_control_ref0_5",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "ltx_2_3_22b_ic_lora_motion_track_control_ref0_5"
+     }
+    },
+    {
+     "localized_name": "ltx_2_5_22b_ic_lora_clean_plate_1_0",
+     "name": "ltx_2_5_22b_ic_lora_clean_plate_1_0",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "ltx_2_5_22b_ic_lora_clean_plate_1_0"
+     }
+    },
+    {
+     "localized_name": "ltx_2_5_22b_ic_lora_alpha_gen_0_9",
+     "name": "ltx_2_5_22b_ic_lora_alpha_gen_0_9",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "ltx_2_5_22b_ic_lora_alpha_gen_0_9"
+     }
+    },
+    {
+     "localized_name": "sam3_1_multiplex_fp16",
+     "name": "sam3_1_multiplex_fp16",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "sam3_1_multiplex_fp16"
+     }
+    },
+    {
+     "localized_name": "video_depth_anything_vits",
+     "name": "video_depth_anything_vits",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "video_depth_anything_vits"
+     }
+    },
+    {
+     "localized_name": "moge_2_vitl_normal_fp16",
+     "name": "moge_2_vitl_normal_fp16",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "moge_2_vitl_normal_fp16"
+     }
+    },
+    {
+     "localized_name": "attention",
+     "name": "attention",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "attention"
+     }
+    },
+    {
+     "localized_name": "depth_model",
+     "name": "depth_model",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "depth_model"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "models",
+     "name": "models",
+     "type": "EF_MODELS",
+     "links": [
+      890
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFAppModels",
+    "models": [
+     {
+      "name": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+      "url": "https://huggingface.co/Lightricks/LTX-2.5/resolve/main/diffusion_models/ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+      "directory": "diffusion_models"
+     },
+     {
+      "name": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+      "url": "https://huggingface.co/Lightricks/LTX-2.5/resolve/main/text_encoders/gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+      "directory": "text_encoders"
+     },
+     {
+      "name": "ltx-2.5-video-vae-conv-bf16.safetensors",
+      "url": "https://huggingface.co/unsloth/LTX-2.5-GGUF/resolve/main/vae/ltx-2.5-video-vae-conv-bf16.safetensors",
+      "directory": "vae"
+     },
+     {
+      "name": "ltx-2.5-audio-vae-bf16.safetensors",
+      "url": "https://huggingface.co/unsloth/LTX-2.5-GGUF/resolve/main/vae/ltx-2.5-audio-vae-bf16.safetensors",
+      "directory": "vae"
+     },
+     {
+      "name": "ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
+      "url": "https://huggingface.co/unsloth/LTX-2.5-GGUF/resolve/main/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
+      "directory": "latent_upscale_models"
+     },
+     {
+      "name": "ltx-2.3-22b-ic-lora-union-control-ref0.5.safetensors",
+      "url": "https://huggingface.co/Lightricks/LTX-2.3-22b-IC-LoRA-Union-Control/resolve/main/ltx-2.3-22b-ic-lora-union-control-ref0.5.safetensors",
+      "directory": "loras"
+     },
+     {
+      "name": "ltx-2.3-22b-ic-lora-motion-track-control-ref0.5.safetensors",
+      "url": "https://huggingface.co/Lightricks/LTX-2.3-22b-IC-LoRA-Motion-Track-Control/resolve/main/ltx-2.3-22b-ic-lora-motion-track-control-ref0.5.safetensors",
+      "directory": "loras"
+     },
+     {
+      "name": "ltx-2.5-22b-ic-lora-clean-plate-1.0.safetensors",
+      "url": "https://huggingface.co/Lightricks/LTX-2.5-22b-IC-LoRA-Clean-Plate/resolve/main/ltx-2.5-22b-ic-lora-clean-plate-1.0.safetensors",
+      "directory": "loras"
+     },
+     {
+      "name": "ltx-2.5-22b-ic-lora-alpha-gen-0.9.safetensors",
+      "url": "https://huggingface.co/Lightricks/LTX-2.5-22b-IC-LoRA-Alpha-Gen/resolve/main/ltx-2.5-22b-ic-lora-alpha-gen-0.9.safetensors",
+      "directory": "loras"
+     },
+     {
+      "name": "sam3.1_multiplex_fp16.safetensors",
+      "url": "https://huggingface.co/Comfy-Org/sam3.1/resolve/main/checkpoints/sam3.1_multiplex_fp16.safetensors",
+      "directory": "checkpoints"
+     },
+     {
+      "name": "video_depth_anything_vits.pth",
+      "url": "https://huggingface.co/depth-anything/Video-Depth-Anything-Small/resolve/main/video_depth_anything_vits.pth",
+      "directory": "videodepthanything"
+     },
+     {
+      "name": "moge_2_vitl_normal_fp16.safetensors",
+      "url": "https://huggingface.co/Comfy-Org/MoGe/resolve/main/geometry_estimation/moge_2_vitl_normal_fp16.safetensors",
+      "directory": "geometry_estimation"
+     }
+    ]
+   },
+   "widgets_values": [
+    "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+    "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+    "ltx-2.5-video-vae-conv-bf16.safetensors",
+    "ltx-2.5-audio-vae-bf16.safetensors",
+    "ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
+    "ltx-2.3-22b-ic-lora-union-control-ref0.5.safetensors",
+    "ltx-2.3-22b-ic-lora-motion-track-control-ref0.5.safetensors",
+    "ltx-2.5-22b-ic-lora-clean-plate-1.0.safetensors",
+    "ltx-2.5-22b-ic-lora-alpha-gen-0.9.safetensors",
+    "sam3.1_multiplex_fp16.safetensors",
+    "video_depth_anything_vits.pth",
+    "moge_2_vitl_normal_fp16.safetensors",
+    "pytorch attention",
+    "Video Depth Anything"
+   ],
+   "title": "Element Forge · Models"
+  }
+ ],
+ "links": [
+  [
+   884,
+   101,
+   0,
+   902,
+   1,
+   "VIDEO"
+  ],
+  [
+   885,
+   901,
+   0,
+   902,
+   2,
+   "EF_EFFECT"
+  ],
+  [
+   886,
+   902,
+   0,
+   903,
+   0,
+   "STRING"
+  ],
+  [
+   887,
+   901,
+   0,
+   903,
+   1,
+   "EF_EFFECT"
+  ],
+  [
+   888,
+   903,
+   0,
+   475,
+   0,
+   "EF_SETTINGS"
+  ],
+  [
+   889,
+   901,
+   0,
+   475,
+   1,
+   "EF_EFFECT"
+  ],
+  [
+   890,
+   706,
+   0,
+   475,
+   4,
+   "EF_MODELS"
+  ]
+ ],
+ "groups": [],
+ "definitions": {},
+ "models": [
+  {
+   "name": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+   "url": "https://huggingface.co/Lightricks/LTX-2.5/resolve/main/diffusion_models/ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+   "directory": "diffusion_models"
+  },
+  {
+   "name": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+   "url": "https://huggingface.co/Lightricks/LTX-2.5/resolve/main/text_encoders/gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+   "directory": "text_encoders"
+  },
+  {
+   "name": "ltx-2.5-video-vae-conv-bf16.safetensors",
+   "url": "https://huggingface.co/unsloth/LTX-2.5-GGUF/resolve/main/vae/ltx-2.5-video-vae-conv-bf16.safetensors",
+   "directory": "vae"
+  },
+  {
+   "name": "ltx-2.5-audio-vae-bf16.safetensors",
+   "url": "https://huggingface.co/unsloth/LTX-2.5-GGUF/resolve/main/vae/ltx-2.5-audio-vae-bf16.safetensors",
+   "directory": "vae"
+  },
+  {
+   "name": "ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
+   "url": "https://huggingface.co/unsloth/LTX-2.5-GGUF/resolve/main/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
+   "directory": "latent_upscale_models"
+  },
+  {
+   "name": "ltx-2.3-22b-ic-lora-union-control-ref0.5.safetensors",
+   "url": "https://huggingface.co/Lightricks/LTX-2.3-22b-IC-LoRA-Union-Control/resolve/main/ltx-2.3-22b-ic-lora-union-control-ref0.5.safetensors",
+   "directory": "loras"
+  },
+  {
+   "name": "ltx-2.3-22b-ic-lora-motion-track-control-ref0.5.safetensors",
+   "url": "https://huggingface.co/Lightricks/LTX-2.3-22b-IC-LoRA-Motion-Track-Control/resolve/main/ltx-2.3-22b-ic-lora-motion-track-control-ref0.5.safetensors",
+   "directory": "loras"
+  },
+  {
+   "name": "ltx-2.5-22b-ic-lora-clean-plate-1.0.safetensors",
+   "url": "https://huggingface.co/Lightricks/LTX-2.5-22b-IC-LoRA-Clean-Plate/resolve/main/ltx-2.5-22b-ic-lora-clean-plate-1.0.safetensors",
+   "directory": "loras"
+  },
+  {
+   "name": "ltx-2.5-22b-ic-lora-alpha-gen-0.9.safetensors",
+   "url": "https://huggingface.co/Lightricks/LTX-2.5-22b-IC-LoRA-Alpha-Gen/resolve/main/ltx-2.5-22b-ic-lora-alpha-gen-0.9.safetensors",
+   "directory": "loras"
+  },
+  {
+   "name": "sam3.1_multiplex_fp16.safetensors",
+   "url": "https://huggingface.co/Comfy-Org/sam3.1/resolve/main/checkpoints/sam3.1_multiplex_fp16.safetensors",
+   "directory": "checkpoints"
+  },
+  {
+   "name": "video_depth_anything_vits.pth",
+   "url": "https://huggingface.co/depth-anything/Video-Depth-Anything-Small/resolve/main/video_depth_anything_vits.pth",
+   "directory": "videodepthanything"
+  },
+  {
+   "name": "moge_2_vitl_normal_fp16.safetensors",
+   "url": "https://huggingface.co/Comfy-Org/MoGe/resolve/main/geometry_estimation/moge_2_vitl_normal_fp16.safetensors",
+   "directory": "geometry_estimation"
+  }
+ ]
+}

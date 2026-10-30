@@ -1,0 +1,1058 @@
+{
+ "settings": {
+  "Clip": [
+   "101",
+   "file"
+  ],
+  "Frames": [
+   "102",
+   "value"
+  ],
+  "Inpaint (off = on black)": [
+   "103",
+   "value"
+  ],
+  "Effect prompt": [
+   "104",
+   "value"
+  ],
+  "Shot description (Inpaint)": [
+   "105",
+   "value"
+  ],
+  "Element from library": [
+   "106",
+   "value"
+  ],
+  "Library element": [
+   "107",
+   "element"
+  ],
+  "Point A x": [
+   "108",
+   "a_x"
+  ],
+  "Point A y": [
+   "108",
+   "a_y"
+  ],
+  "Point B x": [
+   "108",
+   "b_x"
+  ],
+  "Point B y": [
+   "108",
+   "b_y"
+  ],
+  "Object word (optional, helps the click)": [
+   "109",
+   "value"
+  ],
+  "Object word: all alike objects (e.g. all sticks of a crown; off = the clicked one)": [
+   "110",
+   "value"
+  ],
+  "Own object mask (off = click)": [
+   "111",
+   "value"
+  ],
+  "Own object mask: first frame, paint the object (mask editor)": [
+   "112",
+   "image"
+  ],
+  "Track follows the object mask (hands, bodies)": [
+   "113",
+   "value"
+  ],
+  "Sticks to scene (off = object)": [
+   "114",
+   "value"
+  ],
+  "Guide drawing (paint in the mask editor)": [
+   "116",
+   "image"
+  ],
+  "Follows motion": [
+   "117",
+   "value"
+  ],
+  "Particles": [
+   "118",
+   "value"
+  ],
+  "Particles: start video (seed)": [
+   "119",
+   "value"
+  ],
+  "Particle start sigmas (0.909 = tested default)": [
+   "121",
+   "value"
+  ],
+  "Particle latent mask (Inpaint, test)": [
+   "122",
+   "value"
+  ],
+  "Particles: direct look (no LTX, pro)": [
+   "123",
+   "value"
+  ],
+  "Groups in depth": [
+   "124",
+   "value"
+  ],
+  "Groups": [
+   "125",
+   "value"
+  ],
+  "Starts at (s)": [
+   "126",
+   "value"
+  ],
+  "Size in plate": [
+   "127",
+   "value"
+  ],
+  "On black: more room": [
+   "128",
+   "value"
+  ],
+  "On black: round soft edge": [
+   "129",
+   "value"
+  ],
+  "On black: black margin (test)": [
+   "130",
+   "value"
+  ],
+  "Generate width": [
+   "131",
+   "value"
+  ],
+  "Generate height": [
+   "132",
+   "value"
+  ],
+  "Window A-B automatic": [
+   "133",
+   "value"
+  ],
+  "Window width (plate px)": [
+   "134",
+   "value"
+  ],
+  "Window height (plate px)": [
+   "135",
+   "value"
+  ],
+  "Inpaint sigmas (start 0.909 = tested default)": [
+   "136",
+   "value"
+  ],
+  "Inpaint: start from the element": [
+   "137",
+   "value"
+  ],
+  "Solid element (Alpha Gen cut-out)": [
+   "138",
+   "value"
+  ],
+  "NVIDIA SR + HDR": [
+   "139",
+   "value"
+  ],
+  "LTX upscale x2 (latent upscaler + second pass, test)": [
+   "140",
+   "value"
+  ],
+  "Night": [
+   "141",
+   "value"
+  ],
+  "Light": [
+   "142",
+   "value"
+  ],
+  "Glow": [
+   "143",
+   "value"
+  ],
+  "Check track only": [
+   "144",
+   "value"
+  ],
+  "Seed": [
+   "145",
+   "value"
+  ],
+  "Dissolve (clicked object)": [
+   "146",
+   "value"
+  ],
+  "Dissolve direction (0 up, 90 right)": [
+   "147",
+   "value"
+  ],
+  "Dissolve duration (s)": [
+   "148",
+   "value"
+  ],
+  "Dissolve amount": [
+   "149",
+   "value"
+  ],
+  "Dissolve glowing edge": [
+   "150",
+   "value"
+  ],
+  "Dissolve: clean plate (LTX) where never free": [
+   "151",
+   "value"
+  ],
+  "Dissolve: clean plate sharper (crop around the object, test)": [
+   "152",
+   "value"
+  ],
+  "Dissolve style (plain / fire (LTX) / gold dust)": [
+   "153",
+   "value"
+  ],
+  "Dissolve: ember prompt": [
+   "154",
+   "value"
+  ],
+  "Dissolve: ember strength": [
+   "155",
+   "value"
+  ],
+  "Dissolve: embers away from the edge": [
+   "156",
+   "value"
+  ],
+  "Dissolve: empty scene prompt": [
+   "157",
+   "value"
+  ],
+  "Emitter x in window": [
+   "198",
+   "anchor_x"
+  ],
+  "Emitter y in window": [
+   "198",
+   "anchor_y"
+  ],
+  "Particle pro: extra (JSON)": [
+   "223",
+   "value"
+  ],
+  "Particle preset": [
+   [
+    "230",
+    "preset"
+   ],
+   [
+    "873",
+    "preset"
+   ]
+  ],
+  "Particle emitter": [
+   [
+    "230",
+    "emitter"
+   ],
+   [
+    "873",
+    "emitter"
+   ]
+  ],
+  "Particle amount": [
+   [
+    "230",
+    "amount"
+   ],
+   [
+    "873",
+    "amount"
+   ]
+  ],
+  "Particle speed": [
+   [
+    "230",
+    "speed"
+   ],
+   [
+    "873",
+    "speed"
+   ]
+  ],
+  "Particle size": [
+   [
+    "230",
+    "size"
+   ],
+   [
+    "873",
+    "size"
+   ]
+  ],
+  "Particle life": [
+   [
+    "230",
+    "life"
+   ],
+   [
+    "873",
+    "life"
+   ]
+  ],
+  "Particle direction (-1 = preset)": [
+   [
+    "230",
+    "direction"
+   ],
+   [
+    "873",
+    "direction"
+   ]
+  ],
+  "Particle spread (-1 = preset)": [
+   [
+    "230",
+    "spread"
+   ],
+   [
+    "873",
+    "spread"
+   ]
+  ],
+  "Particle follow (-1 = preset)": [
+   [
+    "230",
+    "follow"
+   ],
+   [
+    "873",
+    "follow"
+   ]
+  ],
+  "Particle area": [
+   [
+    "230",
+    "area"
+   ],
+   [
+    "873",
+    "area"
+   ]
+  ],
+  "Particle depth offset": [
+   [
+    "230",
+    "depth_offset"
+   ],
+   [
+    "873",
+    "depth_offset"
+   ]
+  ],
+  "Particle premask": [
+   [
+    "230",
+    "premask"
+   ],
+   [
+    "873",
+    "premask"
+   ]
+  ],
+  "Particle edge fade": [
+   [
+    "230",
+    "edge_fade"
+   ],
+   [
+    "873",
+    "edge_fade"
+   ]
+  ],
+  "Particle tracks": [
+   [
+    "230",
+    "track_count"
+   ],
+   [
+    "873",
+    "track_count"
+   ]
+  ],
+  "Particle line hangs on (track / image / object)": [
+   [
+    "230",
+    "line_attach"
+   ],
+   [
+    "873",
+    "line_attach"
+   ]
+  ],
+  "Particles: carried by motion in the clip (0-1)": [
+   [
+    "230",
+    "motion_carry"
+   ],
+   [
+    "873",
+    "motion_carry"
+   ]
+  ],
+  "Particle pro: gravity": [
+   "229",
+   "gravity"
+  ],
+  "Particle pro: turbulence": [
+   "229",
+   "turbulence"
+  ],
+  "Particle pro: drag": [
+   "229",
+   "drag"
+  ],
+  "Particle pro: collide": [
+   "229",
+   "collide"
+  ],
+  "Particle pro: sprite": [
+   "229",
+   "sprite"
+  ],
+  "Particle pro: guide style": [
+   "229",
+   "guide_style"
+  ],
+  "Particle pro: trail": [
+   "229",
+   "trail"
+  ],
+  "Particle pro: color": [
+   "229",
+   "color"
+  ],
+  "Guide source": [
+   "251",
+   "source"
+  ],
+  "Guide animation": [
+   "251",
+   "animation"
+  ],
+  "Guide grow (s)": [
+   "251",
+   "grow_seconds"
+  ],
+  "Guide trail": [
+   "251",
+   "trail"
+  ],
+  "Guide repeat": [
+   "251",
+   "repeat"
+  ],
+  "Follows motion: strength": [
+   [
+    "252",
+    "amount"
+   ],
+   [
+    "829",
+    "amount"
+   ]
+  ],
+  "Follows motion: lag": [
+   [
+    "252",
+    "inertia"
+   ],
+   [
+    "829",
+    "inertia"
+   ]
+  ],
+  "Emitter side": [
+   "330",
+   "base"
+  ],
+  "Depth offset (+ = element nearer, less hidden)": [
+   "334",
+   "depth_offset"
+  ],
+  "Blend on black (add = light, over = solid)": [
+   [
+    "334",
+    "mode"
+   ],
+   [
+    "341",
+    "mode"
+   ]
+  ],
+  "Inpaint key": [
+   "397",
+   "key"
+  ],
+  "Inpaint blend": [
+   [
+    "399",
+    "blend"
+   ],
+   [
+    "400",
+    "blend"
+   ]
+  ],
+  "Dissolve extra (JSON)": [
+   [
+    "445",
+    "extra"
+   ],
+   [
+    "446",
+    "extra"
+   ]
+  ],
+  "Dissolve: carried by motion in the clip (0-1)": [
+   [
+    "445",
+    "motion_carry"
+   ],
+   [
+    "446",
+    "motion_carry"
+   ]
+  ],
+  "Fixed on screen (Follows: Screen)": [
+   "801",
+   "value"
+  ],
+  "Still image (a picture in the input folder instead of the clip)": [
+   "802",
+   "value"
+  ],
+  "Still image length (s)": [
+   "803",
+   "value"
+  ],
+  "Particle seed": [
+   "805",
+   "value"
+  ],
+  "Particle pre-roll (s, -2 = as in the preset, -1 = auto)": [
+   "806",
+   "value"
+  ],
+  "Particle emitter (app, JSON)": [
+   "807",
+   "value"
+  ],
+  "Guide for the AI (particles / drawn path / object shape / none)": [
+   "808",
+   "guide"
+  ],
+  "Guide strength (on black)": [
+   "809",
+   "value"
+  ],
+  "Object shape: reach around the object": [
+   "810",
+   "shape_grow"
+  ],
+  "Object shape: prompt addition (on black)": [
+   "836",
+   "value"
+  ],
+  "Particles: also draw (over the AI element)": [
+   "871",
+   "value"
+  ],
+  "Dissolve: background behind the object (auto / smooth / structured)": [
+   "881",
+   "value"
+  ],
+  "Object in front (its mask hides the element)": [
+   "891",
+   "value"
+  ],
+  "Base locked to the point (no jitter of the base)": [
+   "892",
+   "value"
+  ]
+ },
+ "groups": {
+  "Settings": [
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114,
+   116,
+   117,
+   118,
+   119,
+   121,
+   122,
+   123,
+   124,
+   125,
+   126,
+   127,
+   128,
+   129,
+   130,
+   131,
+   132,
+   133,
+   134,
+   135,
+   136,
+   137,
+   138,
+   139,
+   140,
+   141,
+   142,
+   143,
+   144,
+   145,
+   146,
+   147,
+   148,
+   149,
+   150,
+   151,
+   152,
+   153,
+   154,
+   155,
+   156,
+   157,
+   159,
+   160,
+   161,
+   162,
+   163,
+   164,
+   165,
+   223,
+   224,
+   225,
+   226,
+   227,
+   228,
+   229,
+   230,
+   231,
+   232,
+   233,
+   234,
+   235,
+   236,
+   801,
+   802,
+   803,
+   804,
+   805,
+   806,
+   807,
+   808,
+   809,
+   810,
+   811,
+   812,
+   813,
+   814,
+   815,
+   816,
+   817,
+   818,
+   819,
+   820,
+   821,
+   822,
+   823,
+   824,
+   825,
+   826,
+   827,
+   828,
+   829,
+   830,
+   831,
+   832,
+   833,
+   834,
+   835,
+   836,
+   837,
+   838,
+   871,
+   881,
+   891,
+   892
+  ],
+  "Stem: clip, depth, object, track": [
+   166,
+   167,
+   168,
+   169,
+   170,
+   171,
+   172,
+   173,
+   174,
+   175,
+   176,
+   177,
+   178,
+   179,
+   180,
+   181,
+   182,
+   183,
+   184,
+   185,
+   186,
+   187,
+   188,
+   189,
+   190,
+   191,
+   192,
+   193,
+   194,
+   195,
+   196,
+   197,
+   198,
+   199,
+   200,
+   201,
+   202,
+   203,
+   204,
+   205,
+   206,
+   207,
+   208,
+   209,
+   210,
+   211,
+   212,
+   213,
+   214,
+   215,
+   216,
+   217,
+   218,
+   219,
+   220,
+   221,
+   222
+  ],
+  "LTX models": [
+   237,
+   238,
+   239,
+   240,
+   241,
+   242,
+   243,
+   244,
+   245,
+   246,
+   247
+  ],
+  "On black: element": [
+   248,
+   249,
+   250,
+   251,
+   252,
+   254,
+   255,
+   256,
+   257,
+   258,
+   259,
+   260,
+   261,
+   262,
+   263,
+   264,
+   265,
+   266,
+   267,
+   268,
+   269,
+   270,
+   271,
+   272,
+   273,
+   274,
+   275,
+   276,
+   277,
+   278,
+   279,
+   280,
+   281,
+   282,
+   283,
+   284,
+   285,
+   286,
+   287,
+   288,
+   289,
+   290,
+   291,
+   292,
+   293,
+   294,
+   295,
+   296,
+   297,
+   298,
+   299,
+   300,
+   301,
+   302,
+   303,
+   304,
+   305,
+   306,
+   307,
+   308,
+   309,
+   310,
+   311,
+   312,
+   313,
+   314,
+   315,
+   316,
+   317,
+   318,
+   319,
+   320,
+   321,
+   322,
+   323,
+   324,
+   325,
+   326,
+   327,
+   328,
+   329
+  ],
+  "On black: placement": [
+   330,
+   331,
+   332,
+   333,
+   334,
+   335,
+   336,
+   337,
+   338,
+   339,
+   340,
+   341,
+   342,
+   343,
+   344,
+   345,
+   346,
+   347,
+   348,
+   349,
+   350,
+   351,
+   352
+  ],
+  "Inpaint": [
+   353,
+   354,
+   355,
+   356,
+   357,
+   358,
+   359,
+   360,
+   361,
+   362,
+   363,
+   364,
+   365,
+   366,
+   367,
+   368,
+   369,
+   370,
+   371,
+   372,
+   373,
+   374,
+   375,
+   376,
+   377,
+   378,
+   379,
+   380,
+   381,
+   382,
+   383,
+   384,
+   385,
+   386,
+   387,
+   388,
+   389,
+   390,
+   391,
+   392,
+   393,
+   394,
+   395,
+   396,
+   397,
+   398,
+   399,
+   400,
+   401,
+   402,
+   403,
+   404,
+   405,
+   406,
+   407
+  ],
+  "Light, glow, output": [
+   408,
+   409,
+   410,
+   411,
+   412,
+   413,
+   414,
+   415,
+   701,
+   702,
+   703,
+   704,
+   471,
+   472,
+   473,
+   474,
+   475,
+   872,
+   873,
+   874,
+   875,
+   876
+  ],
+  "Dissolve": [
+   416,
+   417,
+   418,
+   419,
+   420,
+   421,
+   422,
+   423,
+   424,
+   425,
+   426,
+   427,
+   428,
+   429,
+   430,
+   431,
+   432,
+   433,
+   434,
+   435,
+   436,
+   437,
+   438,
+   439,
+   440,
+   441,
+   442,
+   443,
+   444,
+   445,
+   446,
+   447,
+   448,
+   449,
+   450,
+   451,
+   452,
+   453,
+   454,
+   455,
+   456,
+   457,
+   458,
+   459,
+   460,
+   461,
+   462,
+   463,
+   464,
+   465,
+   466,
+   467,
+   468,
+   469,
+   470,
+   882
+  ],
+  "App passes": [
+   851,
+   852,
+   861,
+   476,
+   477,
+   478,
+   479,
+   705,
+   706
+  ],
+  "App passes (lightning climb)": [
+   480,
+   481,
+   482,
+   483,
+   484,
+   485,
+   486,
+   487,
+   488,
+   489,
+   490,
+   491,
+   492,
+   493,
+   494,
+   495
+  ]
+ }
+}

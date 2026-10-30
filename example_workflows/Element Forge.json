@@ -1,0 +1,2075 @@
+{
+ "id": "a429c26b-b5ef-40ac-afdc-03a464161f3a",
+ "revision": 0,
+ "last_node_id": 16,
+ "last_link_id": 14,
+ "nodes": [
+  {
+   "id": 1,
+   "type": "LoadVideo",
+   "pos": [
+    0,
+    0
+   ],
+   "size": [
+    300,
+    620
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "file",
+     "name": "file",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "file"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "VIDEO",
+     "name": "VIDEO",
+     "type": "VIDEO",
+     "links": [
+      1
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "LoadVideo"
+   },
+   "widgets_values": [
+    "my_clip.mp4",
+    "image"
+   ]
+  },
+  {
+   "id": 2,
+   "type": "EFForgeShot",
+   "pos": [
+    330,
+    0
+   ],
+   "size": [
+    320,
+    180
+   ],
+   "flags": {},
+   "order": 8,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "depth model",
+     "name": "depth model",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "depth model"
+     }
+    },
+    {
+     "localized_name": "night",
+     "name": "night",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "night"
+     }
+    },
+    {
+     "localized_name": "video",
+     "name": "video",
+     "type": "VIDEO",
+     "link": 1,
+     "shape": 7
+    },
+    {
+     "localized_name": "images",
+     "name": "images",
+     "type": "IMAGE",
+     "link": null,
+     "shape": 7
+    },
+    {
+     "localized_name": "picture",
+     "name": "picture",
+     "type": "IMAGE",
+     "link": null,
+     "shape": 7
+    },
+    {
+     "localized_name": "fps",
+     "name": "fps",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "fps"
+     }
+    },
+    {
+     "localized_name": "still length",
+     "name": "still length",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "still length"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "shot",
+     "name": "shot",
+     "type": "EF_SHOT",
+     "links": [
+      2
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFForgeShot"
+   },
+   "widgets_values": [
+    "Video Depth Anything",
+    false,
+    30.0,
+    3.0
+   ]
+  },
+  {
+   "id": 3,
+   "type": "EFForgeTrack",
+   "pos": [
+    680,
+    0
+   ],
+   "size": [
+    380,
+    570
+   ],
+   "flags": {},
+   "order": 10,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "shot",
+     "name": "shot",
+     "type": "EF_SHOT",
+     "link": 2
+    },
+    {
+     "localized_name": "point A x",
+     "name": "point A x",
+     "type": "INT",
+     "link": null,
+     "widget": {
+      "name": "point A x"
+     }
+    },
+    {
+     "localized_name": "point A y",
+     "name": "point A y",
+     "type": "INT",
+     "link": null,
+     "widget": {
+      "name": "point A y"
+     }
+    },
+    {
+     "localized_name": "point B x",
+     "name": "point B x",
+     "type": "INT",
+     "link": null,
+     "widget": {
+      "name": "point B x"
+     }
+    },
+    {
+     "localized_name": "point B y",
+     "name": "point B y",
+     "type": "INT",
+     "link": null,
+     "widget": {
+      "name": "point B y"
+     }
+    },
+    {
+     "localized_name": "object word",
+     "name": "object word",
+     "type": "STRING",
+     "link": null,
+     "widget": {
+      "name": "object word"
+     }
+    },
+    {
+     "localized_name": "follows",
+     "name": "follows",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "follows"
+     }
+    },
+    {
+     "localized_name": "all alike",
+     "name": "all alike",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "all alike"
+     }
+    },
+    {
+     "localized_name": "follows motion",
+     "name": "follows motion",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "follows motion"
+     }
+    },
+    {
+     "localized_name": "own mask",
+     "name": "own mask",
+     "type": "MASK",
+     "link": 3,
+     "shape": 7
+    },
+    {
+     "localized_name": "motion strength",
+     "name": "motion strength",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "motion strength"
+     }
+    },
+    {
+     "localized_name": "motion lag",
+     "name": "motion lag",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "motion lag"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "shot",
+     "name": "shot",
+     "type": "EF_SHOT",
+     "links": [
+      4
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFForgeTrack"
+   },
+   "widgets_values": [
+    -1,
+    -1,
+    -1,
+    -1,
+    "",
+    "style default",
+    false,
+    false,
+    1.0,
+    0.6
+   ]
+  },
+  {
+   "id": 4,
+   "type": "EFForgeElement",
+   "pos": [
+    1090,
+    0
+   ],
+   "size": [
+    380,
+    720
+   ],
+   "flags": {},
+   "order": 11,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "shot",
+     "name": "shot",
+     "type": "EF_SHOT",
+     "link": 4
+    },
+    {
+     "localized_name": "effect",
+     "name": "effect",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "effect"
+     }
+    },
+    {
+     "localized_name": "how it goes in",
+     "name": "how it goes in",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "how it goes in"
+     }
+    },
+    {
+     "localized_name": "strength",
+     "name": "strength",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "strength"
+     }
+    },
+    {
+     "localized_name": "describe",
+     "name": "describe",
+     "type": "STRING",
+     "link": null,
+     "widget": {
+      "name": "describe"
+     }
+    },
+    {
+     "localized_name": "starts at",
+     "name": "starts at",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "starts at"
+     }
+    },
+    {
+     "localized_name": "quality",
+     "name": "quality",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "quality"
+     }
+    },
+    {
+     "localized_name": "seed",
+     "name": "seed",
+     "type": "INT",
+     "link": null,
+     "widget": {
+      "name": "seed"
+     }
+    },
+    {
+     "localized_name": "models",
+     "name": "models",
+     "type": "EF_MODELS",
+     "link": 5,
+     "shape": 7
+    },
+    {
+     "localized_name": "particles",
+     "name": "particles",
+     "type": "EF_PARTICLES",
+     "link": 6,
+     "shape": 7
+    },
+    {
+     "localized_name": "guide",
+     "name": "guide",
+     "type": "EF_GUIDE",
+     "link": 7,
+     "shape": 7
+    },
+    {
+     "localized_name": "dissolve",
+     "name": "dissolve",
+     "type": "EF_DISSOLVE",
+     "link": 8,
+     "shape": 7
+    },
+    {
+     "localized_name": "ltx",
+     "name": "ltx",
+     "type": "EF_LTX",
+     "link": 9,
+     "shape": 7
+    },
+    {
+     "localized_name": "look words",
+     "name": "look words",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "look words"
+     }
+    },
+    {
+     "localized_name": "motion words",
+     "name": "motion words",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "motion words"
+     }
+    },
+    {
+     "localized_name": "contact words",
+     "name": "contact words",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "contact words"
+     }
+    },
+    {
+     "localized_name": "prompt",
+     "name": "prompt",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "prompt"
+     }
+    },
+    {
+     "localized_name": "scene sentence",
+     "name": "scene sentence",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "scene sentence"
+     }
+    },
+    {
+     "localized_name": "direction",
+     "name": "direction",
+     "type": "INT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "direction"
+     }
+    },
+    {
+     "localized_name": "ends at",
+     "name": "ends at",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "ends at"
+     }
+    },
+    {
+     "localized_name": "area x",
+     "name": "area x",
+     "type": "INT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "area x"
+     }
+    },
+    {
+     "localized_name": "area y",
+     "name": "area y",
+     "type": "INT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "area y"
+     }
+    },
+    {
+     "localized_name": "area width",
+     "name": "area width",
+     "type": "INT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "area width"
+     }
+    },
+    {
+     "localized_name": "area height",
+     "name": "area height",
+     "type": "INT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "area height"
+     }
+    },
+    {
+     "localized_name": "round soft edge",
+     "name": "round soft edge",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "round soft edge"
+     }
+    },
+    {
+     "localized_name": "solid element",
+     "name": "solid element",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "solid element"
+     }
+    },
+    {
+     "localized_name": "keep original",
+     "name": "keep original",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "keep original"
+     }
+    },
+    {
+     "localized_name": "preview on node",
+     "name": "preview on node",
+     "type": "BOOLEAN",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "preview on node"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "element",
+     "name": "element",
+     "type": "EF_ELEMENT",
+     "links": [
+      10
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFForgeElement"
+   },
+   "widgets_values": [
+    "fire/flame",
+    "style default",
+    "normal",
+    "",
+    0.0,
+    "preview",
+    0,
+    "fixed",
+    "",
+    "",
+    "",
+    "",
+    "",
+    -1,
+    -1.0,
+    -1,
+    -1,
+    -1,
+    -1,
+    "style default",
+    "style default",
+    0.0,
+    true
+   ],
+   "color": "#5a3a14",
+   "bgcolor": "#80541e"
+  },
+  {
+   "id": 5,
+   "type": "EFForgePlace",
+   "pos": [
+    1500,
+    0
+   ],
+   "size": [
+    330,
+    260
+   ],
+   "flags": {},
+   "order": 12,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "element",
+     "name": "element",
+     "type": "EF_ELEMENT",
+     "link": 10
+    },
+    {
+     "localized_name": "size",
+     "name": "size",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "size"
+     }
+    },
+    {
+     "localized_name": "side",
+     "name": "side",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "side"
+     }
+    },
+    {
+     "localized_name": "depth offset",
+     "name": "depth offset",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "depth offset"
+     }
+    },
+    {
+     "localized_name": "blend",
+     "name": "blend",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "blend"
+     }
+    },
+    {
+     "localized_name": "own element",
+     "name": "own element",
+     "type": "EF_OWN_ELEMENT",
+     "link": 11,
+     "shape": 7
+    },
+    {
+     "localized_name": "groups",
+     "name": "groups",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "groups"
+     }
+    },
+    {
+     "localized_name": "inpaint key",
+     "name": "inpaint key",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "inpaint key"
+     }
+    },
+    {
+     "localized_name": "inpaint blend",
+     "name": "inpaint blend",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "inpaint blend"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "layer",
+     "name": "layer",
+     "type": "EF_LAYER",
+     "links": [
+      12
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFForgePlace"
+   },
+   "widgets_values": [
+    -1.0,
+    "style default",
+    0.0,
+    "style default",
+    "",
+    "style default",
+    "style default"
+   ]
+  },
+  {
+   "id": 6,
+   "type": "EFForgeLight",
+   "pos": [
+    1860,
+    0
+   ],
+   "size": [
+    320,
+    210
+   ],
+   "flags": {},
+   "order": 13,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "layer",
+     "name": "layer",
+     "type": "EF_LAYER,EF_ELEMENT",
+     "link": 12
+    },
+    {
+     "localized_name": "light",
+     "name": "light",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "light"
+     }
+    },
+    {
+     "localized_name": "light strength",
+     "name": "light strength",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "light strength"
+     }
+    },
+    {
+     "localized_name": "glow",
+     "name": "glow",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "glow"
+     }
+    },
+    {
+     "localized_name": "glow exposure",
+     "name": "glow exposure",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "glow exposure"
+     }
+    },
+    {
+     "localized_name": "groups in depth",
+     "name": "groups in depth",
+     "type": "BOOLEAN",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "groups in depth"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "layer",
+     "name": "layer",
+     "type": "EF_LAYER",
+     "links": [
+      13
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFForgeLight"
+   },
+   "widgets_values": [
+    "style default",
+    1.0,
+    "style default",
+    0.0,
+    false
+   ]
+  },
+  {
+   "id": 7,
+   "type": "EFForgeExport",
+   "pos": [
+    2210,
+    0
+   ],
+   "size": [
+    360,
+    280
+   ],
+   "flags": {},
+   "order": 14,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "layer",
+     "name": "layer",
+     "type": "EF_LAYER,EF_ELEMENT",
+     "link": 13
+    },
+    {
+     "localized_name": "run name",
+     "name": "run name",
+     "type": "STRING",
+     "link": null,
+     "widget": {
+      "name": "run name"
+     }
+    },
+    {
+     "localized_name": "EXR passes",
+     "name": "EXR passes",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "EXR passes"
+     }
+    },
+    {
+     "localized_name": "track check",
+     "name": "track check",
+     "type": "BOOLEAN",
+     "link": null,
+     "widget": {
+      "name": "track check"
+     }
+    },
+    {
+     "localized_name": "save element",
+     "name": "save element",
+     "type": "BOOLEAN",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "save element"
+     }
+    },
+    {
+     "localized_name": "only check the track",
+     "name": "only check the track",
+     "type": "BOOLEAN",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "only check the track"
+     }
+    },
+    {
+     "localized_name": "passes",
+     "name": "passes",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "passes"
+     }
+    },
+    {
+     "localized_name": "then",
+     "name": "then",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "then"
+     }
+    },
+    {
+     "localized_name": "from run",
+     "name": "from run",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "from run"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "folder",
+     "name": "folder",
+     "type": "STRING",
+     "links": []
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFForgeExport"
+   },
+   "widgets_values": [
+    "",
+    true,
+    true,
+    false,
+    false,
+    "",
+    "new run",
+    ""
+   ],
+   "color": "#5a3a14",
+   "bgcolor": "#80541e"
+  },
+  {
+   "id": 8,
+   "type": "EFForgeModels",
+   "pos": [
+    1090,
+    860
+   ],
+   "size": [
+    380,
+    160
+   ],
+   "flags": {},
+   "order": 1,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "LTX model",
+     "name": "LTX model",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "LTX model"
+     }
+    },
+    {
+     "localized_name": "attention",
+     "name": "attention",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "attention"
+     }
+    },
+    {
+     "localized_name": "text encoder",
+     "name": "text encoder",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "text encoder"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "models",
+     "name": "models",
+     "type": "EF_MODELS",
+     "links": [
+      5
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFForgeModels"
+   },
+   "widgets_values": [
+    "workflow default",
+    "pytorch attention",
+    "workflow default"
+   ]
+  },
+  {
+   "id": 9,
+   "type": "EFForgeParticles",
+   "pos": [
+    1090,
+    1070
+   ],
+   "size": [
+    380,
+    890
+   ],
+   "flags": {},
+   "order": 2,
+   "mode": 4,
+   "inputs": [
+    {
+     "localized_name": "particles",
+     "name": "particles",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "particles"
+     }
+    },
+    {
+     "localized_name": "preset",
+     "name": "preset",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "preset"
+     }
+    },
+    {
+     "localized_name": "emitter",
+     "name": "emitter",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "emitter"
+     }
+    },
+    {
+     "localized_name": "amount",
+     "name": "amount",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "amount"
+     }
+    },
+    {
+     "localized_name": "speed",
+     "name": "speed",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "speed"
+     }
+    },
+    {
+     "localized_name": "size",
+     "name": "size",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "size"
+     }
+    },
+    {
+     "localized_name": "life",
+     "name": "life",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "life"
+     }
+    },
+    {
+     "localized_name": "direction",
+     "name": "direction",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "direction"
+     }
+    },
+    {
+     "localized_name": "spread",
+     "name": "spread",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "spread"
+     }
+    },
+    {
+     "localized_name": "follow",
+     "name": "follow",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "follow"
+     }
+    },
+    {
+     "localized_name": "seed",
+     "name": "seed",
+     "type": "INT",
+     "link": null,
+     "widget": {
+      "name": "seed"
+     }
+    },
+    {
+     "localized_name": "pre-roll",
+     "name": "pre-roll",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "pre-roll"
+     }
+    },
+    {
+     "localized_name": "area",
+     "name": "area",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "area"
+     }
+    },
+    {
+     "localized_name": "premask",
+     "name": "premask",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "premask"
+     }
+    },
+    {
+     "localized_name": "edge fade",
+     "name": "edge fade",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "edge fade"
+     }
+    },
+    {
+     "localized_name": "tracks",
+     "name": "tracks",
+     "type": "INT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "tracks"
+     }
+    },
+    {
+     "localized_name": "line hangs on",
+     "name": "line hangs on",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "line hangs on"
+     }
+    },
+    {
+     "localized_name": "carried by motion",
+     "name": "carried by motion",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "carried by motion"
+     }
+    },
+    {
+     "localized_name": "gravity",
+     "name": "gravity",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "gravity"
+     }
+    },
+    {
+     "localized_name": "turbulence",
+     "name": "turbulence",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "turbulence"
+     }
+    },
+    {
+     "localized_name": "drag",
+     "name": "drag",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "drag"
+     }
+    },
+    {
+     "localized_name": "collide",
+     "name": "collide",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "collide"
+     }
+    },
+    {
+     "localized_name": "sprite",
+     "name": "sprite",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "sprite"
+     }
+    },
+    {
+     "localized_name": "guide style",
+     "name": "guide style",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "guide style"
+     }
+    },
+    {
+     "localized_name": "trail",
+     "name": "trail",
+     "type": "INT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "trail"
+     }
+    },
+    {
+     "localized_name": "color",
+     "name": "color",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "color"
+     }
+    },
+    {
+     "localized_name": "extra",
+     "name": "extra",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "extra"
+     }
+    },
+    {
+     "localized_name": "emitter panel",
+     "name": "emitter panel",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "emitter panel"
+     }
+    },
+    {
+     "localized_name": "start video",
+     "name": "start video",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "start video"
+     }
+    },
+    {
+     "localized_name": "start sigmas",
+     "name": "start sigmas",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "start sigmas"
+     }
+    },
+    {
+     "localized_name": "direct look",
+     "name": "direct look",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "direct look"
+     }
+    },
+    {
+     "localized_name": "latent mask",
+     "name": "latent mask",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "latent mask"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "particles",
+     "name": "particles",
+     "type": "EF_PARTICLES",
+     "links": [
+      6
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFForgeParticles"
+   },
+   "widgets_values": [
+    "style default",
+    "style default",
+    "style default",
+    -2.0,
+    -2.0,
+    -2.0,
+    -2.0,
+    -2.0,
+    -2.0,
+    -2.0,
+    42,
+    "fixed",
+    -2.0,
+    "",
+    "style default",
+    -2.0,
+    -2,
+    "style default",
+    -2.0,
+    -2.0,
+    -2.0,
+    -2.0,
+    "style default",
+    "style default",
+    "style default",
+    -2,
+    "",
+    "",
+    "",
+    "style default",
+    "",
+    "style default",
+    "style default"
+   ]
+  },
+  {
+   "id": 10,
+   "type": "EFForgeGuide",
+   "pos": [
+    1090,
+    2010
+   ],
+   "size": [
+    380,
+    330
+   ],
+   "flags": {},
+   "order": 9,
+   "mode": 4,
+   "inputs": [
+    {
+     "localized_name": "guide",
+     "name": "guide",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "guide"
+     }
+    },
+    {
+     "localized_name": "guide particles",
+     "name": "guide particles",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "guide particles"
+     }
+    },
+    {
+     "localized_name": "strength",
+     "name": "strength",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "strength"
+     }
+    },
+    {
+     "localized_name": "reach",
+     "name": "reach",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "reach"
+     }
+    },
+    {
+     "localized_name": "drawn path",
+     "name": "drawn path",
+     "type": "MASK",
+     "link": 14,
+     "shape": 7
+    },
+    {
+     "localized_name": "prompt addition",
+     "name": "prompt addition",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "prompt addition"
+     }
+    },
+    {
+     "localized_name": "source",
+     "name": "source",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "source"
+     }
+    },
+    {
+     "localized_name": "animation",
+     "name": "animation",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "animation"
+     }
+    },
+    {
+     "localized_name": "grow",
+     "name": "grow",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "grow"
+     }
+    },
+    {
+     "localized_name": "trail",
+     "name": "trail",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "trail"
+     }
+    },
+    {
+     "localized_name": "repeat",
+     "name": "repeat",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "repeat"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "guide",
+     "name": "guide",
+     "type": "EF_GUIDE",
+     "links": [
+      7
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFForgeGuide"
+   },
+   "widgets_values": [
+    "style default",
+    "style default",
+    -2.0,
+    -2.0,
+    "",
+    "style default",
+    "style default",
+    -2.0,
+    -2.0,
+    "style default"
+   ]
+  },
+  {
+   "id": 11,
+   "type": "EFForgeDissolve",
+   "pos": [
+    1090,
+    2390
+   ],
+   "size": [
+    380,
+    390
+   ],
+   "flags": {},
+   "order": 3,
+   "mode": 4,
+   "inputs": [
+    {
+     "localized_name": "amount",
+     "name": "amount",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "amount"
+     }
+    },
+    {
+     "localized_name": "glowing edge",
+     "name": "glowing edge",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "glowing edge"
+     }
+    },
+    {
+     "localized_name": "style",
+     "name": "style",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "style"
+     }
+    },
+    {
+     "localized_name": "clean plate where never free",
+     "name": "clean plate where never free",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "clean plate where never free"
+     }
+    },
+    {
+     "localized_name": "sharper clean plate",
+     "name": "sharper clean plate",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "sharper clean plate"
+     }
+    },
+    {
+     "localized_name": "ember prompt",
+     "name": "ember prompt",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "ember prompt"
+     }
+    },
+    {
+     "localized_name": "ember strength",
+     "name": "ember strength",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "ember strength"
+     }
+    },
+    {
+     "localized_name": "embers away from the edge",
+     "name": "embers away from the edge",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "embers away from the edge"
+     }
+    },
+    {
+     "localized_name": "empty scene prompt",
+     "name": "empty scene prompt",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "empty scene prompt"
+     }
+    },
+    {
+     "localized_name": "carried by motion",
+     "name": "carried by motion",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "carried by motion"
+     }
+    },
+    {
+     "localized_name": "extra",
+     "name": "extra",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "extra"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "dissolve",
+     "name": "dissolve",
+     "type": "EF_DISSOLVE",
+     "links": [
+      8
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFForgeDissolve"
+   },
+   "widgets_values": [
+    -2.0,
+    -2.0,
+    "style default",
+    "style default",
+    "style default",
+    "",
+    -2.0,
+    -2.0,
+    "",
+    -2.0,
+    ""
+   ]
+  },
+  {
+   "id": 12,
+   "type": "EFForgeLTX",
+   "pos": [
+    1090,
+    2830
+   ],
+   "size": [
+    380,
+    230
+   ],
+   "flags": {},
+   "order": 4,
+   "mode": 4,
+   "inputs": [
+    {
+     "localized_name": "sharper x2",
+     "name": "sharper x2",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "sharper x2"
+     }
+    },
+    {
+     "localized_name": "NVIDIA SR + HDR",
+     "name": "NVIDIA SR + HDR",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "NVIDIA SR + HDR"
+     }
+    },
+    {
+     "localized_name": "more room",
+     "name": "more room",
+     "type": "FLOAT",
+     "link": null,
+     "widget": {
+      "name": "more room"
+     }
+    },
+    {
+     "localized_name": "black margin",
+     "name": "black margin",
+     "type": "FLOAT",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "black margin"
+     }
+    },
+    {
+     "localized_name": "inpaint sigmas",
+     "name": "inpaint sigmas",
+     "type": "STRING",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "inpaint sigmas"
+     }
+    },
+    {
+     "localized_name": "inpaint starts from the element",
+     "name": "inpaint starts from the element",
+     "type": "COMBO",
+     "link": null,
+     "shape": 7,
+     "widget": {
+      "name": "inpaint starts from the element"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "ltx",
+     "name": "ltx",
+     "type": "EF_LTX",
+     "links": [
+      9
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFForgeLTX"
+   },
+   "widgets_values": [
+    "style default",
+    "style default",
+    -2.0,
+    -2.0,
+    "",
+    "style default"
+   ]
+  },
+  {
+   "id": 13,
+   "type": "LoadImage",
+   "pos": [
+    680,
+    860
+   ],
+   "size": [
+    390,
+    330
+   ],
+   "flags": {},
+   "order": 5,
+   "mode": 4,
+   "inputs": [
+    {
+     "localized_name": "image",
+     "name": "image",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "image"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "IMAGE",
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": []
+    },
+    {
+     "localized_name": "MASK",
+     "name": "MASK",
+     "type": "MASK",
+     "links": [
+      3
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "LoadImage"
+   },
+   "widgets_values": [
+    "ef_guide_blank.png",
+    "image"
+   ],
+   "title": "Own object mask (paint the object on the first frame)"
+  },
+  {
+   "id": 14,
+   "type": "EFForgeLibraryElement",
+   "pos": [
+    1500,
+    860
+   ],
+   "size": [
+    330,
+    110
+   ],
+   "flags": {},
+   "order": 6,
+   "mode": 4,
+   "inputs": [
+    {
+     "localized_name": "element",
+     "name": "element",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "element"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "element",
+     "name": "element",
+     "type": "EF_OWN_ELEMENT",
+     "links": [
+      11
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EFForgeLibraryElement"
+   },
+   "widgets_values": [
+    "alphagen_t2"
+   ]
+  },
+  {
+   "id": 15,
+   "type": "LoadImage",
+   "pos": [
+    1500,
+    2010
+   ],
+   "size": [
+    360,
+    330
+   ],
+   "flags": {},
+   "order": 7,
+   "mode": 4,
+   "inputs": [
+    {
+     "localized_name": "image",
+     "name": "image",
+     "type": "COMBO",
+     "link": null,
+     "widget": {
+      "name": "image"
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "IMAGE",
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": []
+    },
+    {
+     "localized_name": "MASK",
+     "name": "MASK",
+     "type": "MASK",
+     "links": [
+      14
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "LoadImage"
+   },
+   "widgets_values": [
+    "ef_guide_blank.png",
+    "image"
+   ],
+   "title": "Guide drawing (paint the path on the first frame)"
+  },
+  {
+   "id": 16,
+   "type": "MarkdownNote",
+   "pos": [
+    -700,
+    0
+   ],
+   "size": [
+    660,
+    740
+   ],
+   "flags": {},
+   "order": 15,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "properties": {},
+   "widgets_values": [
+    "# Element Forge\n\n**Run** once the clip and the effect are set. The comp shows on **EF Export**, the track check on **EF Track**, the element on\n**EF Element**. Everything goes to `output/element-forge/<run>/` (comp MP4, EXR passes, the settings).\n\n1. **Load Video**: your clip (a file in ComfyUI's input folder).\n2. **EF Shot**: depth model and day for night. Pictures from other nodes go to *images*, a single picture to *picture*.\n3. **EF Track**: click into the first frame for point A, Shift+click for point B. A word for what you clicked helps the\n   tracker. *Follows*: point, the whole object, the scene, or the screen.\n4. **EF Element**: the effect and its style. Leave the words empty for the tested look. The template starts on\n   *quality preview* (half the size, about 3 instead of 7 minutes) for AI styles on black; set *full* for the final and\n   for styles rendered into the clip.\n5. **EF Place**: size, side, depth and blend in the clip.\n6. **EF Light & Glow**: the light the effect casts and its glow. Change only these and Run again: the effect is not made again.\n7. **EF Export**: which passes are written.\n\n**Options** (bypassed, select and press Ctrl+B to use one): EF Particles, EF Guide (with its drawing), EF Dissolve,\nEF LTX Options, your own object mask, an element from the library. Without them the style's tested values hold.\nMore fields: *Show advanced inputs* in a node's menu.\n\n**EF Models**: which LTX files this computer uses.\nTo use the results in other nodes, add **EF Unpack** from Element Forge/Tools: it gives plate, depth, normals, object\nmask, element, light, glow and comp."
+   ]
+  }
+ ],
+ "links": [
+  [
+   1,
+   1,
+   0,
+   2,
+   2,
+   "VIDEO"
+  ],
+  [
+   2,
+   2,
+   0,
+   3,
+   0,
+   "EF_SHOT"
+  ],
+  [
+   3,
+   13,
+   1,
+   3,
+   9,
+   "MASK"
+  ],
+  [
+   4,
+   3,
+   0,
+   4,
+   0,
+   "EF_SHOT"
+  ],
+  [
+   5,
+   8,
+   0,
+   4,
+   8,
+   "EF_MODELS"
+  ],
+  [
+   6,
+   9,
+   0,
+   4,
+   9,
+   "EF_PARTICLES"
+  ],
+  [
+   7,
+   10,
+   0,
+   4,
+   10,
+   "EF_GUIDE"
+  ],
+  [
+   8,
+   11,
+   0,
+   4,
+   11,
+   "EF_DISSOLVE"
+  ],
+  [
+   9,
+   12,
+   0,
+   4,
+   12,
+   "EF_LTX"
+  ],
+  [
+   10,
+   4,
+   0,
+   5,
+   0,
+   "EF_ELEMENT"
+  ],
+  [
+   11,
+   14,
+   0,
+   5,
+   5,
+   "EF_OWN_ELEMENT"
+  ],
+  [
+   12,
+   5,
+   0,
+   6,
+   0,
+   "EF_LAYER"
+  ],
+  [
+   13,
+   6,
+   0,
+   7,
+   0,
+   "EF_LAYER"
+  ],
+  [
+   14,
+   15,
+   1,
+   10,
+   4,
+   "MASK"
+  ]
+ ],
+ "groups": [
+  {
+   "id": 1,
+   "title": "Main path",
+   "bounding": [
+    -20,
+    -80,
+    2620,
+    820
+   ],
+   "color": "#444444",
+   "font_size": 22,
+   "flags": {}
+  },
+  {
+   "id": 2,
+   "title": "Options (select one and press Ctrl+B to use it)",
+   "bounding": [
+    660,
+    780,
+    1220,
+    2320
+   ],
+   "color": "#444444",
+   "font_size": 22,
+   "flags": {}
+  }
+ ],
+ "config": {},
+ "extra": {
+  "ds": {
+   "scale": 0.5,
+   "offset": [
+    760,
+    120
+   ]
+  }
+ },
+ "version": 0.4
+}

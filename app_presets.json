@@ -1,0 +1,1152 @@
+{
+ "about": "Effects and styles of the Element Forge app (22.10.2026). Every style is a set of values for the one workflow, by setting name (element_forge.settings.json); the canvas and the timeline add the clip, the points, the frame, the direction and the timing. Values come from the test runs named in ref (one_tests.py). placement: point = element on black hanging on point A (frame = element size), window = crop window around point A (frame = window, origin inside it), ab = between point A and B, frame = the whole picture, object = follows the clicked object by itself, none = no frame. win and emitter are fractions (window of the clip's shorter side, origin inside the window). prompt.what_plain: the same thing without colour or size words, used once the user changes the Look block (so a chosen look never contradicts the fixed part).",
+ "tail_on_black": " Filmed on a pure black background, live-action, realistic, high detail.",
+ "effects": [
+  {
+   "id": "fire",
+   "name": "Fire",
+   "text": "Flames on something in your clip",
+   "styles": [
+    {
+     "id": "flame",
+     "name": "Flame on the object",
+     "text": "A flame burns where you click and moves with it.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "point",
+     "ref": "g1-flamme-hand, e5-lagerfeuer, pod 23.10. fire/flame_tiefe_prompt (depth offset and preset prompt: the flame was hidden by plants in the forest clip and came out small), 23.10. fire/flame/rand (round soft edge: the flame had a hard straight bottom edge), 23.10. fire/flame/hero-orange (orange tongues: with the yellow-white core the flame came out thin, white and candle-like)",
+     "settings": {
+      "Emitter side": "bottom",
+      "Size in plate": 0.3,
+      "Light": true,
+      "Glow": true,
+      "Depth offset (+ = element nearer, less hidden)": 0.3,
+      "On black: round soft edge": true,
+      "Guide for the AI (particles / drawn path / object shape / none)": "object shape"
+     },
+     "gen": [
+      512,
+      768
+     ],
+     "prompt": {
+      "preset": "A single realistic flame burns: deep orange and yellow tongues flicker naturally and rise straight up from the bottom of the frame, filling the lower half of the frame. Filmed on a pure black background, live-action, realistic, high detail.",
+      "what": "A single realistic flame",
+      "look": "deep orange and yellow tongues",
+      "motion": "flickers naturally and rises straight up",
+      "contact": "",
+      "chips": {
+       "look": [
+        "deep orange and yellow tongues",
+        "bright yellow-white core with thin orange tongues",
+        "deep orange and smoky",
+        "pale blue gas flame",
+        "green magical fire"
+       ],
+       "motion": [
+        "flickers naturally and rises straight up",
+        "roars and flares wildly",
+        "sways gently as if in a light breeze"
+       ],
+       "contact": [
+        "it lights its surroundings warmly",
+        "small sparks rise from it",
+        "thin smoke curls up from its tip"
+       ]
+      }
+     },
+     "prompt_tested": true,
+     "guide_particles": "fire"
+    },
+    {
+     "id": "burst",
+     "name": "Short burst",
+     "text": "A quick burst of fire, gone after a few frames (muzzle flash, explosion).",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "point",
+     "ref": "e9m-muendungsfeuer-klein-rund",
+     "settings": {
+      "Emitter side": "centre",
+      "Size in plate": 1.0,
+      "On black: round soft edge": true,
+      "Track follows the object mask (hands, bodies)": true,
+      "Depth offset (+ = element nearer, less hidden)": 0.3,
+      "Guide for the AI (particles / drawn path / object shape / none)": "object shape"
+     },
+     "gen": [
+      512,
+      768
+     ],
+     "prompt": {
+      "preset": "A single small muzzle flash in the centre of the frame: a brief burst of orange-white fire surrounded by black space, gone after a few frames. Filmed on a pure black background, live-action, realistic, high detail.",
+      "what": "A single small burst of fire in the centre of the frame",
+      "look": "orange-white fire surrounded by black space",
+      "motion": "flashes up briefly and is gone after a few frames",
+      "contact": "",
+      "chips": {
+       "look": [
+        "orange-white fire surrounded by black space",
+        "a round fireball with a white-hot core and a ring of orange flame",
+        "a white-hot core with a ring of orange flame",
+        "dark red fire with thick smoke"
+       ],
+       "motion": [
+        "flashes up briefly and is gone after a few frames",
+        "blooms outward in a round fireball",
+        "bursts out sideways in a cone"
+       ],
+       "contact": [
+        "a few sparks fly away from it",
+        "a puff of smoke stays behind"
+       ]
+      }
+     },
+     "prompt_tested": true,
+     "guide_particles": "fire"
+    },
+    {
+     "id": "smolder",
+     "name": "Smoldering ground",
+     "text": "Embers glow in the ground where you click, painted into your clip.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "point",
+     "ref": "pod 23.10. fire/flame/paint_09875 (a flame painted in from 0.9875 made the forest floor glow like smoldering undergrowth, 0.70 % of the pixels, it took on the shape of the ground)",
+     "settings": {
+      "Inpaint (off = on black)": true,
+      "Inpaint: start from the element": false,
+      "Inpaint sigmas (start 0.909 = tested default)": "0.9875, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+      "Emitter side": "bottom",
+      "Size in plate": 0.3,
+      "Light": false,
+      "Glow": true,
+      "Inpaint key": "auto (effect color)",
+      "Inpaint blend": "add"
+     },
+     "gen": [
+      512,
+      768
+     ],
+     "prompt": {
+      "preset": "Glowing embers smolder in the ground: a deep orange-red glow creeps through the soil and the undergrowth, with faint smoke rising, live-action, natural flicker.",
+      "what": "Glowing embers smolder in the ground",
+      "look": "a deep orange-red glow creeps through the soil and the undergrowth",
+      "motion": "with faint smoke rising",
+      "contact": "",
+      "chips": {
+       "look": [
+        "a deep orange-red glow creeps through the soil and the undergrowth",
+        "bright orange cracks glow in the ground",
+        "dark red embers pulse slowly"
+       ],
+       "motion": [
+        "with faint smoke rising",
+        "the glow pulses like breathing",
+        "sparks pop up now and then"
+       ],
+       "contact": []
+      }
+     },
+     "prompt_tested": false,
+     "guide_particles": "embers"
+    }
+   ]
+  },
+  {
+   "id": "lightning",
+   "name": "Lightning",
+   "text": "Electric arcs between two points or along an object",
+   "styles": [
+    {
+     "id": "between",
+     "name": "Between two points",
+     "text": "An arc jumps from point A to point B.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "ab",
+     "ref": "p7f-blitz-ab-auto",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "lightning",
+      "Window A-B automatic": true,
+      "Depth offset (+ = element nearer, less hidden)": 0.3
+     },
+     "gen": [
+      448,
+      640
+     ],
+     "emitter": [
+      0.48,
+      0.875
+     ],
+     "prompt": {
+      "preset": "A jagged bright blue-white lightning bolt crackles exactly along the guide line, flickering, with small branches. Filmed on a pure black background, live-action, realistic, high detail.",
+      "what": "A jagged bright blue-white lightning bolt",
+      "what_plain": "A jagged lightning bolt",
+      "look": "with small branches",
+      "motion": "crackles exactly along the guide line, flickering",
+      "contact": "",
+      "chips": {
+       "look": [
+        "with small branches",
+        "thick and blinding with a violet glow",
+        "hair-thin and crisp, like fine cracks of light"
+       ],
+       "motion": [
+        "crackles exactly along the guide line, flickering",
+        "strikes again and again in short flashes",
+        "writhes and changes shape constantly"
+       ],
+       "contact": [
+        "sparks spray where it touches",
+        "it lights up {the %|what it touches}"
+       ]
+      }
+     },
+     "prompt_tested": true
+    },
+    {
+     "id": "climb",
+     "name": "Climbs an object: fine filaments",
+     "text": "Click a staff, a crown or a branch: hair-thin filaments crawl along it.",
+     "cost": "gen",
+     "variant": "climb",
+     "placement": "object",
+     "ref": "generalised from p7w; 29.10. old EF Lightning Guides prompt (blitz_04_altlook)",
+     "settings": {
+      "Particles: direct look (no LTX, pro)": false
+     },
+     "prompt": {
+      "preset": "Raw electrical discharge filmed at night with a high-speed camera: jagged, branching lightning bolts and crackling arcs against a pure black background. Irregular zigzag filaments that split again and again into thin forks, white-hot cores with violet-blue edges, sparks jumping between points, every bolt a different shape, flickering violently from frame to frame. No glowing tubes, no neon, no straight rods, no light sabers: only real lightning. Everything else is completely black, static camera, photorealistic.",
+      "what": "Hair-thin, crisp blue-white electric filaments",
+      "what_plain": "Hair-thin, crisp electric filaments",
+      "look": "a few pixels wide, sharp and jagged like fine cracks of light, no glow tube, no plasma beam",
+      "motion": "crawl along the object",
+      "contact": "thin forked sparks jump from its tips, crackling and flickering",
+      "chips": {
+       "look": [
+        "a few pixels wide, sharp and jagged like fine cracks of light, no glow tube, no plasma beam",
+        "golden-orange instead of blue",
+        "violet with a faint glow"
+       ],
+       "motion": [
+        "crawl along the object",
+        "race up the object in pulses",
+        "flicker across the whole object at once"
+       ],
+       "contact": [
+        "thin forked sparks jump from its tips, crackling and flickering",
+        "small arcs jump between neighbouring parts"
+       ]
+      }
+     },
+     "prompt_tested": true
+    },
+    {
+     "id": "climb_arcs",
+     "name": "Climbs an object: blue arcs",
+     "text": "The same with brighter branching arcs and a blue glow.",
+     "cost": "gen",
+     "variant": "climb",
+     "placement": "object",
+     "ref": "generalised from p7p",
+     "settings": {
+      "Particles: direct look (no LTX, pro)": false
+     },
+     "prompt": {
+      "preset": null,
+      "what": "Bright blue-white electric charge",
+      "what_plain": "Bright electric charge",
+      "look": "jagged, branching lightning arcs, crackling and flickering",
+      "motion": "crawls along the object",
+      "contact": "it jumps from its tips as forked arcs",
+      "chips": {
+       "look": [
+        "jagged, branching lightning arcs, crackling and flickering",
+        "jagged, branching lightning arcs with a deep blue glow",
+        "thick white-hot arcs",
+        "violet arcs with pink sparks"
+       ],
+       "motion": [
+        "crawls along the object",
+        "surges up in waves"
+       ],
+       "contact": [
+        "it jumps from its tips as forked arcs",
+        "arcs leap from the object into the air"
+       ]
+      }
+     },
+     "prompt_tested": false
+    },
+    {
+     "id": "climb_drawn",
+     "name": "Climbs an object: particles only",
+     "text": "Thin jagged bolts made by the particles alone, straight on the object: no AI run, fastest.",
+     "cost": "calc",
+     "variant": "climb",
+     "placement": "object",
+     "ref": "q7o-blitz-staebe-direkt-aehnlich, q7t",
+     "settings": {
+      "Particles: direct look (no LTX, pro)": true
+     },
+     "prompt": null
+    }
+   ]
+  },
+  {
+   "id": "sparks",
+   "name": "Sparks",
+   "text": "Sparks spraying from something that moves",
+   "styles": [
+    {
+     "id": "grind",
+     "name": "From a moving object",
+     "text": "Sparks spray from the lower edge of what you click while it moves (wheels, skates, a blade).",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "window",
+     "ref": "generalised from p1i",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "grinding sparks",
+      "Particle emitter": "object bottom edge",
+      "Particle amount": 1.5
+     },
+     "gen": [
+      576,
+      768
+     ],
+     "win": [
+      0.67,
+      0.89
+     ],
+     "emitter": [
+      0.5,
+      0.75
+     ],
+     "prompt": {
+      "preset": null,
+      "what": "A dense spray of many individual thin orange-white sparks",
+      "what_plain": "A dense spray of many individual sparks",
+      "look": "glowing hot metal grinding sparks in long straight streaks",
+      "motion": "shoots backwards from the lower edge of the moving object in long straight streaks, low over the ground",
+      "contact": "bounces off the ground",
+      "chips": {
+       "look": [
+        "glowing hot metal grinding sparks in long straight streaks",
+        "short white-hot flecks",
+        "slow, fat orange embers"
+       ],
+       "motion": [
+        "shoots backwards from the lower edge of the moving object in long straight streaks, low over the ground",
+        "fans out upwards in a wide arc",
+        "drips down in short bursts"
+       ],
+       "contact": [
+        "bounces off the ground",
+        "dies out quickly in the air"
+       ]
+      }
+     },
+     "prompt_tested": false
+    },
+    {
+     "id": "burst",
+     "name": "Burst from a point",
+     "text": "A shower of sparks flies from the point you click.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "window",
+     "ref": "p1e-funken-start-sigma08",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "sparks",
+      "Particles: start video (seed)": true,
+      "Particle start sigmas (0.909 = tested default)": "0.8, 0.65, 0.4, 0.0"
+     },
+     "gen": [
+      512,
+      512
+     ],
+     "win": [
+      0.67,
+      0.67
+     ],
+     "emitter": [
+      0.75,
+      0.6
+     ],
+     "prompt": {
+      "preset": "Bright orange-white sparks fly fast along thin streaks and bounce off the surfaces around them, glowing metal grinding sparks. Filmed on a pure black background, live-action, realistic, high detail.",
+      "what": "Bright orange-white sparks",
+      "what_plain": "Bright sparks",
+      "look": "glowing metal sparks along thin streaks",
+      "motion": "fly fast",
+      "contact": "bounce off the surfaces around them",
+      "chips": {
+       "look": [
+        "glowing metal sparks along thin streaks",
+        "tiny white-hot flecks",
+        "big slow embers"
+       ],
+       "motion": [
+        "fly fast",
+        "burst out in all directions",
+        "fall like a fountain"
+       ],
+       "contact": [
+        "bounce off the surfaces around them",
+        "fade out in the air"
+       ]
+      }
+     },
+     "prompt_tested": true
+    }
+   ]
+  },
+  {
+   "id": "smoke",
+   "name": "Smoke",
+   "text": "Smoke rising from a place in your clip",
+   "styles": [
+    {
+     "id": "rise",
+     "name": "Rises from a point",
+     "text": "Soft smoke rises from where you click and curls upward.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "window",
+     "ref": "p2-rauch-start, pod 23.10. smoke/rise/breit2 (radius 40, spread 35, size_end 5: wider column)",
+     "settings": {
+      "Sticks to scene (off = object)": true,
+      "Particles": true,
+      "Particle preset": "smoke",
+      "Particles: start video (seed)": true,
+      "Particle depth offset": 0.3,
+      "Light": false,
+      "Particle pro: extra (JSON)": "{\"radius\": 40, \"spread\": 35, \"size_end\": 5.0}"
+     },
+     "gen": [
+      480,
+      640
+     ],
+     "win": [
+      0.5,
+      0.67
+     ],
+     "emitter": [
+      0.5,
+      0.85
+     ],
+     "prompt": {
+      "preset": "Thick soft grey smoke rises slowly from {the %|below} and curls upward, real smoke, volumetric. Filmed on a pure black background, live-action, realistic, high detail.",
+      "what": "Thick soft grey smoke",
+      "what_plain": "Smoke",
+      "look": "real smoke, volumetric",
+      "motion": "rises slowly and curls upward",
+      "contact": "",
+      "chips": {
+       "look": [
+        "real smoke, volumetric",
+        "thin white wisps",
+        "dark, oily black smoke"
+       ],
+       "motion": [
+        "rises slowly and curls upward",
+        "billows out fast",
+        "drifts sideways in the wind"
+       ],
+       "contact": [
+        "it spreads out low first"
+       ]
+      }
+     },
+     "prompt_tested": true
+    },
+    {
+     "id": "rise_drawn",
+     "name": "Rises from a point: particles only",
+     "text": "A lighter smoke made by the particles alone, without an AI run: fast, a bit more transparent.",
+     "cost": "calc",
+     "variant": "app",
+     "placement": "window",
+     "ref": "q4b-rauch-direkt-optisch",
+     "settings": {
+      "Sticks to scene (off = object)": true,
+      "Particles": true,
+      "Particle preset": "smoke",
+      "Particles: start video (seed)": false,
+      "Particle depth offset": 0.3,
+      "Light": false,
+      "Particle amount": 2.0,
+      "Particle size": 1.3,
+      "Particle pro: guide style": "volume",
+      "Particles: direct look (no LTX, pro)": true
+     },
+     "gen": [
+      480,
+      640
+     ],
+     "win": [
+      0.5,
+      0.67
+     ],
+     "emitter": [
+      0.5,
+      0.85
+     ],
+     "prompt": null
+    }
+   ]
+  },
+  {
+   "id": "magic",
+   "name": "Magic & energy",
+   "text": "Glowing energy, auras and magic",
+   "styles": [
+    {
+     "id": "aura",
+     "name": "Aura around a figure",
+     "text": "Glowing particles rise from the outline of the person or object you click.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "object",
+     "ref": "p6i-aura-preset",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "aura",
+      "Particle emitter": "object contour",
+      "Particles: start video (seed)": false,
+      "Light": false
+     },
+     "gen": [
+      448,
+      832
+     ],
+     "win": [
+      1.0,
+      1.9
+     ],
+     "emitter": [
+      0.5,
+      0.5
+     ],
+     "prompt": {
+      "preset": "A shimmering aura of tiny glowing blue magic particles rises from the outline of a figure. Filmed on a pure black background, live-action, realistic, high detail.",
+      "what": "A shimmering aura of tiny glowing magic particles",
+      "look": "cold blue",
+      "motion": "rises from the outline of a figure",
+      "contact": "",
+      "chips": {
+       "look": [
+        "cold blue",
+        "golden",
+        "deep red and smoky",
+        "green and flickering"
+       ],
+       "motion": [
+        "rises from the outline of a figure",
+        "swirls slowly around the figure",
+        "pulses outward in waves"
+       ],
+       "contact": [
+        "it lights the edges of the figure"
+       ]
+      }
+     },
+     "prompt_tested": true
+    },
+    {
+     "id": "aura_drawn",
+     "name": "Aura: particles only",
+     "text": "A glowing veil along the outline, made by the particles alone without an AI run.",
+     "cost": "calc",
+     "variant": "app",
+     "placement": "object",
+     "ref": "q5b-aura-direkt-halo",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "aura",
+      "Particle emitter": "object contour",
+      "Particles: start video (seed)": false,
+      "Light": false,
+      "Particles: direct look (no LTX, pro)": true
+     },
+     "gen": [
+      448,
+      832
+     ],
+     "win": [
+      1.0,
+      1.9
+     ],
+     "emitter": [
+      0.5,
+      0.5
+     ],
+     "prompt": null
+    },
+    {
+     "id": "flow",
+     "name": "Energy between two points",
+     "text": "Magic energy flows from point A to point B.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "ab",
+     "ref": "generalised from p15b",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "energy A-B",
+      "Particles: start video (seed)": true,
+      "Particle depth offset": 0.3,
+      "Window A-B automatic": true
+     },
+     "gen": [
+      448,
+      640
+     ],
+     "emitter": [
+      0.48,
+      0.875
+     ],
+     "prompt": {
+      "preset": null,
+      "what": "Glowing blue magic energy",
+      "what_plain": "Glowing magic energy",
+      "look": "bright crackling streams",
+      "motion": "flows from one point to the other",
+      "contact": "",
+      "chips": {
+       "look": [
+        "bright crackling streams",
+        "a stream of tiny golden sparks",
+        "a twisting violet ribbon"
+       ],
+       "motion": [
+        "flows from one point to the other",
+        "pulses back and forth",
+        "spirals between both points"
+       ],
+       "contact": [
+        "it glows brighter where it touches"
+       ]
+      }
+     },
+     "prompt_tested": false
+    },
+    {
+     "id": "orb",
+     "name": "Energy ball",
+     "text": "A glowing ball of energy hovers at the point you click.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "point",
+     "ref": "e3c-energiekugel-hand, 23.10. magic/orb/gross (night clip: the ball was very small at the hand; size 0.7 and a larger ball in the prompt)",
+     "settings": {
+      "Track follows the object mask (hands, bodies)": true,
+      "Depth offset (+ = element nearer, less hidden)": 0.3,
+      "Emitter side": "centre",
+      "Size in plate": 0.7
+     },
+     "gen": [
+      512,
+      512
+     ],
+     "prompt": {
+      "preset": "A large glowing blue-white ball of crackling electric energy fills most of the frame, bright arcs dance over it and flicker. Filmed on a pure black background, live-action, realistic, high detail.",
+      "what": "A large glowing blue-white ball of crackling electric energy",
+      "what_plain": "A glowing ball of energy",
+      "look": "bright arcs dance over it and flicker",
+      "motion": "fills most of the frame",
+      "contact": "",
+      "chips": {
+       "look": [
+        "bright arcs dance over it and flicker",
+        "small arcs dance over it",
+        "a swirling core of fire",
+        "a soft pulsing light without sparks"
+       ],
+       "motion": [
+        "fills most of the frame",
+        "hovers in the middle of the frame",
+        "spins faster and faster",
+        "grows and shrinks like a heartbeat"
+       ],
+       "contact": [
+        "it lights up {the %|what is below it}"
+       ]
+      }
+     },
+     "prompt_tested": true,
+     "guide_particles": "magic dust"
+    }
+   ]
+  },
+  {
+   "id": "weather",
+   "name": "Snow, rain & fireflies",
+   "text": "Particles in the whole picture",
+   "styles": [
+    {
+     "id": "snow",
+     "name": "Snow",
+     "text": "Soft snow falls through the whole picture.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "frame",
+     "ref": "p4c2-schnee-start-weich",
+     "settings": {
+      "Sticks to scene (off = object)": true,
+      "Particles": true,
+      "Particle preset": "snow",
+      "Particle emitter": "whole frame",
+      "Particles: start video (seed)": true,
+      "Particle pro: extra (JSON)": "{\"glow\": 0.55}",
+      "Light": false,
+      "Glow": false
+     },
+     "gen": [
+      832,
+      448
+     ],
+     "emitter": [
+      0.5,
+      0.5
+     ],
+     "prompt": {
+      "preset": "Real snowfall: many soft, small, matte white snowflakes drift down slowly, some out of focus, natural and irregular, no sparkle, no stars, no glints. Filmed on a pure black background, live-action, realistic, high detail.",
+      "what": "Real snowfall: many soft, small, matte white snowflakes",
+      "what_plain": "Real snowfall",
+      "look": "some out of focus, natural and irregular, no sparkle, no stars, no glints",
+      "motion": "drift down slowly",
+      "contact": "",
+      "chips": {
+       "look": [
+        "some out of focus, natural and irregular, no sparkle, no stars, no glints",
+        "big wet flakes",
+        "fine powder snow"
+       ],
+       "motion": [
+        "drift down slowly",
+        "whirl in a strong wind",
+        "fall straight and dense"
+       ],
+       "contact": []
+      }
+     },
+     "prompt_tested": true
+    },
+    {
+     "id": "rain",
+     "name": "Rain",
+     "text": "Rain in the whole picture (best on darker clips).",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "frame",
+     "ref": "p5c-regen-guide-kraeftig, pod 23.10. weather/rain/kraeftig2 (opacity 0.8, size 1.4: more and clearer streaks)",
+     "settings": {
+      "Sticks to scene (off = object)": true,
+      "Particles": true,
+      "Particle preset": "rain",
+      "Particle emitter": "whole frame",
+      "Light": false,
+      "Glow": false,
+      "Particle pro: extra (JSON)": "{\"opacity\": 0.8, \"size\": 1.4}"
+     },
+     "gen": [
+      832,
+      448
+     ],
+     "emitter": [
+      0.5,
+      0.5
+     ],
+     "prompt": {
+      "preset": "Heavy rain: many fast bright streaks of falling raindrops across the whole frame, no fog. Filmed on a pure black background, live-action, realistic, high detail.",
+      "what": "Heavy rain",
+      "what_plain": "Rain",
+      "look": "many fast bright streaks of falling raindrops, no fog",
+      "motion": "across the whole frame",
+      "contact": "",
+      "chips": {
+       "look": [
+        "many fast bright streaks of falling raindrops, no fog",
+        "a light drizzle of fine drops"
+       ],
+       "motion": [
+        "across the whole frame",
+        "slants hard in the wind"
+       ],
+       "contact": []
+      }
+     },
+     "prompt_tested": true
+    },
+    {
+     "id": "fireflies",
+     "name": "Fireflies",
+     "text": "Small glowing lights drift through the picture, in front of and behind things. Particles only, no AI run.",
+     "cost": "calc",
+     "variant": "app",
+     "placement": "frame",
+     "ref": "q6b-gluehwuermchen-dof15",
+     "settings": {
+      "Sticks to scene (off = object)": true,
+      "Particles": true,
+      "Particle preset": "fireflies",
+      "Particle emitter": "whole frame",
+      "Particles: start video (seed)": true,
+      "Particles: direct look (no LTX, pro)": true
+     },
+     "gen": [
+      832,
+      448
+     ],
+     "emitter": [
+      0.5,
+      0.5
+     ],
+     "prompt": null
+    }
+   ]
+  },
+  {
+   "id": "debris",
+   "name": "Dust & debris",
+   "text": "Something bursts out where you click",
+   "styles": [
+    {
+     "id": "debris",
+     "name": "Debris burst",
+     "text": "Chunks burst from the point you click, fly in arcs and fall back.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "window",
+     "ref": "p17-truemmer-guide, 23.10. debris/debris/dunkel (forest clip: the chunks were white and lay on one straight line; dark earth-coloured prompt and depth_spread)",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "debris",
+      "Particles: start video (seed)": false,
+      "Light": false,
+      "Glow": false,
+      "Solid element (Alpha Gen cut-out)": true,
+      "Blend on black (add = light, over = solid)": "over"
+     },
+     "gen": [
+      512,
+      512
+     ],
+     "win": [
+      0.67,
+      0.67
+     ],
+     "emitter": [
+      0.5,
+      0.7
+     ],
+     "prompt": {
+      "preset": "Small dark chunks of earth and stone burst up from {the %|the surface}, fly in arcs, fall back and bounce, real debris in the colour of {the %|the surface}. Filmed on a pure black background, live-action, realistic, high detail.",
+      "what": "Small dark chunks of earth and stone",
+      "what_plain": "Small pieces of debris",
+      "light_ground": {
+       "preset": "Small chunks of concrete and grit burst up from {the %|the surface}, fly in arcs, fall back and bounce, real debris. Filmed on a pure black background, live-action, realistic, high detail.",
+       "what": "Small chunks of concrete and grit",
+       "look": "real debris"
+      },
+      "look": "real debris in the colour of {the %|the surface}",
+      "motion": "burst up from {the %|the surface}, fly in arcs, fall back and bounce",
+      "contact": "",
+      "chips": {
+       "look": [
+        "real debris in the colour of {the %|the surface}",
+        "real debris",
+        "splinters of wood",
+        "shards of glass"
+       ],
+       "motion": [
+        "burst up from {the %|the surface}, fly in arcs, fall back and bounce",
+        "explode outward in all directions"
+       ],
+       "contact": [
+        "a puff of dust stays behind"
+       ]
+      }
+     },
+     "prompt_tested": true
+    },
+    {
+     "id": "debris_drawn",
+     "name": "Debris burst: particles only",
+     "text": "The same made by the particles alone, without an AI run, in the colours around it.",
+     "cost": "calc",
+     "variant": "app",
+     "placement": "window",
+     "ref": "q9-truemmer-direkt",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "debris",
+      "Particles: start video (seed)": false,
+      "Light": false,
+      "Glow": false,
+      "Solid element (Alpha Gen cut-out)": true,
+      "Blend on black (add = light, over = solid)": "over",
+      "Particles: direct look (no LTX, pro)": true
+     },
+     "gen": [
+      512,
+      512
+     ],
+     "win": [
+      0.67,
+      0.67
+     ],
+     "emitter": [
+      0.5,
+      0.7
+     ],
+     "prompt": null
+    },
+    {
+     "id": "dust",
+     "name": "Dust burst",
+     "text": "A burst of dust is kicked up where you click.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "window",
+     "ref": "p10-staub-start",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "dust burst",
+      "Particles: start video (seed)": true,
+      "Light": false,
+      "Glow": false,
+      "Solid element (Alpha Gen cut-out)": true,
+      "Blend on black (add = light, over = solid)": "over"
+     },
+     "gen": [
+      512,
+      512
+     ],
+     "win": [
+      0.67,
+      0.67
+     ],
+     "emitter": [
+      0.5,
+      0.7
+     ],
+     "prompt": {
+      "preset": "A burst of fine grey dust and small debris is kicked up from {the %|the surface}, swirls and spreads. Filmed on a pure black background, live-action, realistic, high detail.",
+      "what": "A burst of fine grey dust and small debris",
+      "what_plain": "A burst of dust",
+      "look": "",
+      "motion": "is kicked up from {the %|the surface}, swirls and spreads",
+      "contact": "",
+      "chips": {
+       "look": [
+        "fine grey dust",
+        "warm sandy dust",
+        "white chalk powder"
+       ],
+       "motion": [
+        "is kicked up from {the %|the surface}, swirls and spreads",
+        "rolls along {the %|the surface} in a low cloud"
+       ],
+       "contact": []
+      }
+     },
+     "prompt_tested": true
+    }
+   ]
+  },
+  {
+   "id": "liquid",
+   "name": "Liquid",
+   "text": "Something runs or drips down",
+   "styles": [
+    {
+     "id": "drip",
+     "name": "Drips from a point",
+     "text": "A thick liquid runs down from where you click.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "window",
+     "ref": "p9b-fluessigkeit-guide",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "liquid",
+      "Particles: start video (seed)": false,
+      "Particle pro: color": "#7a0a0a",
+      "Light": false,
+      "Glow": false,
+      "Solid element (Alpha Gen cut-out)": true,
+      "Blend on black (add = light, over = solid)": "over"
+     },
+     "gen": [
+      384,
+      768
+     ],
+     "win": [
+      0.33,
+      0.67
+     ],
+     "emitter": [
+      0.5,
+      0.1
+     ],
+     "prompt": {
+      "preset": "A thin stream of thick dark red liquid runs down from one small point at the top centre of the frame and drips, narrow and glossy. Filmed on a pure black background, live-action, realistic, high detail.",
+      "what": "A thin stream of thick dark red liquid",
+      "what_plain": "A thin stream of thick liquid",
+      "look": "narrow and glossy",
+      "motion": "runs down from one small point at the top centre of the frame and drips",
+      "contact": "",
+      "chips": {
+       "look": [
+        "narrow and glossy",
+        "black and oily",
+        "clear water with highlights",
+        "bright green slime"
+       ],
+       "motion": [
+        "runs down from one small point at the top centre of the frame and drips",
+        "pours down in a wide sheet"
+       ],
+       "contact": [
+        "it splashes where it lands"
+       ]
+      }
+     },
+     "prompt_tested": true
+    }
+   ]
+  },
+  {
+   "id": "dissolve",
+   "name": "Dissolve",
+   "text": "An object crumbles into particles and disappears",
+   "styles": [
+    {
+     "id": "plain",
+     "name": "Crumbles into particles",
+     "text": "The object breaks apart in its own colours; the AI fills in the background behind it.",
+     "cost": "gen",
+     "variant": "dissolve",
+     "placement": "none",
+     "dir": "dissolve",
+     "ref": "d-series (plain)",
+     "settings": {
+      "Dissolve style (plain / fire (LTX) / gold dust)": "plain",
+      "Light": false,
+      "Glow": false
+     },
+     "prompt": null
+    },
+    {
+     "id": "gold",
+     "name": "Gold dust",
+     "text": "The same with glowing golden particles and a glowing edge; the AI fills in the background.",
+     "cost": "gen",
+     "variant": "dissolve",
+     "placement": "none",
+     "dir": "dissolve",
+     "ref": "D4e (gold dust look)",
+     "settings": {
+      "Dissolve style (plain / fire (LTX) / gold dust)": "gold dust",
+      "Light": true,
+      "Glow": false
+     },
+     "prompt": null
+    },
+    {
+     "id": "fire",
+     "name": "Burns away",
+     "text": "A glowing edge eats the object; the AI turns the particles into embers (one AI run).",
+     "cost": "gen",
+     "variant": "dissolve",
+     "placement": "none",
+     "dir": "dissolve",
+     "ref": "d4f-dissolve-statue-glut-kurz",
+     "settings": {
+      "Dissolve style (plain / fire (LTX) / gold dust)": "fire (LTX)",
+      "Dissolve glowing edge": 1.5,
+      "Light": true,
+      "Glow": false
+     },
+     "prompt": null
+    }
+   ]
+  },
+  {
+   "id": "own",
+   "name": "Your own effect",
+   "text": "Describe any element yourself",
+   "styles": [
+    {
+     "id": "point",
+     "name": "At a point",
+     "text": "Your element is generated and hangs on the point you click. Best for things that glow.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "point",
+     "ref": "on black at point A (one workflow defaults)",
+     "settings": {
+      "Emitter side": "bottom",
+      "Size in plate": 0.3
+     },
+     "gen": [
+      512,
+      768
+     ],
+     "prompt": {
+      "preset": null,
+      "what": "",
+      "look": "",
+      "motion": "",
+      "contact": "",
+      "chips": {
+       "look": [],
+       "motion": [],
+       "contact": []
+      }
+     },
+     "prompt_tested": false,
+     "guide_particles": "magic dust"
+    }
+   ]
+  }
+ ],
+ "inpaint": {
+  "about": "Every AI effect can be made as a layer on black or painted into the clip (inpaint). These are the settings a kind gets when it is painted in; the style's own settings and Advanced win. Glowing effects are keyed by their colour and added, solid ones (smoke, debris, liquid, snow) are taken as any change and laid over. No light pass: the light is in the picture already. Sigmas start at the tested default 0.909. Fire starts from the flame made on black first (23.10., pod: painted in from scratch LTX kept the forest and drew no flame, also from 0.975 and 0.9875; from the element it burns at the point and lights the ground around it). Lightning starts at 0.975 (23.10., pod: between the hands from 0.909 a small spark, from 0.975 a clear jagged arc, 0.15 -> 0.71 % of the pixels changed). Styles name no object (25.10.: no body parts as defaults); painted in between two points, the Effect step asks for the object word in Position (23.10.: from two clicks alone the track lost the hands and nothing was painted, 0.0 %; with the word hand 0.97 %, and magic flow between the hands appeared).",
+  "default": {
+   "Inpaint key": "auto (effect color)",
+   "Inpaint blend": "add",
+   "Light": false
+  },
+  "fire": {
+   "Inpaint: start from the element": true
+  },
+  "lightning": {
+   "Inpaint key": "cold (lightning)",
+   "Inpaint blend": "add",
+   "Inpaint sigmas (start 0.909 = tested default)": "0.975, 0.909375, 0.725, 0.421875, 0.0"
+  },
+  "smoke": {
+   "Inpaint key": "any change (over)",
+   "Inpaint blend": "over"
+  },
+  "debris": {
+   "Inpaint key": "any change (over)",
+   "Inpaint blend": "over"
+  },
+  "liquid": {
+   "Inpaint key": "any change (over)",
+   "Inpaint blend": "over"
+  },
+  "weather": {
+   "Inpaint key": "any change (over)",
+   "Inpaint blend": "over"
+  }
+ }
+}

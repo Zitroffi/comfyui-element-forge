@@ -1,0 +1,214 @@
+{
+ "shot": "element_forge_dissolve",
+ "title": "Dissolve: the clicked object crumbles into particles, the background appears (one workflow, app passes)",
+ "api_file": "element_forge_dissolve.json",
+ "reference_run": "-",
+ "server": "ComfyUI >= 0.41.2 with comfyui-element-forge, ComfyUI-GGUF; queue via /prompt",
+ "node_classes": "EF",
+ "inputs": [
+  {
+   "node": "101",
+   "input": "file",
+   "label": "Clip (ComfyUI input folder)",
+   "type": "video_file",
+   "default": "efc_statue_plate.mp4"
+  },
+  {
+   "node": "108",
+   "input": "a_x",
+   "label": "Point on the object x (plate px, frame 0)",
+   "type": "int",
+   "default": 752
+  },
+  {
+   "node": "108",
+   "input": "a_y",
+   "label": "Point on the object y (plate px, frame 0)",
+   "type": "int",
+   "default": 777
+  },
+  {
+   "node": "109",
+   "input": "value",
+   "label": "Object word (optional, helps the click)",
+   "type": "text",
+   "default": ""
+  },
+  {
+   "node": "153",
+   "input": "value",
+   "label": "Dissolve style (plain / fire (LTX) / gold dust)",
+   "type": "text",
+   "default": "plain"
+  },
+  {
+   "node": "126",
+   "input": "value",
+   "label": "Starts at (s)",
+   "type": "float",
+   "default": 0.0
+  },
+  {
+   "node": "148",
+   "input": "value",
+   "label": "Dissolve lasts (s)",
+   "type": "float",
+   "default": 2.0
+  },
+  {
+   "node": "147",
+   "input": "value",
+   "label": "Dissolve direction (0 up, 90 right)",
+   "type": "float",
+   "default": 90.0
+  },
+  {
+   "node": "149",
+   "input": "value",
+   "label": "Dissolve amount (share of the object)",
+   "type": "float",
+   "default": 1.0
+  },
+  {
+   "node": "150",
+   "input": "value",
+   "label": "Glowing edge (0 = from the style)",
+   "type": "float",
+   "default": 0.0
+  },
+  {
+   "node": "142",
+   "input": "value",
+   "label": "Light on the scene (the glow lights its surroundings)",
+   "type": "bool",
+   "default": true
+  },
+  {
+   "node": "151",
+   "input": "value",
+   "label": "Background: clean plate (LTX) where the object never moves away",
+   "type": "bool",
+   "default": true
+  },
+  {
+   "node": "881",
+   "input": "value",
+   "label": "Background behind the object (auto / smooth / structured)",
+   "type": "text",
+   "default": "auto"
+  },
+  {
+   "node": "157",
+   "input": "value",
+   "label": "Empty scene (the shot without the object, in words)",
+   "type": "text",
+   "default": "The same shot without any people: only the empty background, natural light. Nobody is in the scene."
+  },
+  {
+   "node": "152",
+   "input": "value",
+   "label": "Clean plate sharper (crop around the object, test)",
+   "type": "bool",
+   "default": false
+  },
+  {
+   "node": "154",
+   "input": "value",
+   "label": "Embers description (fire style)",
+   "type": "text",
+   "default": "Glowing orange embers, sparks and burning ash drifting upwards on a pure black background, realistic fire particles, live-action, no people."
+  },
+  {
+   "node": "155",
+   "input": "value",
+   "label": "Ember strength (fire style)",
+   "type": "float",
+   "default": 1.0
+  },
+  {
+   "node": "156",
+   "input": "value",
+   "label": "Embers away from the edge (fire style)",
+   "type": "float",
+   "default": 0.3
+  },
+  {
+   "node": "102",
+   "input": "value",
+   "label": "Frames from the start of the clip",
+   "type": "int",
+   "default": 81
+  },
+  {
+   "node": "145",
+   "input": "value",
+   "label": "Seed",
+   "type": "int",
+   "default": 42
+  },
+  {
+   "node": "805",
+   "input": "value",
+   "label": "Particle seed",
+   "type": "int",
+   "default": 42
+  }
+ ],
+ "output_prefixes": [
+  {
+   "node": "222",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/track_check"
+  },
+  {
+   "node": "475",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/comp"
+  },
+  {
+   "node": "852",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/mask"
+  },
+  {
+   "node": "477",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/plate"
+  },
+  {
+   "node": "478",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/element"
+  },
+  {
+   "node": "479",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/depth"
+  },
+  {
+   "node": "705",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/light"
+  },
+  {
+   "node": "706",
+   "input": "filename_prefix",
+   "value": "element-forge/{run}/normals"
+  }
+ ],
+ "run_placeholder": "{run} in every filename_prefix is replaced by the run name (one folder per run)",
+ "element_names": [],
+ "outputs": {
+  "folder": "<ComfyUI output>/element-forge/{run}/",
+  "exr": [
+   "plate_#####.exr (linear)",
+   "element_#####.exr (RGBA, linear, premultiplied: the dissolve over the plate, comp Over)",
+   "depth_#####.exr (Video Depth Anything, near = 1)",
+   "light_#####.exr (linear, the glow's light on the scene, comp Add; with Light on)",
+   "normals_#####.exr (MoGe, with Light on)"
+  ],
+  "mp4": [
+   "comp_*.mp4 (the dissolve as the workflow makes it)"
+  ]
+ }
+}

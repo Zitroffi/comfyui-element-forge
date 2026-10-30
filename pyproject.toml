@@ -1,0 +1,22 @@
+[project]
+name = "comfyui-element-forge"
+description = "Generate VFX elements with LTX-2.5 and composite them into your own footage: tracked, occluded, lit from depth, with EXR passes and an app inside ComfyUI."
+version = "1.0.0"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = ["opencv-python-headless>=4.8", "OpenImageIO>=2.5"]
+classifiers = [
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Environment :: GPU :: NVIDIA CUDA",
+]
+
+[project.urls]
+Repository = "https://github.com/Zitroffi/comfyui-element-forge"
+"Bug Tracker" = "https://github.com/Zitroffi/comfyui-element-forge/issues"
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "Element Forge"
+Icon = ""
+requires-comfyui = ">=0.41.2"
