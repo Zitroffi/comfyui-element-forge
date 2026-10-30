@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="title"><title id="title">Element Forge icon</title><rect width="400" height="400" rx="72" fill="#141416" /><g transform="translate(29 42)"><g id="brand-mark" transform="translate(24 24) scale(1)">
+      <g id="rear-planes" fill="none" stroke="#ececf0" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+        <path id="rear-plane" d="M61 191 L18 206 Q0 212 0 193 L0 63 Q0 46 18 40 L137 1 Q156 -5 156 14 L156 31" />
+        <path id="middle-plane" d="M122 220 L80 236 Q61 242 61 222 L61 82 Q61 66 79 60 L205 19 Q222 13 222 32 L222 65" />
+      </g>
+      <path id="front-plane" fill="#f5c84b" fill-rule="evenodd" d="M120 107 Q120 89 138 83 L272 39 Q294 32 294 54 L294 192 Q294 211 276 217 L143 262 Q120 270 120 247 Z M165 121 L249 94 L249 178 L165 205 Z" />
+    </g></g></svg>

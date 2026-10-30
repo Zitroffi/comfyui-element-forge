@@ -1,16 +1,31 @@
-# Element Forge
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/branding/logo-on-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/assets/branding/logo-on-light.svg">
+    <img src="docs/assets/branding/logo-on-light.svg" alt="Element Forge" width="560">
+  </picture>
+</h1>
 
-**AI effects that sit in the shot.**
+<p align="center"><strong>AI effects that sit in the shot.</strong></p>
+
+<p align="center">
+  <a href="#get-started">Get started</a> ·
+  <a href="#your-first-effect">Your first effect</a> ·
+  <a href="#more-examples">Examples</a> ·
+  <a href="#documentation">Documentation</a>
+</p>
 
 Add fire, lightning, smoke and particles to your own footage in ComfyUI. Track effects through your shot, adjust their light and colour, and export the result or separate EXR passes.
 
 Use the app for a guided workflow, or connect the nodes in your own graph. AI effects are generated locally with **LTX-2.5**; selected particle styles run without AI generation.
 
-[Get started](#get-started) · [Your first effect](#your-first-effect) · [Examples](#more-examples) · [Documentation](#documentation)
+<p align="center">
+  <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/katana-charge.mp4">
+    <img src="docs/assets/examples/katana-charge.gif" alt="Electricity following a moving katana" width="640">
+  </a>
+</p>
 
-[![Electricity following a moving katana](https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/katana-charge.gif)](https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/katana-charge.mp4)
-
-*Electricity follows the blade through the shot. Click the image for the full clip. AI-generated effects; stock footage.*
+<p align="center"><em>Electricity follows the blade through the shot. Click the image for the full clip.</em><br><sub>AI-generated effects; stock footage.</sub></p>
 
 ## What you can do
 
@@ -65,12 +80,40 @@ Prefer a node graph? Open the **Element Forge** template instead. It uses the sa
 
 The effects below are AI-generated with LTX-2.5, except the fireflies, which are drawn particles. Footage comes from Pexels and Mixkit.
 
-| Example | Watch | Preview |
-|---|---|---|
-| Energy around a moving ball | [MP4](https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/orb.mp4) | [GIF](https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/orb.gif) |
-| Flame following a rose | [MP4](https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/rose-flame.mp4) | [GIF](https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/rose-flame.gif) |
-| Sparks from a spinning dress | [MP4](https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/dress-sparks.mp4) | [GIF](https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/dress-sparks.gif) |
-| Fireflies over a lake | [MP4](https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/fireflies.mp4) | [GIF](https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/fireflies.gif) |
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/orb.mp4">
+        <img src="docs/assets/examples/orb.jpg" alt="Energy around a moving ball" width="160"><br>
+        <strong>Energy around a moving ball</strong>
+      </a><br>
+      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/orb.gif">GIF preview</a>
+    </td>
+    <td align="center" width="50%">
+      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/rose-flame.mp4">
+        <img src="docs/assets/examples/rose-flame.jpg" alt="Flame following a rose" width="160"><br>
+        <strong>Flame following a rose</strong>
+      </a><br>
+      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/rose-flame.gif">GIF preview</a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/dress-sparks.mp4">
+        <img src="docs/assets/examples/dress-sparks.jpg" alt="Sparks from a spinning dress" width="160"><br>
+        <strong>Sparks from a spinning dress</strong>
+      </a><br>
+      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/dress-sparks.gif">GIF preview</a>
+    </td>
+    <td align="center" width="50%">
+      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/fireflies.mp4">
+        <img src="docs/assets/examples/fireflies.jpg" alt="Fireflies over a lake" width="160"><br>
+        <strong>Fireflies over a lake</strong>
+      </a><br>
+      <a href="https://github.com/Zitroffi/comfyui-element-forge/releases/download/examples/fireflies.gif">GIF preview</a>
+    </td>
+  </tr>
+</table>
 
 All clips, stills and GIFs are available in the [examples release](https://github.com/Zitroffi/comfyui-element-forge/releases/tag/examples).
 

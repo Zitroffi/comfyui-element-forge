@@ -18,5 +18,5 @@ Repository = "https://github.com/Zitroffi/comfyui-element-forge"
 [tool.comfy]
 PublisherId = ""
 DisplayName = "Element Forge"
-Icon = ""
+Icon = "https://raw.githubusercontent.com/Zitroffi/comfyui-element-forge/main/docs/assets/branding/icon.svg"
 requires-comfyui = ">=0.41.2"

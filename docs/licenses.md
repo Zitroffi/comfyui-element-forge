@@ -18,3 +18,7 @@ results. Checked at the sources on 22 and 23 October 2026 (not legal advice):
 
 Node packs this pack works with: ComfyUI (GPL-3.0), ComfyUI-Video-Depth-Anything (Apache-2.0), ComfyUI-GGUF (Apache-2.0,
 optional) and ComfyUI-LTXVideo, whose code is under the LTX-2 Community License as well.
+
+## Brand artwork
+
+The wordmark uses Montserrat. Its [SIL Open Font License](assets/branding/Montserrat-OFL.txt) is included for attribution; no font installation is needed to display the logos.
