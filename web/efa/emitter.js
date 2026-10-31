@@ -56,7 +56,8 @@ const DRAWN = new Set(["glow", "trail", "opacity", "shutter", "blob", "blob_chok
 
 const key = (k, label, min, max, step, o = {}) => ({ k, label, min, max, step, ...o });
 const PARTICLES = {
-  source: { main: [], more: [key("max_particles", "Max. alive at once", 100, 40000, 100, { tip: "More would be dropped (rain over a long clip)" })] },
+  source: { main: [key("radius", "Emitter size", 0, 300, 1, { unit: "px", tip: "How far around the point or the line they are born (At 1080 px)" })],
+    more: [key("max_particles", "Max. alive at once", 100, 40000, 100, { tip: "More would be dropped (rain over a long clip)" })] },
   emission: {
     main: [key("rate", "Rate", 0, 2000, 1, { unit: "/s", tip: "Particles per second", show: (P) => P.rate > 0 }),
       key("burst", "Burst", 0, 2000, 1, { unit: "", tip: "Particles at once", show: (P) => P.burst > 0 })],
@@ -64,9 +65,12 @@ const PARTICLES = {
   },
   motion: {
     main: [key("spread", "Spread", 0, 180, 1, { unit: "°", tip: "How far the particles fan out around the direction" }),
-      key("speed", "Speed", 0, 3000, 5, { unit: "px/s", tip: "At 1080 px" }),
+      key("speed", "Speed", 0, 3000, 5, { unit: "px/s", tip: "How fast they leave the emitter (At 1080 px)" }),
       key("speed_var", "± Variation", 0, 1, 0.05, { tip: "0: all equally fast, 0.5: between half and one and a half times" })],
-    more: [key("lift", "Lift", -90, 90, 1, { unit: "°", tip: "Against motion: the spray tilted upwards", show: (P) => P.direction_mode === "against motion" })],
+    more: [key("lift", "Lift", -90, 90, 1, { unit: "°", tip: "Against motion: the spray tilted upwards", show: (P) => P.direction_mode === "against motion" }),
+      key("spread_falloff", "Bunch to the centre", 0, 1, 0.05, { tip: "0: evenly over the spread, 1: most of them near the direction" }),
+      key("speed_end", "Speed at the end", 0, 2, 0.05, { tip: "Times the speed at birth: 0.2 = they come to rest, 1 = as they are" }),
+      key("max_speed", "Speed limit", 0, 3000, 5, { unit: "px/s", tip: "No particle gets faster (wind, vortex, attract); 0 = off" })],
   },
   particle: {
     main: [key("life", "Life", 0.05, 60, 0.05, { unit: "s" }), key("life_var", "± Life", 0, 1, 0.05),
@@ -82,7 +86,8 @@ const PARTICLES = {
       key("fine_life", "Small: life", 0.1, 2, 0.05, { tip: "Times the life", show: (P) => P.fine_share > 0 }),
       key("fade_in", "Fade in", 0, 1, 0.01, { tip: "Share of the life" }), key("fade_out", "Fade out", 0, 1, 0.01, { tip: "Share of the life" }),
       key("shutter", "Motion blur", 0, 5, 0.1, { tip: "The streak over this many frames of motion" }),
-      key("opacity", "Opacity", 0, 1, 0.01)],
+      key("opacity", "Opacity", 0, 1, 0.01), key("color_var", "Colour variation", 0, 1, 0.05, { tip: "Each particle a bit brighter or darker" }),
+      key("spin", "Spin", 0, 720, 5, { unit: "°/s", tip: "How fast a particle turns at most; 0 = not at all (calm smoke, flakes)" })],
   },
   merge: {
     main: [key("blob", "Blur", 0, 60, 0.5, { unit: "px", tip: "The particles blurred together into one body (At 1080 px)" }),
@@ -103,11 +108,16 @@ const PARTICLES = {
       key("turb_speed", "Turbulence change", 0, 3, 0.05, { show: (P) => P.turbulence > 0 }),
       key("vortex", "Vortex", -3000, 3000, 10, { tip: "Swirl around the emitter" }),
       key("attract", "Attract to B", 0, 6000, 20, { tip: "Pull towards point B" }),
-      key("flock", "Flocking", 0, 1, 0.05, { tip: "Neighbours pull together: streams wander, clump and break into drops" })],
+      key("flock", "Flocking", 0, 1, 0.05, { tip: "Neighbours pull together: streams wander, clump and break into drops" }),
+      key("flock_radius", "Flocking: reach", 5, 200, 1, { unit: "px", show: (P) => P.flock > 0 }),
+      key("flock_cohesion", "Flocking: pull", 0, 20, 0.1, { show: (P) => P.flock > 0 }),
+      key("turb_fade", "Turbulence fades in", 0, 1, 0.05, { tip: "Share of the life: calm at birth, the swirl comes later", show: (P) => P.turbulence > 0 }),
+      key("turb_drag", "Drag calms turbulence", 0, 1, 0.05, { tip: "1: the swirl slows down with the drag, as the speed does", show: (P) => P.turbulence > 0 })],
   },
   contact: {
     main: [key("restitution", "Bounce", 0, 1, 0.05, { show: (P) => P.collide === "bounce" })],
-    more: [key("depth_spread", "Depth spread", 0, 0.5, 0.01, { tip: "Random spread of the particles' depth around the emitter" }),
+    more: [key("land_fade", "Lying time", 0, 20, 0.1, { unit: "s", tip: "How long a particle that sticks stays before it fades", show: (P) => P.collide === "stick" }),
+      key("depth_spread", "Depth spread", 0, 0.5, 0.01, { tip: "Random spread of the particles' depth around the emitter" }),
       key("friction", "Friction", 0, 1, 0.05, { show: (P) => P.collide === "slide" || P.collide === "bounce" })],
   },
 };
@@ -443,7 +453,7 @@ function particleGroups(ctx) {
   const sum = {
     source: [guideStyle(ctx.st0 || st) ? pname(GUIDES, guideNow(ctx.st0 || st, e)) : null, shapeName(shapeOf(e, st)), seedText(ctx)],
     emission: [P.rate > 0 ? `${num_(P.rate * amt, 0)} /s` : null, P.burst > 0 ? `${num_(P.burst * amt, 0)} at once` : null, timeSpan(ctx)],
-    motion: [pname(MODES, P.direction_mode), `spread ${num_(P.spread, 0)}°`, `${num_(P.speed, 0)} px/s`],
+    motion: [pname(MODES, P.direction_mode), `spread ${num_(P.spread, 0)}°`, `speed ${num_(P.speed, 0)} px/s`],
     particle: [`life ${num_(P.life)} s`, `size ${num_(P.size)} px`, P.trail > 0 ? `trail ${num_(P.trail, 0)}` : null],
     merge: [P.blob > 0 ? `blur ${num_(P.blob, 1)} px · choke ${num_(P.blob_choke)}` : "off"],
     forces: nonzero([["gravity", P.gravity], ["wind", P.wind?.[0]], ["turbulence", P.turbulence], ["drag", P.drag]]),
@@ -526,6 +536,7 @@ function ltxGroups(ctx) {
       `guide: ${pname(GUIDES, guideNow(ctx.st0 || ctx.st, e)).toLowerCase()}`),
     box(ctx, "emission", "Emission", [timing(ctx)], [], "", timeSpan(ctx)),
     box(ctx, "motion", "Motion", [
+      h("p", { class: "muted small" }, "The AI paints how fast it moves. For a speed of your own, set the guide to Particles (Source): their speed shows here."),
       ui.toggle("Follows motion", on, (v) => ctx.api.setFx("follows_motion", v)),
       h("p", { class: "muted small" }, EXPL.ltx),
       on ? advNum(ctx, FOLLOW_STRENGTH, "Strength", 0, 3, 0.05, 1.0) : null,

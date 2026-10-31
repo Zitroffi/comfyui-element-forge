@@ -9,6 +9,7 @@ REF = 1080.0
 
 interrupted = lambda: None
 
+SPIN = 114.59155902616465
 BASE = dict(
     path="particles",
     blend="add", look="",
@@ -80,6 +81,12 @@ BASE = dict(
     blob_choke=0.35,
     blob_soft=0.12,
     blob_fill=1.0,
+    spread_falloff=0.0,
+    speed_end=1.0,
+    max_speed=0.0,
+    spin=SPIN,
+    turb_fade=0.0,
+    turb_drag=0.0,
     blob_life=0.0,
 )
 
@@ -198,6 +205,17 @@ def hash_u(*keys, seed=0):
 def smoothstep(x):
     x = np.clip(x, 0.0, 1.0)
     return x * x * (3.0 - 2.0 * x)
+
+
+def turb_calm(P, age, life, drag):
+    if P["turb_fade"] <= 0 and P["turb_drag"] <= 0:
+        return None
+    k = np.ones(len(age))
+    if P["turb_fade"] > 0:
+        k *= smoothstep(age / (life * P["turb_fade"]))
+    if P["turb_drag"] > 0:
+        k *= np.exp(-P["turb_drag"] * drag * age)
+    return k
 
 
 def fade(age, fade_in, fade_out):
@@ -869,6 +887,9 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
         mode = src.get("direction_mode", "angle")
         spr = np.radians(src.get("spread", 30.0))
         sym = lambda c: 2 * U(c) - 1
+        if src.get("spread_falloff", 0.0) > 0:
+            base_sym, k_fall = sym, 1.0 + 3.0 * min(1.0, src["spread_falloff"])
+            sym = lambda c: (lambda u: np.sign(u) * np.abs(u) ** k_fall)(base_sym(c)) if c == 0 else base_sym(c)
         if mode == "random":
             th = 2 * np.pi * U(0)
         elif mode == "outward" and nrm is not None:
@@ -905,6 +926,11 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
             st["life"][idx[fine]] *= P["fine_life"]
             st["vx"][idx[fine]] *= P["fine_speed"]
             st["vy"][idx[fine]] *= P["fine_speed"]
+        if P["max_speed"] > 0:
+            vl = np.hypot(st["vx"][idx], st["vy"][idx])
+            lim = np.minimum(1.0, P["max_speed"] / np.maximum(vl, 1e-9))
+            st["vx"][idx] *= lim
+            st["vy"][idx] *= lim
         st["rot"][idx] = 2 * np.pi * U(6)
         st["spin"][idx] = sym(7)
         st["rnd"][idx] = U(8)
@@ -998,6 +1024,9 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
                 sz = sfac(z)
                 fx, fy = noise(st["x"][a] / ps, st["y"][a] / ps, t)
                 rec_noise = (s, a, fx, fy)
+                k = turb_calm(P, t - st["born"][a], st["life"][a], st["drag"][a])
+                if k is not None:
+                    fx, fy = fx * k, fy * k
                 age = np.clip((t - st["born"][a]) / st["life"][a], 0, 1)
                 lt = landed[a]
                 size, al = _record_look(P, t, age, lt, st["land_t"][a], st["size0"][a], st["phase"][a], sz, ps)
@@ -1065,11 +1094,25 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
                 w = carry_weight(np.hypot(dx, dy), ps) * (1 - (1 - min(P["motion_carry"], 1.0)) ** (1.0 / sub))
                 nvx = nvx + w * (dx * fps / (sz * ps) - nvx)
                 nvy = nvy + w * (dy * fps / (sz * ps) - nvy)
+            age = t - st["born"][live]
+            if P["speed_end"] != 1.0:
+                lf = st["life"][live]
+                m0 = 1 + (P["speed_end"] - 1) * np.clip(age / lf, 0, 1)
+                m1 = 1 + (P["speed_end"] - 1) * np.clip((age + dt) / lf, 0, 1)
+                k = np.maximum(m1, 1e-3) / np.maximum(m0, 1e-3)
+                nvx, nvy = nvx * k, nvy * k
+            if P["max_speed"] > 0:
+                vl = np.hypot(nvx, nvy)
+                k = np.minimum(1.0, P["max_speed"] / np.maximum(vl, 1e-9))
+                nvx, nvy = nvx * k, nvy * k
+            k = turb_calm(P, age, st["life"][live], st["drag"][live])
+            if k is not None:
+                fx, fy = fx * k, fy * k
             st["vx"][live], st["vy"][live] = nvx, nvy
             st["x"][live] = x + (0.5 * (vx + nvx) + fx) * dt * sz * ps
             st["y"][live] = y + (0.5 * (vy + nvy) + fy) * dt * sz * ps
             vx, vy = nvx, nvy
-            st["rot"][live] += st["spin"][live] * dt * 2.0
+            st["rot"][live] += st["spin"][live] * dt * (2.0 if P["spin"] == SPIN else math.radians(P["spin"]))
             if dep and P["collide"] != "none":
                 sx, sy = cam.to_screen(st["x"][live], st["y"][live], fi)
                 gap = dep.at(fi, sx, sy) - z

@@ -45,7 +45,8 @@ PANEL = ("rate", "burst", "burst_at", "max_particles", "life", "life_var", "size
          "depth_offset", "depth_spread", "fade_in", "fade_out", "opacity", "flicker", "flicker_hz", "flicker_size", "fine_share",
          "fine_size", "fine_speed", "fine_life", "sprite", "trail", "glow",
          "shutter", "colors", "blob", "blob_choke", "blob_soft", "blob_fill", "blob_life", "path", "roughness", "branches", "width",
-         "reroll_frames", "preroll")
+         "reroll_frames", "preroll", "radius", "spread_falloff", "speed_end", "max_speed", "color_var", "spin", "flock_radius",
+         "flock_cohesion", "turb_fade", "turb_drag", "land_fade")
 DPANEL = ("density", "push", "lift", "spread", "inherit", "motion_carry", "gravity", "drag", "turbulence", "turb_scale", "life",
           "size", "fade_out", "edge_noise", "noise_size", "glow", "glow_width", "glow_color", "tint")
 HOLD_SECONDS = 10.0
