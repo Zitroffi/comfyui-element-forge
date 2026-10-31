@@ -74,12 +74,13 @@ function toggle(label, value, onchange, tip) {
     h("span", { class: "track", "aria-hidden": "true" }), h("span", {}, label));
 }
 const link = (text, onclick) => h("button", { class: "link", onclick }, text);
-function group(key, title, body, { open: dflt = false, hint = "", preview = "" } = {}) {
+function group(key, title, body, { open: dflt = false, hint = "", preview = "", badge = "", cls = "" } = {}) {
   const isOpen = groups.has(key) ? groups.get(key) : dflt;
   const flip = () => { groups.set(key, !isOpen); render(); };
-  return h("div", { class: "group" + (isOpen ? " open" : ""), "data-group": key },
+  return h("div", { class: "group" + (isOpen ? " open" : "") + (cls ? ` ${cls}` : ""), "data-group": key },
     h("button", { class: "group-head", "aria-expanded": String(isOpen), onclick: flip }, icon("chevron", "chev"), h("span", {}, title),
-      hint ? h("span", { class: "group-hint" }, hint) : null),
+      badge ? h("span", { class: "group-badge" }, badge) : null,
+      hint ? h("span", { class: "group-hint", title: hint }, hint) : null),
     !isOpen && preview ? h("p", { class: "group-preview", onclick: flip }, preview) : null,
     isOpen ? h("div", { class: "group-body" }, ...[].concat(body()).filter(Boolean)) : null);
 }
@@ -117,7 +118,7 @@ function stepState(id) {
   if (!shot.clip) return "locked";
   if (id === "position") return !needsPoint(st) || e?.where.a ? "done" : "todo";
   if (id === "effect") return st ? "done" : "todo";
-  if (!st) return "locked";
+  if (!st) return id === "output" ? "todo" : "locked";
   if (id === "finish") return "todo";
   if (id === "output") return lastResult ? "done" : "todo";
   return "todo";
@@ -308,12 +309,27 @@ const whereKey = (e) => JSON.stringify([S.getShot().clip?.name, e.where, e.adv?.
 const TRACK_KEYS = ["Clip", "Still image (a picture in the input folder instead of the clip)", "Still image length (s)", "Frames", "Point A x", "Point A y", "Point B x", "Point B y", "Object word (optional, helps the click)", ALIKE, OWN,
   "Own object mask: first frame, paint the object (mask editor)", SCENE, MASK, STILL, "Follows motion", "Inpaint (off = on black)", "On black: more room",
   "Window A-B automatic", "Window width (plate px)", "Window height (plate px)", "Emitter x in window", "Emitter y in window", "Generate width", "Generate height"];
+const CHECK_PHASE = { SAM3_Detect: "Finding the object", EFSaveTrack: "Keeping the track", EFFollowCrop: "Drawing the mask",
+  EFMaskTrack: "Drawing the mask", EFTrackPreview: "Drawing the mask", CreateVideo: "Saving the video", SaveVideo: "Saving the video" };
+function checkPhase(e, ck, phase) {
+  if (phase) ck.phase = phase;
+  const busy = ck.status === "running" && !ck.shown;
+  if (busy) S.setUI({ waitNote: { effect: e.id, text: `Track check · ${ck.phase}` } });
+  else if (S.ui.waitNote?.effect === e.id) S.setUI({ waitNote: null });
+  render();
+}
+function showCheck(e, ck) {
+  if (ck.shown || !ck.url) return;
+  ck.shown = true;
+  if (S.activeEffect()?.id === e.id) { S.setUI({ media: { url: ck.url, label: "Track check", clip: S.getShot().clip?.name, check: true } }); api.show?.("canvas"); }
+  checkPhase(e, ck);
+}
 async function runCheck(e) {
   if (e.adv?.[OWN] && !e.paint?.mask?.length) return;
   const st = P.styleDef(e.kind, e.style);
-  const ck = { key: whereKey(e), status: "running", phase: "Waiting in the queue", url: null, error: null };
+  const ck = { key: whereKey(e), status: "running", phase: "Waiting in the queue", url: null, error: null, shown: false };
   checks.set(e.id, ck);
-  render();
+  checkPhase(e, ck);
   try {
     C.connectSocket();
     const run = `app-check-${new Date().toISOString().replace(/[-:T]/g, "").slice(4, 12)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -321,12 +337,17 @@ async function runCheck(e) {
     if (pending) Object.assign(all, await pending);
     const values = { "Check track only": true };
     for (const k of TRACK_KEYS) if (k in all) values[k] = all[k];
-    const { prompt } = await C.build("check", values, run, null);
+    const { prompt, show } = await C.build("check", values, run, null);
     await C.queue(prompt, {
-      onStart: () => { ck.phase = "Following the object"; render(); },
-      onProgress: (v, m) => { ck.phase = `Following the object · ${Math.round((v / m) * 100)} %`; render(); },
-      onOutput: (node, out) => { const f = [...(out?.images || []), ...(out?.gifs || []), ...(out?.videos || [])][0];
-        if (f && !ck.url) ck.url = `/view?filename=${encodeURIComponent(f.filename)}&subfolder=${encodeURIComponent(f.subfolder || "")}&type=${encodeURIComponent(f.type || "output")}`; },
+      onStart: () => checkPhase(e, ck, "Following the object"),
+      onNode: (node) => { const p = CHECK_PHASE[prompt[node]?.class_type]; if (p && p !== ck.phase) checkPhase(e, ck, p); },
+      onProgress: (v, m, node) => { if (prompt[node]?.class_type !== "SAM3_Detect") checkPhase(e, ck, `Following the object · ${Math.round((v / m) * 100)} %`); },
+      onOutput: (node, out) => {
+        if (show && String(node) !== String(show)) return;
+        const f = [...(out?.images || []), ...(out?.gifs || []), ...(out?.videos || [])][0];
+        if (f && !ck.url) ck.url = `/view?filename=${encodeURIComponent(f.filename)}&subfolder=${encodeURIComponent(f.subfolder || "")}&type=${encodeURIComponent(f.type || "output")}`;
+        showCheck(e, ck);
+      },
       onDone: (r) => {
         ck.status = r.status === "done" && ck.url ? "done" : r.status === "stopped" ? "stopped" : "failed";
         ck.error = r.status === "done" && !ck.url ? "The check finished without a video." : r.error || null;
@@ -336,15 +357,15 @@ async function runCheck(e) {
           if (c) loadKept(c).then(() => api.refreshClips?.());
           if (e.adv?.[OWN] && e.paint?.mask?.length && !e.paint.maskHidden && S.activeEffect()?.id === e.id) editBrush(false);
         }
-        if (ck.status === "done" && S.activeEffect()?.id === e.id) { S.setUI({ media: { url: ck.url, label: "Track check", clip: S.getShot().clip?.name } }); api.show?.("canvas"); }
+        if (ck.status === "done") showCheck(e, ck);
         if (ck.status === "done") refreshLive();
-        render();
+        checkPhase(e, ck);
       },
     });
   } catch (err) {
     ck.status = "failed";
     ck.error = err.message + (err.detail ? ` (${err.detail})` : "");
-    render();
+    checkPhase(e, ck);
   }
 }
 const trackKeys = new Map();
@@ -380,7 +401,7 @@ function checkBlock(e) {
   const kids = [];
   if (fresh && ck.status === "running") kids.push(note("ok", `Tracking… ${ck.phase}`));
   else if (fresh && ck.status === "done") kids.push(note("ok", "Tracked: the canvas shows the mask and the points through the clip. The track is kept, the run takes it."),
-    h("button", { class: "btn ghost small", onclick: () => S.setUI({ media: { url: ck.url, label: "Track check", clip: c?.name } }) }, "Show the track again"));
+    h("button", { class: "btn ghost small", onclick: () => S.setUI({ media: { url: ck.url, label: "Track check", clip: c?.name, check: true } }) }, "Show the track again"));
   else if (fresh && ck.status !== "done") kids.push(note("err", ck.error || "The track was stopped."));
   else if (keptHere) kids.push(note("ok", "This place has a kept track: the run takes it and does not track again."));
   if (!fresh || ck.status !== "running") {
@@ -877,7 +898,10 @@ function emitterCtx(e, st) {
   const ls = S.ui.liveSim, c = S.getShot().clip;
   const hd = ls && ls.effect === e.id && ls.clip === c?.name ? ls.data?.header : null;
   const kind = emitterKind(st);
-  return { e, st, kind, f: fx(), api, own: ownValues(fx()), P: hd?.params || null, B: hd?.base || null, amount: hd?.amount ?? 1,
+  const own = ownValues(fx());
+  const back = Object.fromEntries(Object.entries(hd?.base || {}).filter(([k]) => k !== "direction" && !(k in own)));
+  return { e, st, kind, f: fx(), api, own, P: hd?.params ? { ...hd.params, ...back, ...own } : null, B: hd?.base || null, amount: hd?.amount ?? 1,
+    fresh: !!hd && ls.status === "ready", busy: !!hd && ls.status === "running" && !ls.lookOnly,
     ui: { seg, toggle, group, note, link, open: setOpen },
     extras: { seed: () => particleSeed(e), preroll: () => (kind === "particles" ? prerollRows(hd) : []) } };
 }
@@ -898,6 +922,12 @@ const setOutput = (fn) => S.change((sh) => { sh.output = { ...outputOf(sh) }; sh
 function outputBody() {
   const e = effect(), st = style(), f = fx();
   const kids = [];
+  if (!st) {
+    kids.push(h("p", { class: "muted small" }, "Choose an effect in Effect for a run. Without one, Export gives the clip alone: its passes, NVIDIA × 2 or HDR."));
+    kids.push(group("export", "Export", () => exportRows({ h, seg, toggle, note, link, render, say: (t) => api.say(t) }),
+      { open: true, preview: "the clip alone, with its passes" }));
+    return kids;
+  }
   const o = outputOf(S.getShot());
   const gen = st?.cost === "gen";
   const preview = o.quality === "preview" && canPreview(st, e);
@@ -946,7 +976,8 @@ function outputBody() {
   kids.push(...versionRows({ h, link, note, fx, setFx: (k, v) => api.setFx(k, v), chooseStyle, render,
     say: (t, err) => (err ? api.say(t) : (api.info || api.say)(t)) }));
   if (e && st) kids.push(group("export", "Export", () => exportRows({ h, seg, toggle, note, link, render, say: (t) => api.say(t) }),
-    { open: S.getShot().effects.some((y) => S.shownOf(y.id)?.status === "done"), preview: "the comp as you see it, at full size" }));
+    { open: S.getShot().effects.some((y) => S.shownOf(y.id)?.status === "done"),
+      preview: S.getShot().effects.some((y) => S.shownOf(y.id)?.status === "done") ? "the comp as you see it, at full size" : "the clip alone, with its passes" }));
   if (lastResult) kids.push(note("ok", `Last run: ${lastResult.label}`));
   const d = api.docked?.(), made = S.getShot().effects.some((y) => S.shownOf(y.id)?.status === "done");
   if (d && (made || d !== "canvas")) kids.push(h("button", { class: "btn small", onclick: () => api.show(d === "canvas" ? "result" : "canvas") },

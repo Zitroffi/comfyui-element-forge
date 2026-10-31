@@ -1,8 +1,9 @@
 import * as S from "./state.js";
 import * as C from "./comfy.js";
 import { styleDef, effectDef } from "./presets.js";
-import { uid } from "./lib.js";
-import { frameBox, genWindow, usesGuide, inWindow } from "./run.js";
+import { uid, postJSON } from "./lib.js";
+import { frameBox, genWindow, usesGuide, inWindow, efaValues } from "./run.js";
+import { ltxForBuild } from "./machine.js";
 
 export const LEVELS = ["Off", "Low", "Medium", "High"];
 const LIGHT = [0, 0.5, 1, 1.6];
@@ -142,24 +143,33 @@ export const onExport = (fn) => (notify = fn);
 export const runningExport = () => exports_.find((x) => x.status === "running") || null;
 
 export const EXPORT_FILES = { mp4: "comp.mp4", prores: "comp.mov", h265: "comp_h265.mp4", png8: "comp_#####.png", png16: "comp_#####.png", exr: "comp_#####.exr" };
-export async function exportShot(kind, { name = "", exr = false, layers: withLayers = false, range = null, hdr = false } = {}) {
+export async function exportShot(kind, { name = "", exr = false, passes = [], range = null, hdr = false, hdrOn = "comp", upscale = "off" } = {}) {
   const shot = S.getShot();
   const fps = shot.clip.fps;
   const layers = shot.effects.map((e) => ({ e, v: S.shownOf(e.id) })).filter((x) => x.v?.status === "done")
     .map(({ e, v }) => ({ run_folder: runFolder(v), settings: postSettings(e), ...timingFrames(e, fps), keys: keysFrames(e, fps),
       name: effectDef(e.kind)?.name || e.kind || "effect" }));
-  if (!layers.length) throw new Error("Make at least one effect first.");
   const stamp = new Date().toISOString().replace(/[-:T]/g, "").slice(4, 12);
   const safe = (name || shot.clip.name.replace(/\.[^.]+$/, "")).replace(/[^A-Za-z0-9_-]+/g, "_").slice(0, 40) || "shot";
   const out = `element-forge/app-export-${safe}-${stamp}-${uid().slice(0, 3)}`;
   const format = kind;
-  const graph = { "1": { class_type: "EFFinishStack", inputs: { layers: JSON.stringify(layers), common: JSON.stringify(commonSettings()), out_folder: out,
-    write_exr: exr, fps: 0, chunk: 8, write_layers: withLayers, comp_name: safe.replaceAll("_", " "),
-    format, frame_start: range?.[0] ?? 0, frame_end: range?.[1] ?? -1, hdr: !!hdr && format === "h265" } } };
-  const job = { id: uid(), kind, status: "running", started: Date.now(), out, error: null, value: 0, max: 0, file: EXPORT_FILES[format], layers: withLayers, hdr: !!hdr };
+  const opts = { format, frame_start: range?.[0] ?? 0, frame_end: range?.[1] ?? -1, hdr: !!hdr && format === "h265",
+    hdr_on: hdrOn === "plate" ? "plate" : "comp", upscale: ["plate", "comp"].includes(upscale) ? upscale : "off" };
+  const job = { id: uid(), kind, status: "running", started: Date.now(), out, error: null, value: 0, max: 0, file: EXPORT_FILES[format],
+    layers: passes.length > 0, hdr: !!hdr, clipOnly: !layers.length };
   exports_.push(job);
   notify();
   try {
+    let graph;
+    if (layers.length) {
+      graph = { "1": { class_type: "EFFinishStack", inputs: { layers: JSON.stringify(layers), common: JSON.stringify(commonSettings()), out_folder: out,
+        write_exr: exr, fps: 0, chunk: 8, passes: passes.join(","), comp_name: safe.replaceAll("_", " "), ...opts } } };
+    } else {
+      const { values, pending } = efaValues(shot);
+      if (pending) Object.assign(values, await pending);
+      ({ prompt: graph } = await postJSON("/element-forge/api/export/build", { values, ltx: ltxForBuild(),
+        export: { out, exr, passes, name: safe.replaceAll("_", " "), common: commonSettings(), ...opts } }));
+    }
     C.connectSocket();
     job.promptId = await C.queue(graph, {
       onProgress: (val, max) => { job.value = val; job.max = max; notify(); },

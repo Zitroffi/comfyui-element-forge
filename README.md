@@ -18,7 +18,7 @@
 
 Add fire, lightning, smoke and particles to your own footage in ComfyUI. Track effects through your shot, adjust their light and colour, and export the result or separate EXR passes.
 
-Use the app for a guided workflow, or connect the nodes in your own graph. AI effects are generated locally with **LTX-2.5**; selected particle styles run without AI generation.
+Use the app for a guided workflow, or connect the nodes in your own graph. AI effects are generated locally with **LTX-2.5**; particle styles also run without AI, as a live simulation that reacts to the scene.
 
 https://github.com/user-attachments/assets/468b014c-f544-41fe-b26f-fd6da37d78a3
 
@@ -80,7 +80,7 @@ The app guides you through five steps:
 
 - **What it follows**<br>Click where the effect belongs. It follows that **point**, the whole **object**, the **scene** while the camera moves, or stays fixed on **screen**.
 - **Two points**<br>Shift-click a second point for effects that connect two positions, such as lightning or energy.
-- **Track check**<br>An object word helps find what to follow. The track check shows the path before you generate.
+- **Track check**<br>An object word helps find what to follow. The track check shows the path and the object's mask before you generate.
 - **Masks**<br>Hide an effect behind the selected object with its mask, or keep the base of an effect on its tracked point.
 
 </details>
@@ -104,7 +104,7 @@ The app guides you through five steps:
 - **Part of the scene**<br>The clip's depth hides particles behind nearer objects and lets them bounce, stick, slide or die on surfaces. The object's mask and track carry the emitter; the clip's motion and the camera move them along.
 - **Three uses**<br>Keep the simulation as the finished effect, let it guide LTX-2.5, or draw it over the AI element.
 - **Guides for the AI**<br>Besides the particles, the AI can follow the object's shape or a path you paint on the canvas.
-- **Out of the box**<br>Every particle style starts from tested values. Changed values are marked and go back one by one.
+- **Out of the box**<br>Every particle style starts from tested values, marked on each slider. Changed values are highlighted and go back one by one.
 - **Keep it**<br>**Save as my effect** stores the emitter values for every clip. See [Make your own effects](#make-your-own-effects).
 
 </details>

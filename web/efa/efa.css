@@ -6,6 +6,7 @@
   --cost-live: #4cc38a; --cost-calc: #6aa8ff; --cost-gen: #f0a43a;
   --radius: 8px; --radius-s: 5px; --side-w: 348px; --top-h: 46px; --tl-h: 150px;
   --shadow: 0 6px 24px rgba(0, 0, 0, .35);
+  --on-bg: color-mix(in srgb, var(--accent) 20%, transparent); --on-line: color-mix(in srgb, var(--accent) 75%, transparent); --on-text: var(--accent);
   color-scheme: dark;
   font: 13px/1.45 Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
 }
@@ -14,6 +15,7 @@
   --text: #17181b; --text-2: #4a4d55; --text-3: #686c75;
   --accent: #e8b52c; --accent-text: #1b1606; --focus: #2f6fdb; --select: #2f6fdb;
   --shadow: 0 6px 24px rgba(0, 0, 0, .12);
+  --on-bg: color-mix(in srgb, var(--accent) 30%, transparent); --on-line: #c99a12; --on-text: var(--text);
   color-scheme: light;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -34,14 +36,16 @@
 .efa-root .spacer { flex: 1; }
 .efa-root .seg { display: inline-flex; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 2px; }
 .efa-root .seg button { border: 0; background: none; padding: 4px 12px; border-radius: 999px; color: var(--text-2); }
-.efa-root .seg button[aria-pressed="true"] { background: var(--raise); color: var(--text); box-shadow: inset 0 0 0 1px var(--line-2); }
-.efa-root.mode-adv .seg button[data-mode="advanced"][aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--select); }
+.efa-root .seg button[aria-pressed="true"] { background: var(--on-bg); color: var(--text); box-shadow: inset 0 0 0 1px var(--on-line); }
+.efa-root.mode-adv .seg button[data-mode="advanced"][aria-pressed="true"] { background: color-mix(in srgb, var(--select) 22%, transparent); box-shadow: inset 0 0 0 1px var(--select); }
 .efa-root .seg button[data-mode][aria-pressed="true"] { font-weight: 650; }
 .efa-root .icon-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 32px; height: 32px;
   padding: 0 8px; border-radius: var(--radius-s); border: 1px solid transparent; background: none; color: var(--text-2); }
 .efa-root .icon-btn:hover:not(:disabled) { background: var(--raise); color: var(--text); }
 .efa-root .icon-btn:disabled { opacity: .35; cursor: default; }
 .efa-root .icon-btn svg { width: 17px; height: 17px; }
+.efa-root .icon-btn[aria-pressed="true"]:not(.tiny), .efa-root .icon-btn[aria-pressed="true"]:not(.tiny):hover:not(:disabled) {
+  background: var(--on-bg); color: var(--on-text); box-shadow: inset 0 0 0 1px var(--on-line); }
 .efa-root .close-btn:hover { background: color-mix(in srgb, var(--err) 22%, transparent) !important; }
 .efa-root .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 34px; padding: 0 14px;
   border-radius: var(--radius-s); border: 1px solid var(--line-2); background: var(--raise); color: var(--text); }
@@ -80,6 +84,8 @@
 .efa-root .label { font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
 .efa-root .lead { margin: 0; color: var(--text); }
 .efa-root .field { display: grid; gap: 0; }
+.efa-root .field.stack { gap: 12px; }
+.efa-root .field.stack > .label { margin-bottom: 0; }
 .efa-root .text { width: 100%; height: 32px; padding: 0 10px; border-radius: var(--radius-s); border: 1px solid var(--line-2); background: var(--panel-2); }
 .efa-root .text.area { height: auto; padding: 8px 10px; resize: vertical; line-height: 1.45; }
 .efa-root .text:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 1px var(--focus); }
@@ -157,7 +163,7 @@
 .efa-root .clip-row { display: flex; gap: 10px; align-items: center; min-width: 0; }
 .efa-root .clip-thumb { height: 48px; max-width: 86px; border-radius: 4px; object-fit: cover; background: var(--raise); flex: none; }
 .efa-root .clip-info { display: grid; gap: 2px; min-width: 0; font-size: 12px; }
-.efa-root .clip-list { display: grid; gap: 2px; max-height: 210px; overflow-y: auto; margin-top: -6px; }
+.efa-root .clip-list { display: grid; gap: 2px; max-height: 210px; overflow-y: auto; margin-top: -6px; scrollbar-gutter: stable; }
 .efa-root .clip-item { display: flex; justify-content: space-between; gap: 10px; padding: 6px 8px; border: 0; background: none; border-radius: var(--radius-s); text-align: left; font-size: 12px; min-width: 0; }
 .efa-root .clip-item:hover { background: var(--raise); }
 .efa-root .clip-item.on { background: var(--raise); box-shadow: inset 2px 0 0 var(--accent); }
@@ -259,7 +265,7 @@
 .efa-root .tool { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: 0; border-radius: 6px; background: none; color: var(--text-2); font-size: 12px; }
 .efa-root .tool svg { width: 16px; height: 16px; }
 .efa-root .tool:hover { background: var(--raise); color: var(--text); }
-.efa-root .tool.on { background: var(--raise); color: var(--text); box-shadow: inset 0 0 0 1px var(--select); }
+.efa-root .tool.on { background: color-mix(in srgb, var(--select) 22%, transparent); color: var(--text); box-shadow: inset 0 0 0 1px var(--select); }
 .efa-root .zoombar { position: absolute; top: 10px; right: 10px; display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: var(--radius);
   background: color-mix(in srgb, var(--panel) 92%, transparent); border: 1px solid var(--line); box-shadow: var(--shadow); }
 .efa-root .zoom-btn { border: 0; background: none; min-width: 52px; height: 30px; border-radius: 6px; font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
@@ -288,7 +294,7 @@
 .efa-root .ver-actions .btn.small { height: 24px; padding: 0 8px; }
 .efa-root .ver-actions .ver { min-width: 24px; height: 24px; }
 .efa-root .efa-timeline { --tl-label: 168px; display: flex; flex-direction: column; overflow: hidden; }
-.efa-root .tl-grid { position: relative; flex: 1; display: grid; grid-template-columns: var(--tl-label) 1fr; grid-auto-rows: min-content; overflow-y: auto; overflow-x: hidden; padding-right: 14px; }
+.efa-root .tl-grid { position: relative; flex: 1; display: grid; grid-template-columns: var(--tl-label) 1fr; grid-auto-rows: min-content; overflow-y: auto; overflow-x: hidden; padding-right: 14px; scrollbar-gutter: stable; }
 .efa-root .tl-ctrl { display: grid; gap: 4px; align-content: center; padding: 6px 10px; border-right: 1px solid var(--line); }
 .efa-root .tl-ctrl .icon-btn { min-width: 28px; height: 28px; padding: 0 4px; }
 .efa-root .tl-time { font-size: 11.5px; color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -308,7 +314,7 @@
 .efa-root .tl-row.tl-keys .tl-label { font-size: 11px; padding-left: 22px; display: flex; align-items: center; gap: 5px; cursor: pointer; }
 .efa-root .tl-anim .dia { color: var(--text-3); font-size: 11px; }
 .efa-root .tl-anim.on { color: var(--text); }
-.efa-root .tl-anim.on .dia, .efa-root .tl-label .dia { color: var(--accent); }
+.efa-root .tl-anim.on .dia, .efa-root .tl-label:not(.tl-anim) .dia { color: var(--accent); }
 .efa-root .tl-row.tl-keys .tl-lane { background: color-mix(in srgb, var(--panel-2) 60%, transparent); border-top: 1px solid var(--line); cursor: pointer; }
 .efa-root .tl-key { position: absolute; top: 50%; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; transform: rotate(45deg); background: var(--text-2);
   border: 1.5px solid var(--panel); cursor: grab; z-index: 1; }
@@ -390,11 +396,26 @@
   padding: 6px 12px; border-radius: var(--radius-s); background: var(--panel-2); border: 1px solid var(--line-2); box-shadow: var(--shadow); }
 .efa-root .efa-banner.show { display: block; }
 .efa-root .efa-banner.err { border-color: var(--err); white-space: pre-line; text-align: left; }
-.efa-root .plate.sim { background: transparent; box-shadow: none; pointer-events: none; }
-.efa-root .tl-cache { position: absolute; left: 0; bottom: 1px; height: 3px; border-radius: 2px; background: #3ecf6e; pointer-events: none; opacity: .9; }
-.efa-root .tl-cache.busy { background: repeating-linear-gradient(90deg, #3ecf6e55 0 6px, transparent 6px 12px); animation: efa-cache 1s linear infinite; background-size: 24px 3px; }
+.efa-root .plate.sim { background: transparent; box-shadow: none; pointer-events: none; transition: opacity .12s; }
+.efa-root .plate.sim.stale { opacity: .4; transition: opacity .15s .2s; }
+.efa-root .stage-notes { position: absolute; left: 12px; bottom: 12px; z-index: 3; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  max-width: calc(100% - 24px); pointer-events: none; }
+.efa-root .view-note { display: flex; align-items: center; gap: 10px; padding: 4px 4px 4px 12px; border-radius: 999px; pointer-events: auto;
+  background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); box-shadow: var(--shadow);
+  color: var(--text); font-size: 12px; font-weight: 500; }
+.efa-root .view-note[hidden] { display: none; }
+.efa-root .view-note .btn { border-radius: 999px; }
+.efa-root .sim-badge { display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+  border-radius: 999px; background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); box-shadow: var(--shadow);
+  color: var(--text); font-size: 12px; font-weight: 500; pointer-events: none; }
+.efa-root .sim-badge[hidden] { display: none; }
+.efa-root .sim-badge:not([hidden]) { animation: efa-badge-in .15s .2s both; }
+@keyframes efa-badge-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.efa-root .tl-cache { position: absolute; left: 0; bottom: 0; height: 5px; border-radius: 3px; background: #3ecf6e; pointer-events: none; }
+.efa-root .tl-cache.busy { background: repeating-linear-gradient(90deg, #3ecf6e 0 8px, #3ecf6e40 8px 16px); animation: efa-cache .8s linear infinite;
+  background-size: 32px 5px; box-shadow: 0 0 6px #3ecf6e80; }
 .efa-root .tl-cache.failed { background: var(--err, #e5484d); }
-@keyframes efa-cache { to { background-position: 24px 0; } }
+@keyframes efa-cache { to { background-position: 32px 0; } }
 .efa-root .tl-preroll { position: absolute; top: 4px; bottom: 4px; width: 7px; margin-left: -7px; border-radius: 3px 0 0 3px; pointer-events: none; z-index: 2;
   background: repeating-linear-gradient(135deg, #3ecf6e 0 2px, transparent 2px 4px); }
 .efa-root .tl-pre-name { opacity: .75; font-weight: 400; }

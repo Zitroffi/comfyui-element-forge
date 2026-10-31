@@ -734,6 +734,32 @@ def analysis_graph(values, ltx=None):
     return graph, graph["analysis_keep"]["inputs"]["clip"]
 
 
+def export_graph(values, export, ltx=None):
+    want = {str(p) for p in export.get("passes") or []} & {"plate", "depth", "normals", "mask"}
+    common = export.get("common") or {}
+    blur = float((common.get("dof") or {}).get("amount", 0) or 0) > 0
+    if "mask" in want and not (isinstance(values.get(WHERE["a"][0]), (int, float)) and values[WHERE["a"][0]] >= 0):
+        raise ValueError("the object's mask needs a point: click the object in Position first")
+    b = isinstance(values.get(WHERE["b"][0]), (int, float)) and values[WHERE["b"][0]] >= 0
+
+    def edit(g):
+        inp = {"layers": "[]", "common": json.dumps(common), "out_folder": str(export["out"]), "write_exr": bool(export.get("exr")),
+               "fps": ["167", 2], "chunk": 8, "comp_name": str(export.get("name") or "Element Forge shot"),
+               "format": str(export.get("format") or "mp4"), "frame_start": int(export.get("frame_start") or 0),
+               "frame_end": int(export.get("frame_end", -1)), "hdr": bool(export.get("hdr")), "passes": ",".join(sorted(want)),
+               "upscale": "plate" if export.get("upscale") in ("plate", "comp") else "off", "hdr_on": "comp", "plate": ["167", 0]}
+        if "depth" in want or blur:
+            inp["depth"] = [KEPT_DEPTH, 0]
+        if "normals" in want:
+            inp["normals"] = [KEPT_NORMALS, 0]
+        if "mask" in want:
+            inp["mask"] = [KEPT_MASK, 0]
+            if b:
+                inp["mask_b"] = [KEPT_MASK_B, 0]
+        g["clip_export"] = {"class_type": "EFFinishStack", "inputs": inp, "_meta": {"title": "Export the clip"}}
+    return upstream(build_graph("check", values, "export", ltx=ltx, edit=edit), ["clip_export"])
+
+
 def without_clip(graph, clip_id):
     for nd in graph.values():
         for k, v in list(nd["inputs"].items()):
@@ -882,7 +908,14 @@ async def ef_build(request):
         variant, values, run, edit, recipe, extra = app_job(body, out_dir)
         if variant == "check" and values.get("Check track only"):
             settings = _load_json("element_forge.settings.json")["settings"]
-            edit = (lambda e: lambda g: (e(g) if e else None, keep_track(g, settings)))(edit)
+
+            def check_edit(g, e=edit):
+                if e:
+                    e(g)
+                keep_track(g, settings)
+                g.pop(VIDEO_SAVES[0], None)
+            edit = check_edit
+            extra = {**extra, "show": VIDEO_SAVES[1]}
         graph = build_graph(variant, values, run, body.get("ltx"), edit)
     except ValueError as e:
         return web.json_response({"error": str(e)}, status=400)
@@ -924,6 +957,23 @@ async def ef_analysis_build(request):
     except ValueError as e:
         return web.json_response({"error": str(e)}, status=400)
     return web.json_response({"prompt": graph, "clip": name})
+
+
+@routes.post("/element-forge/api/export/build")
+async def ef_export_build(request):
+    body = await request.json()
+    values = dict(body.get("values") or {})
+    export = dict(body.get("export") or {})
+    still, clip = values.get(STILL_IMAGE), values.get("Clip")
+    if still and not _clip_path(still, stills=True) or not still and (not clip or not _clip_path(clip)):
+        return web.json_response({"error": "the clip is not in ComfyUI's input folder"}, status=400)
+    if not str(export.get("out") or "").startswith("element-forge/") or ".." in str(export.get("out")):
+        return web.json_response({"error": "bad export folder"}, status=400)
+    try:
+        graph = export_graph(values, export, body.get("ltx"))
+    except ValueError as e:
+        return web.json_response({"error": str(e)}, status=400)
+    return web.json_response({"prompt": graph})
 
 
 FIRST_MASK, FIRST_MASK_B = "187", "202"

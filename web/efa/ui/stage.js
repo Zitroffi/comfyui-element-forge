@@ -1005,6 +1005,12 @@ function loadClip() {
   const wasClip = isPlate(currentClip) && isPlate(url) && currentClip !== url;
   currentClip = url;
   video.src = url;
+  mediaLoading = S.ui.media ? url : null;
+  if (mediaLoading) {
+    const done = () => { if (mediaLoading !== url) return; mediaLoading = null; syncStatus(); };
+    video.addEventListener("loadeddata", done, { once: true });
+    video.addEventListener("error", done, { once: true });
+  }
   video.addEventListener("loadedmetadata", () => { if (t && !wasClip) video.currentTime = Math.min(t, video.duration || t); }, { once: true });
   if (!S.ui.media) video.addEventListener("loadeddata", groundAfterLoad, { once: true });
   if (wasClip || !view.s) requestAnimationFrame(fit);
@@ -1054,7 +1060,16 @@ export const isFrozen = () => frozen;
 
 let sim = null;
 let simRaf = 0;
+let simBadge = null;
+let simBadgeText = null;
+let viewNote = null;
+let mediaLoading = null;
 export const simShown = () => !!sim && !sim.canvas.hidden;
+export function previewSimLook(patch) {
+  if (!sim?.look || sim.canvas.hidden) return;
+  sim.r.setLook({ ...sim.look, ...patch });
+  if (!simRaf) simRaf = requestAnimationFrame(simTick);
+}
 const shapeCache = new WeakMap();
 function shapeFrame(m, i) {
   let per = shapeCache.get(m);
@@ -1082,9 +1097,23 @@ function motionOn(e) {
   const m = S.ui.liveMotion, c = clip();
   return !!(e && c && m?.data?.emit?.length && m.effect === e.id && m.clip === c.name && (S.ui.step === "effect" || S.ui.step === "where") && !S.ui.media);
 }
+function syncStatus(simBusy = false) {
+  if (!simBadge) return;
+  const w = S.ui.waitNote, e = eff();
+  const loading = mediaLoading || (live && !live.ready);
+  const text = (w && w.effect === e?.id && w.text) || (loading && S.ui.media && `Loading the ${(S.ui.media.label || "result").toLowerCase()}…`)
+    || (simBusy && "Updating the particles…") || "";
+  simBadge.hidden = !text;
+  if (text && simBadgeText.textContent !== text) simBadgeText.textContent = text;
+}
 function syncSim() {
   const L = S.ui.liveSim, c = clip();
-  const show = !!(L?.data && c && L.clip === c.name && L.effect === eff()?.id && !S.ui.media && !frozen);
+  const mine = !!(L && c && L.clip === c.name && L.effect === eff()?.id && !S.ui.media && !frozen);
+  const busy = mine && L.status === "running" && !L.lookOnly;
+  syncStatus(busy);
+  if (viewNote) viewNote.hidden = !(L?.data && c && L.clip === c.name && L.effect === eff()?.id && S.ui.media && S.ui.step === "effect" && !frozen);
+  const show = mine && !!L.data;
+  if (sim) sim.canvas.classList.toggle("stale", show && busy);
   if (!show) { if (sim) sim.canvas.hidden = true; return; }
   if (!sim) {
     const canvas = h("canvas", { class: "plate sim", "aria-label": "Particles, live" });
@@ -1128,6 +1157,10 @@ export function mountStage(el) {
     h("button", { class: "icon-btn", title: "Zoom in (Alt+=, mouse wheel as in ComfyUI)", "aria-label": "Zoom in", onclick: () => zoomBy(1.25) }, icon("zoomIn")),
     h("button", { class: "icon-btn", title: "Fit (., double-click)", "aria-label": "Fit to the window", onclick: fit }, icon("fit")));
   hint = h("div", { class: "stage-hint", role: "status", hidden: true });
+  simBadgeText = h("span", {}, "Updating the particles…");
+  simBadge = h("div", { class: "sim-badge", role: "status", hidden: true }, h("span", { class: "spinner", "aria-hidden": "true" }), simBadgeText);
+  viewNote = h("div", { class: "view-note", hidden: true }, h("span", {}, "This view hides the particles"),
+    h("button", { class: "btn small", onclick: () => S.setUI({ media: null, compare: false, pass: null }) }, "Back to the clip"));
   viewSwitch = h("div", { class: "seg view-switch", role: "group", "aria-label": "Show", hidden: true });
   wipeTags = [h("span", { class: "wipe-tag l" }, "Before"), h("span", { class: "wipe-tag r" }, "After")];
   wipeEl = h("div", { class: "wipe", hidden: true, title: "Drag: before | after (a click into the picture puts the line there)", role: "slider", tabindex: "0",
@@ -1151,7 +1184,7 @@ export function mountStage(el) {
     live.renderer.setWipe(clamp(live.renderer.wipe + (ev.key === "ArrowLeft" ? -0.02 : 0.02), 0, 1));
     apply();
   });
-  root.append(viewport, overlay, wipeEl, toolbar, zoombar, hint, viewSwitch);
+  root.append(viewport, overlay, wipeEl, toolbar, zoombar, hint, h("div", { class: "stage-notes" }, simBadge, viewNote), viewSwitch);
   root.addEventListener("pointerdown", onDown);
   root.addEventListener("pointermove", onMove);
   root.addEventListener("pointerup", onUp);
@@ -1194,6 +1227,7 @@ function renderViewSwitch() {
   const v = e && S.shownOf(e.id);
   const made = v?.comp ? { url: v.comp, live: v.preview && !liveFailed.has(v.preview) ? v.preview : null, label: "Result" } : null;
   if (made && S.ui.media?.url === made.url && !S.ui.media.live && made.live) S.ui.media = made;
+  if (lookFrom && lookFrom !== S.ui.step && S.ui.media) Object.assign(S.ui, { media: null, compare: false, pass: null });
   if ((S.ui.step === "look" || S.ui.step === "export") && lookFrom !== S.ui.step && !S.ui.media && made) S.ui.media = made;
   lookFrom = S.ui.step;
   const ana = S.ui.media?.analysis;

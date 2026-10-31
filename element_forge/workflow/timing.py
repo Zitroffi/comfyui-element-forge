@@ -115,16 +115,24 @@ class EFTrackPreview:
 
     def draw(self, plate, track, track_b=None, window=None, mask=None):
         import cv2
-        pl = _np(plate)[..., :3].astype(np.float32)
-        n, h, w = pl.shape[:3]
-        out = pl.copy()
+        out = _np(plate)[..., :3].astype(np.float32)
+        n, h, w = out.shape[:3]
         if mask is not None:
-            m = _np(mask).reshape(-1, *_np(mask).shape[-2:]).astype(np.float32)
+            m = _np(mask)
+            m = m.reshape(-1, *m.shape[-2:])
+            tint = np.array([0.2, 0.6, 1.0], np.float32)
             for i in range(n):
-                mi = m[min(i, len(m) - 1)]
+                mi = m[min(i, len(m) - 1)].astype(np.float32, copy=False)
                 if mi.shape != (h, w):
                     mi = cv2.resize(mi, (w, h), interpolation=cv2.INTER_LINEAR)
-                out[i] = out[i] * (1 - 0.35 * mi[..., None]) + np.array([0.2, 0.6, 1.0], np.float32) * 0.35 * mi[..., None]
+                rows, cols = np.flatnonzero(mi.max(1) > 0), np.flatnonzero(mi.max(0) > 0)
+                if not len(rows):
+                    continue
+                y0, y1, x0, x1 = rows[0], rows[-1] + 1, cols[0], cols[-1] + 1
+                a = 0.35 * mi[y0:y1, x0:x1, None]
+                o = out[i, y0:y1, x0:x1]
+                o *= 1 - a
+                o += tint * a
         notes = []
         edge = 0
         lw = max(2, int(round(min(h, w) / 360)))
@@ -156,7 +164,7 @@ class EFTrackPreview:
             if edge:
                 notes.append(f"window touches the border of the plate in {edge} of {n} frames (red box): the effect may be cut there")
         rep = "; ".join(notes) if notes else "track drawn; window inside the plate"
-        return (torch.from_numpy(np.clip(out, 0, 1)), rep)
+        return (torch.from_numpy(np.clip(out, 0, 1, out=out)), rep)
 
 
 class EFVideoLatentMask:

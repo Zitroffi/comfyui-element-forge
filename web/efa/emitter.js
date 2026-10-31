@@ -1,5 +1,6 @@
 import { h, fmtSec } from "./ui/lib.js";
 import * as S from "./ui/state.js";
+import { previewSimLook } from "./ui/stage.js";
 
 export const FOLLOW_STRENGTH = "Follows motion: strength";
 export const FOLLOW_LAG = "Follows motion: lag";
@@ -50,6 +51,7 @@ const r = (v, d = 2) => (v == null || Number.isNaN(+v) ? "" : String(+(+v).toFix
 const hex = (c) => "#" + c.map((x) => Math.round(Math.min(1, Math.max(0, x)) * 255).toString(16).padStart(2, "0")).join("");
 const rgb = (s) => [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16) / 255);
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const DRAWN = new Set(["glow", "trail", "opacity", "shutter", "blob", "blob_choke", "blob_soft", "blob_fill", "blob_life", "color_var"]);
 
 const key = (k, label, min, max, step, o = {}) => ({ k, label, min, max, step, ...o });
 const PARTICLES = {
@@ -191,18 +193,21 @@ function numRow(ctx, c) {
   const lo = Math.min(c.min, cur, base), hi = Math.max(c.max, cur, base);
   const num = h("input", { class: "text em-num", type: "number", step: String(c.step), value: r(cur, 3), "aria-label": c.label,
     onchange: (ev) => { const v = +ev.target.value; if (Number.isFinite(v)) set(c.int ? Math.round(v) : v); } });
+  const at = hi > lo ? Math.min(1, Math.max(0, (base - lo) / (hi - lo))) : 0;
+  const tick = h("span", { class: "em-tick", title: `The style's value: ${r(base, 3)}`, style: { left: `calc(${at.toFixed(4)} * (100% - 14px) + 6px)` } });
+  const drawn = DRAWN.has(c.k2 || c.k) && !c.put;
   const range = h("input", { type: "range", min: String(lo), max: String(hi), step: String(c.step), value: String(cur), "aria-label": c.label,
-    oninput: (ev) => { num.value = r(+ev.target.value, 3); },
+    oninput: (ev) => { num.value = r(+ev.target.value, 3); if (drawn) previewSimLook({ [c.k]: +ev.target.value }); },
     onchange: (ev) => set(c.int ? Math.round(+ev.target.value) : +ev.target.value) });
   return h("div", { class: "em-row" + (changed ? " changed" : ""), "data-key": c.k },
     h("span", { class: "em-label", title: c.tip || null }, c.label, c.unit ? h("span", { class: "muted" }, ` ${c.unit}`) : null),
-    range, num,
+    h("span", { class: "em-slider" }, range, tick), num,
     changed ? h("button", { class: "em-reset", title: `Back to the style's value (${r(base, 3)})`, "aria-label": `Reset ${c.label}`, onclick: reset }, "×")
       : h("span", { class: "em-base", title: "The style's value" }, ""));
 }
 function choiceRow(ctx, k, label, options, tip) {
   const cur = ctx.P[k], changed = k in ctx.own && ctx.P[k] !== ctx.B[k];
-  return h("div", { class: "em-row choice" + (changed ? " changed" : ""), "data-key": k },
+  return h("div", { class: "em-row choice wide" + (changed ? " changed" : ""), "data-key": k },
     h("span", { class: "em-label", title: tip || null }, label),
     ctx.ui.seg(label, options, cur, (v) => setOwn(ctx, k, v === ctx.B[k] ? undefined : v)),
     changed ? h("button", { class: "em-reset", title: `Back to the style's value (${ctx.B[k]})`, onclick: () => setOwn(ctx, k, undefined) }, "×") : h("span", {}));
@@ -275,14 +280,28 @@ function advNum(ctx, name, label, min, max, step, dflt, tip) {
 }
 
 const rows = (ctx, list) => list.filter((c) => !c.show || c.show(ctx.P)).map((c) => numRow(ctx, c));
-function box(ctx, key_, title, main, more, explain) {
+const rowName = (x) => x?.querySelector?.(".em-label")?.firstChild?.textContent || x?.querySelector?.(".toggle span:last-child")?.textContent || "";
+function box(ctx, key_, title, main, more, explain, summary = "") {
   const n = [...main, ...more].filter((x) => x?.classList?.contains("changed")).length;
+  const names = more.map(rowName).filter(Boolean);
   return ctx.ui.group(`em-${key_}`, title, () => [
     explain ? h("p", { class: "muted small" }, explain) : null,
     ...main,
-    more.length ? ctx.ui.group(`em-${key_}-more`, "more", () => more) : null,
-  ], { hint: n ? `${n} changed` : "" });
+    more.length ? ctx.ui.group(`em-${key_}-more`, `More ${title.replace(/ \(.*\)$/, "").toLowerCase()} settings (${more.length})`, () => more,
+      { preview: names.join(" · "), badge: more.filter((x) => x?.classList?.contains("changed")).length ? "changed" : "", cls: "em-more" }) : null,
+  ], { hint: summary, badge: n ? `${n} changed` : "", cls: "em-group" });
 }
+const num_ = (v, d = 2) => (v == null || Number.isNaN(+v) ? "–" : String(+(+v).toFixed(d)).replace(/^-/, "−"));
+const nonzero = (pairs) => pairs.filter(([, v]) => Math.abs(+v || 0) > 1e-9).map(([t, v, u = ""]) => `${t} ${num_(v)}${u}`);
+function timeSpan(ctx) {
+  const t = ctx.e.timing, c = S.getShot().clip, end = t.end ?? c?.seconds;
+  return `${fmtSec(t.start || 0)}–${end != null ? fmtSec(end) : "end"}`;
+}
+function seedText(ctx) {
+  const v = ctx.f?.particle_seed;
+  return `seed ${Number.isFinite(+v) && v !== "" ? +v : 42}`;
+}
+const pname = (list, v) => list.find(([k]) => k === v)?.[1] || v;
 function timing(ctx) {
   const t = ctx.e.timing, c = S.getShot().clip;
   const end = t.end ?? c?.seconds;
@@ -294,7 +313,7 @@ function guideRows(ctx) {
   if (!guideStyle(st)) return [];
   const cur = guideNow(st, e), dflt = st.settings?.[AI_GUIDE] || "none";
   const set = (v) => ctx.api.setFx("guide", v === dflt ? "style default" : v);
-  const out = [h("div", { class: "em-row choice" + (cur !== dflt ? " changed" : ""), "data-key": "guide" },
+  const out = [h("div", { class: "em-row choice wide" + (cur !== dflt ? " changed" : ""), "data-key": "guide" },
     h("span", { class: "em-label", title: "What guides the AI where it paints the element" }, "Guide for the AI"),
     ui.seg("Guide for the AI", GUIDES, cur, set),
     cur !== dflt ? h("button", { class: "em-reset", title: `Back to the style's guide (${GUIDES.find(([k]) => k === dflt)?.[1] || dflt})`, onclick: () => set(dflt) }, "×")
@@ -330,7 +349,7 @@ function backgroundRows(ctx) {
   const { e, ui } = ctx;
   const cur = e.adv?.[DISSOLVE_BG] || "auto";
   const set = (v) => setAdv(DISSOLVE_BG, v === "auto" ? undefined : v);
-  return [h("div", { class: "em-row choice" + (cur !== "auto" ? " changed" : ""), "data-key": "background" },
+  return [h("div", { class: "em-row choice wide" + (cur !== "auto" ? " changed" : ""), "data-key": "background" },
     h("span", { class: "em-label", title: "What is behind the object where it never moves away" }, "Background"),
     ui.seg("Background", BG_CHOICES, cur, set),
     cur !== "auto" ? h("button", { class: "em-reset", title: "Back to auto", onclick: () => set("auto") }, "×") : h("span", {})),
@@ -373,6 +392,18 @@ function particleGroups(ctx) {
   const { e, st, P, B, ui } = ctx;
   const G = PARTICLES;
   const dirActs = P.direction_mode === "angle" || P.direction_mode === "against motion";
+  const amt = ctx.amount || 1;
+  const sum = {
+    source: [guideStyle(ctx.st0 || st) ? pname(GUIDES, guideNow(ctx.st0 || st, e)) : null, shapeName(shapeOf(e, st)), seedText(ctx)],
+    emission: [P.rate > 0 ? `${num_(P.rate * amt, 0)} /s` : null, P.burst > 0 ? `${num_(P.burst * amt, 0)} at once` : null, timeSpan(ctx)],
+    motion: [pname(MODES, P.direction_mode), `spread ${num_(P.spread, 0)}°`, `${num_(P.speed, 0)} px/s`],
+    particle: [`life ${num_(P.life)} s`, `size ${num_(P.size)} px`, P.trail > 0 ? `trail ${num_(P.trail, 0)}` : null],
+    merge: [P.blob > 0 ? `blur ${num_(P.blob, 1)} px · choke ${num_(P.blob_choke)}` : "off"],
+    forces: nonzero([["gravity", P.gravity], ["wind", P.wind?.[0]], ["turbulence", P.turbulence], ["drag", P.drag]]),
+    contact: [P.collide === "none" ? "no collision" : pname(COLLIDE, P.collide), (e.adv?.[PREMASK] ?? true) ? null : "in front of all",
+      Math.abs(P.depth_offset || 0) > 1e-6 ? `depth ${num_(P.depth_offset)}` : null],
+  };
+  const line = (k) => (sum[k].filter(Boolean).join(" · ") || "none");
   return [
     box(ctx, "source", "Source", [
       ...guideRows(ctx),
@@ -380,8 +411,8 @@ function particleGroups(ctx) {
       h("div", { class: "em-row choice" }, h("span", { class: "em-label" }, "Shape"),
         h("span", {}, shapeName(shapeOf(e, st)), " · ", ui.link("change in Position", () => ui.open("position")))),
       ...ctx.extras.seed(),
-    ], rows(ctx, G.source.more)),
-    box(ctx, "emission", "Emission", [...rows(ctx, G.emission.main), timing(ctx), ...ctx.extras.preroll()], rows(ctx, G.emission.more)),
+    ], rows(ctx, G.source.more), "", line("source")),
+    box(ctx, "emission", "Emission", [...rows(ctx, G.emission.main), timing(ctx), ...ctx.extras.preroll()], rows(ctx, G.emission.more), "", line("emission")),
     box(ctx, "motion", "Motion", [
       choiceRow(ctx, "direction_mode", "Mode", MODES),
       dirActs ? dialRow(ctx, "Direction", e.dir, B.direction, setDir, "Which way they fly: the canvas arrow") : null,
@@ -389,56 +420,64 @@ function particleGroups(ctx) {
       h("div", { class: "label sub" }, "Follows motion"),
       numRow(ctx, key("inherit", "Takes the emitter's motion", 0, 1, 0.05)), h("p", { class: "muted small" }, EXPL.inherit),
       numRow(ctx, key("motion_carry", "Carried by the clip", 0, 1, 0.05)), h("p", { class: "muted small" }, EXPL.carry),
-    ].filter(Boolean), rows(ctx, G.motion.more)),
-    box(ctx, "particle", "Particle", [...rows(ctx, G.particle.main), colorsRow(ctx)], [spriteRow(ctx), ...rows(ctx, G.particle.more)]),
+    ].filter(Boolean), rows(ctx, G.motion.more), "", line("motion")),
+    box(ctx, "particle", "Particle", [...rows(ctx, G.particle.main), colorsRow(ctx)], [spriteRow(ctx), ...rows(ctx, G.particle.more)], "", line("particle")),
     box(ctx, "merge", "Merge (liquid)", [
       ui.toggle("Merge into one body", P.blob > 0, (v) => setOwn(ctx, "blob", v ? (B.blob > 0 ? B.blob : 8) : 0),
         "The particles blurred together and choked: drops, thick smoke, flame tongues"),
       ...(P.blob > 0 ? rows(ctx, G.merge.main) : []),
-    ], P.blob > 0 ? rows(ctx, G.merge.more) : []),
-    box(ctx, "forces", "Forces", rows(ctx, G.forces.main), rows(ctx, G.forces.more)),
+    ], P.blob > 0 ? rows(ctx, G.merge.more) : [], "", line("merge")),
+    box(ctx, "forces", "Forces", rows(ctx, G.forces.main), rows(ctx, G.forces.more), "", line("forces")),
     box(ctx, "contact", "Contact & depth", [choiceRow(ctx, "collide", "Collision", COLLIDE, "What a particle does where it meets the scene (depth)"),
       ...rows(ctx, G.contact.main), depthWrapOf(ctx)],
     [...rows(ctx, G.contact.more), ui.toggle("Hidden by the scene", e.adv?.[PREMASK] ?? true, (v) => setAdv(PREMASK, v ? undefined : false),
-      "Off: the particles stay in front of everything")]),
+      "Off: the particles stay in front of everything")], "", line("contact")),
   ];
 }
+const depthBase = new Map();
 function depthWrapOf(ctx) {
-  const mine = +(ctx.e.depth || 0), cur = ctx.P.depth_offset ?? 0, base = cur - mine;
+  const mine = +(ctx.e.depth || 0);
+  if (ctx.fresh || !depthBase.has(ctx.e.id)) depthBase.set(ctx.e.id, (ctx.P.depth_offset ?? 0) - mine);
+  const base = depthBase.get(ctx.e.id), cur = base + mine;
   return depthWrap(ctx, cur, base, mine, (v) => setEffect((x) => { x.depth = +(v - base).toFixed(3); }, "emitter"));
 }
 function pathGroups(ctx) {
   return [
     box(ctx, "source", "Source", [h("p", { class: "muted small" }, ctx.st.variant === "climb" ? "It climbs the thin parts of the object you clicked."
-      : "From point A to point B."), ...ctx.extras.seed()], []),
-    box(ctx, "emission", "Emission", [timing(ctx)], []),
-    box(ctx, "particle", "Look", [...rows(ctx, PATH.particle.main), colorsRow(ctx)], rows(ctx, PATH.particle.more)),
-    box(ctx, "contact", "Contact & depth", [depthWrapOf(ctx)], []),
+      : "From point A to point B."), ...ctx.extras.seed()], [], "", [ctx.st.variant === "climb" ? "climbs the object" : "A to B", seedText(ctx)].join(" · ")),
+    box(ctx, "emission", "Emission", [timing(ctx)], [], "", timeSpan(ctx)),
+    box(ctx, "particle", "Look", [...rows(ctx, PATH.particle.main), colorsRow(ctx)], rows(ctx, PATH.particle.more), "",
+      `width ${num_(ctx.P.width)} px · glow ${num_(ctx.P.glow)} · ${num_(ctx.P.branches, 0)} branches`),
+    box(ctx, "contact", "Contact & depth", [depthWrapOf(ctx)], [], "", Math.abs(ctx.P.depth_offset || 0) > 1e-6 ? `depth ${num_(ctx.P.depth_offset)}` : "as the scene"),
   ];
 }
 function dissolveGroups(ctx) {
   const G = DISSOLVE;
   return [
     box(ctx, "source", "Source", [h("p", { class: "muted small" }, "The object you clicked: its mask crumbles."), ...backgroundRows(ctx),
-      ...ctx.extras.seed()], []),
-    box(ctx, "emission", "Emission", [...rows(ctx, G.emission.main), timing(ctx)], rows(ctx, G.emission.more)),
+      ...ctx.extras.seed()], [], "", [`background ${pname(BG_CHOICES, ctx.e.adv?.[DISSOLVE_BG] || "auto").toLowerCase()}`, seedText(ctx)].join(" · ")),
+    box(ctx, "emission", "Emission", [...rows(ctx, G.emission.main), timing(ctx)], rows(ctx, G.emission.more), "",
+      [`particles ${num_(ctx.P.density)}`, `ragged ${num_(ctx.P.edge_noise)}`, timeSpan(ctx)].join(" · ")),
     box(ctx, "motion", "Motion", [
       dialRow(ctx, "Direction", ctx.e.dir, 90, (v) => setDir(v ?? 90), "Which way it crumbles: the canvas arrow"),
       ...rows(ctx, G.motion.main),
       h("div", { class: "label sub" }, "Follows motion"),
       numRow(ctx, key("inherit", "Takes the object's motion", 0, 1, 0.05)), h("p", { class: "muted small" }, EXPL.inherit.replace("emitter's", "object's")),
       numRow(ctx, key("motion_carry", "Carried by the clip", 0, 1, 0.05)), h("p", { class: "muted small" }, EXPL.carry),
-    ], []),
-    box(ctx, "particle", "Particle", [...rows(ctx, G.particle.main), hexRow(ctx, "glow_color", "Glow colour")], rows(ctx, G.particle.more)),
-    box(ctx, "forces", "Forces", rows(ctx, G.forces.main), []),
+    ], [], "", [`${Math.round(ctx.e.dir ?? 90)}°`, `${num_(ctx.P.push, 0)} px/s`].join(" · ")),
+    box(ctx, "particle", "Particle", [...rows(ctx, G.particle.main), hexRow(ctx, "glow_color", "Glow colour")], rows(ctx, G.particle.more), "",
+      [`life ${num_(ctx.P.life)} s`, `size ${num_(ctx.P.size)} px`].join(" · ")),
+    box(ctx, "forces", "Forces", rows(ctx, G.forces.main), [], "",
+      nonzero([["gravity", ctx.P.gravity], ["turbulence", ctx.P.turbulence], ["drag", ctx.P.drag]]).join(" · ") || "none"),
   ];
 }
 function ltxGroups(ctx) {
   const { e, f, ui } = ctx;
   const on = !!f.follows_motion;
   return [
-    box(ctx, "source", "Source", [...guideRows(ctx), h("p", { class: "muted small" }, "Your point; the area in the canvas sets its size.")], []),
-    box(ctx, "emission", "Emission", [timing(ctx)], []),
+    box(ctx, "source", "Source", [...guideRows(ctx), h("p", { class: "muted small" }, "Your point; the area in the canvas sets its size.")], [], "",
+      `guide: ${pname(GUIDES, guideNow(ctx.st0 || ctx.st, e)).toLowerCase()}`),
+    box(ctx, "emission", "Emission", [timing(ctx)], [], "", timeSpan(ctx)),
     box(ctx, "motion", "Motion", [
       ui.toggle("Follows motion", on, (v) => ctx.api.setFx("follows_motion", v)),
       h("p", { class: "muted small" }, EXPL.ltx),
@@ -446,6 +485,6 @@ function ltxGroups(ctx) {
       on ? advNum(ctx, FOLLOW_LAG, "Lag", 0, 1, 0.05, 0.6) : null,
       on ? h("p", { class: "muted small" }, EXPL.strength) : null,
       on ? h("p", { class: "muted small" }, e.where.a ? "The canvas shows the path it gets: the point and the trailing tip." : "Set the position to see the path.") : null,
-    ].filter(Boolean), []),
+    ].filter(Boolean), [], "", on ? "follows motion" : "stays on the point"),
   ];
 }

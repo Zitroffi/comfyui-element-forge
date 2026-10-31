@@ -799,7 +799,8 @@ function ensureUndoGuard() {
 
 
 const HIDE_PREVIEW_CSS = '[data-testid="linear-widgets"]:has(.efa-host) [data-testid="app-mode-widget-item"] '
-  + '[data-testid="drop-zone-indicator"]:has(video[data-testid="drop-zone-media"]) { display: none; }';
+  + '[data-testid="drop-zone-indicator"]:has(video[data-testid="drop-zone-media"]) { display: none; }'
+  + ' [data-testid="linear-widgets"]:has(.efa-host) { scrollbar-gutter: stable; }';
 function hideLoadVideoPreview() {
   if (document.querySelector("style[data-efa-hide-preview]")) return;
   const st = document.createElement("style");

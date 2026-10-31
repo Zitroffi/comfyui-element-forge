@@ -166,7 +166,7 @@ def params_for(preset, settings, speed, size, life, start_seconds, depth_offset=
 def setup(plate, preset, emitter, amount, speed, size, life, direction, spread, follow, start_seconds, fps, seed,
           track=None, track_b=None, mask=None, drawing=None, depth=None, settings=None, area="0.4, 0.4, 0.6, 0.6",
           depth_offset=0.0, premask=True, edge_fade=0.08, camera="follow the plate", look_plate=None, line_attach="track",
-          motion_carry=0.0, screen_fixed=False, cam=None):
+          motion_carry=0.0, screen_fixed=False, cam=None, memo=None):
     if screen_fixed:
         camera = "fixed"
     if emitter == "whole frame":
@@ -192,10 +192,16 @@ def setup(plate, preset, emitter, amount, speed, size, life, direction, spread, 
             track, track_b = {"point_track_px": ea.tolist()}, {"point_track_px": eb.tolist()}
     em = pt.Emitter(emitter, n, fps, W, H, P, rng, a=track, b=track_b, masks=avoid,
                     drawing=_mask3(drawing) if drawing is not None else None, area=ar, depth=dep, cam=cam,
-                    attach=line_attach, frames=pl if line_attach == "object" else None)
+                    attach=line_attach, frames=pl if line_attach == "object" else None, memo=memo)
     target = track_b if (P["attract"] or P["path"] == "bolt") else None
-    flow = pt.PlateFlow(pl) if P["motion_carry"] > 0 and n > 1 else None
-    rec = pt.simulate(P, em, seed=seed, amount=amount, target=target, flow=flow)
+    flow = None
+    if P["motion_carry"] > 0 and n > 1:
+        flow = memo.get(("flow", n, H, W)) if memo is not None else None
+        if flow is None:
+            flow = pt.PlateFlow(pl, keep=memo is not None)
+            if memo is not None:
+                memo[("flow", n, H, W)] = flow
+    rec = pt.simulate(P, em, seed=seed, amount=amount, target=target, flow=flow, look_state=memo is not None)
     if P.get("plate_color"):
         rec["pcol"] = pt.plate_colours(rec, pl if look_plate is None else _fit_plate(_np(look_plate)[..., :3], n, H, W))
     paths = pt.make_paths(P, em, seed, target=target) if P["path"] != "particles" else None

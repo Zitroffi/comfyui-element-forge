@@ -39,6 +39,7 @@ function paintHead() {
   playBtn.replaceChildren(icon(playing ? "pause" : "play"));
   playBtn.title = playing ? "Pause (Space)" : "Play (Space)";
   playBtn.setAttribute("aria-label", playBtn.title);
+  playBtn.setAttribute("aria-pressed", String(!!playing));
   loopBtn.setAttribute("aria-pressed", String(!!v?.loop));
 }
 function loop() { paintHead(); raf = media() && !media().paused ? requestAnimationFrame(loop) : 0; }
@@ -267,9 +268,10 @@ function liveMarks(e, c) {
   const hd = ls.data?.header;
   const out = [];
   const share = !hd ? 0 : hd.mode === "hold" ? 1 : Math.min(1, hd.n / hd.fps / c.seconds);
-  out.push(h("span", { class: "tl-cache" + (ls.status === "running" ? " busy" : "") + (ls.status === "failed" ? " failed" : ""),
-    style: { width: `${(ls.status === "running" ? 100 : share * 100).toFixed(2)}%` },
-    title: ls.status === "running" ? "Simulating the particles…" : ls.status === "failed" ? `Live preview failed: ${ls.error || ""}`
+  const busy = ls.status === "running" && !ls.lookOnly;
+  out.push(h("span", { class: "tl-cache" + (busy ? " busy" : "") + (ls.status === "failed" ? " failed" : ""),
+    style: { width: `${(busy ? 100 : share * 100).toFixed(2)}%` },
+    title: busy ? "Simulating the particles…" : ls.status === "failed" ? `Live preview failed: ${ls.error || ""}`
       : hd?.mode === "hold" ? `Live: ${fmtSec(hd.n / hd.fps)} on the held frame, ready` : "Live: simulated and ready" }));
   const pre = livePre(e, c);
   if (pre > 0) out.push(h("span", { class: "tl-preroll", style: { left: `${(e.timing.start / c.seconds) * 100}%` },

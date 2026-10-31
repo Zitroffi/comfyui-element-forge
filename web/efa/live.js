@@ -9,8 +9,20 @@ export const PARTICLE_SEED = "Particle seed";
 export const PREROLL = "Particle pre-roll (s, -2 = as in the preset, -1 = auto)";
 export const PARTICLE_EMITTER = "Particle emitter (app, JSON)";
 export const DISSOLVE_EXTRA = "Dissolve extra (JSON)";
-const DEBOUNCE = 250;
+const DEBOUNCE = 100;
 const KEEP = 8;
+const LOOK_ONLY = new Set(["colors", "color_var", "glow", "trail", "blob", "blob_choke", "blob_soft", "blob_fill", "blob_life", "plate_color",
+  "dof", "focus", "bloom", "halo", "ambient", "relief", "shell", "look", "blend", "guide_style", "sprite", "sprite_gain", "sprite_aspect",
+  "sprite_occlude", "sprite_play", "shutter"]);
+function simSig(body) {
+  const v = { ...body.values };
+  for (const k of [PARTICLE_EMITTER, DISSOLVE_EXTRA]) {
+    if (!v[k]) continue;
+    try { v[k] = JSON.stringify(Object.fromEntries(Object.entries(JSON.parse(v[k])).filter(([x]) => !LOOK_ONLY.has(x)))); } catch {  }
+  }
+  return JSON.stringify({ ...body, values: v });
+}
+let lastSimSig = null;
 
 export const livePreviews = (st) => (!!st?.settings?.Particles && (st.variant || "app") === "app") || st?.variant === "dissolve"
   || st?.variant === "climb";
@@ -31,7 +43,7 @@ export function initLive({ fx }) {
 }
 export const liveMode = () => S.ui.liveMode || "play";
 export function setLiveMode(m) { S.setUI({ liveMode: m }); poke(true); }
-export function refresh() { lastSig = null; poke(true); }
+export function refresh() { lastSig = null; lastSimSig = null; poke(true); }
 export function poke(now = false) {
   clearTimeout(timer);
   timer = setTimeout(request, now ? 0 : DEBOUNCE);
@@ -71,7 +83,9 @@ async function request() {
   lastSig = sig;
   const prev = S.ui.liveSim;
   const same = prev && prev.clip === c.name && prev.effect === e.id;
-  S.setUI({ liveSim: { ...(same ? prev : {}), clip: c.name, effect: e.id, status: "running", error: null } });
+  const ss = simSig(body), lookOnly = same && !!prev.data && ss === lastSimSig;
+  lastSimSig = ss;
+  S.setUI({ liveSim: { ...(same ? prev : {}), clip: c.name, effect: e.id, status: "running", lookOnly, error: null } });
   const have = same ? prev.data?.header.key : null;
   const t0 = performance.now();
   busy = fetch("/element-forge/api/live", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, have }) });
@@ -93,7 +107,7 @@ async function request() {
     while (kept.size > KEEP) kept.delete(kept.keys().next().value);
     const cur = target();
     if (!cur || cur.c.name !== c.name || cur.e.id !== e.id) return;
-    S.setUI({ liveSim: { clip: c.name, effect: e.id, data, look: { ...d.header.look, kind: d.header.kind || "particles" }, status: "ready", error: null,
+    S.setUI({ liveSim: { clip: c.name, effect: e.id, data, look: { ...d.header.look, kind: d.header.kind || "particles" }, status: "ready", lookOnly: false, error: null,
       ms: Math.round(performance.now() - t0), server: d.header.ms, leftOut: d.header.left_out || [], fallbacks: d.header.fallbacks || [] } });
   } catch (err) {
     S.setUI({ liveSim: { ...(S.ui.liveSim || {}), clip: c.name, effect: e.id, status: "failed", error: err.message } });

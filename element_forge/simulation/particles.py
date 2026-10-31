@@ -231,7 +231,13 @@ class CurlNoise:
     def __call__(self, x, y, t):
         if not self.on or len(x) == 0:
             return np.zeros_like(x), np.zeros_like(y)
-        c = np.cos(np.outer(x, self.kx) + np.outer(y, self.ky) + t * self.w + self.ph) * self.a
+        c = np.multiply.outer(self.kx, x)
+        c += np.multiply.outer(self.ky, y)
+        c += (t * self.w)[:, None]
+        c += self.ph[:, None]
+        np.cos(c, out=c)
+        c *= self.a[:, None]
+        c = np.ascontiguousarray(c.T)
         return c @ self.ky, -(c @ self.kx)
 
 
@@ -282,7 +288,8 @@ class Camera:
 
 class PlateFlow:
 
-    def __init__(self, plate, max_side=640):
+    def __init__(self, plate, max_side=640, keep=False):
+        self.keep = keep
         self.n, self.H, self.W = plate.shape[:3]
         self.k = min(1.0, max_side / max(self.H, self.W))
         self.g = [cv2.cvtColor(cv2.resize((np.clip(f[..., :3], 0, 1) * 255).astype(np.uint8), None, fx=self.k, fy=self.k,
@@ -294,7 +301,8 @@ class PlateFlow:
         i = int(np.clip(i, 0, self.n - 1))
         if i not in self.cache:
             a, b = (i, i + 1) if i + 1 < self.n else (i - 1, i)
-            self.cache.clear()
+            if not self.keep:
+                self.cache.clear()
             self.cache[i] = np.zeros(self.g[0].shape + (2,), np.float32) if a < 0 else                 self.dis.calc(self.g[a], self.g[b], None) / self.k
         return self.cache[i]
 
@@ -322,14 +330,29 @@ class Depth:
     def at(self, i, x, y):
         if self.d is None:
             return np.ones_like(x)
-        i = int(np.clip(i, 0, len(self.d) - 1))
+        i = min(max(int(i), 0), len(self.d) - 1)
         xi = np.clip((x * self.sx).astype(np.int64), 0, self.d.shape[2] - 1)
         yi = np.clip((y * self.sy).astype(np.int64), 0, self.d.shape[1] - 1)
         return self.d[i][yi, xi]
 
 
-def _mask_points(m, contour, step=2):
-    mb = (m > 0.5).astype(np.uint8)
+def _mask_box(mb, step=1, pad=8, align=64):
+    x, y, w, h = cv2.boundingRect(mb)
+    if w == 0 or h == 0:
+        return None
+    H, W = mb.shape
+    al = align * step
+    return (max(y - pad, 0) // step * step, min(y + h + pad, H), max(x - pad, 0) // al * al,
+            min(-(-(x + w + pad) // al) * al, W))
+
+
+def _mask_points(m, contour, step=2, mb=None):
+    mb = (m > 0.5).astype(np.uint8) if mb is None else mb
+    box = _mask_box(mb, step)
+    if box is None:
+        return np.zeros((0, 2), np.float32), (np.zeros((0, 2), np.float32) if contour else None)
+    y0, y1, x0, x1 = box
+    mb = mb[y0:y1, x0:x1]
     if contour:
         edge = mb - cv2.erode(mb, np.ones((3, 3), np.uint8))
         ys, xs = np.nonzero(edge)
@@ -338,18 +361,20 @@ def _mask_points(m, contour, step=2):
         gy = cv2.Sobel(dist, cv2.CV_32F, 0, 1, ksize=5)
         nx, ny = gx[ys, xs], gy[ys, xs]
         ln = np.maximum(np.hypot(nx, ny), 1e-6)
-        return np.stack([xs, ys], 1).astype(np.float32), np.stack([nx / ln, ny / ln], 1).astype(np.float32)
+        return np.stack([xs + x0, ys + y0], 1).astype(np.float32), np.stack([nx / ln, ny / ln], 1).astype(np.float32)
     ys, xs = np.nonzero(mb[::step, ::step])
-    return np.stack([xs * step, ys * step], 1).astype(np.float32), None
+    return np.stack([xs * step + x0, ys * step + y0], 1).astype(np.float32), None
 
 
 def _bottom_points(m):
-    p, nr = _mask_points(m, True)
+    mb = (m > 0.5).astype(np.uint8)
+    p, nr = _mask_points(m, True, mb=mb)
     if not len(p):
         return p, nr
-    _, lab, st, _ = cv2.connectedComponentsWithStats((m > 0.5).astype(np.uint8), connectivity=8)
-    li = lab[p[:, 1].astype(np.int64), p[:, 0].astype(np.int64)]
-    top, hgt = st[li, cv2.CC_STAT_TOP].astype(np.float32), st[li, cv2.CC_STAT_HEIGHT].astype(np.float32)
+    y0, y1, x0, x1 = _mask_box(mb)
+    _, lab, st, _ = cv2.connectedComponentsWithStats(np.ascontiguousarray(mb[y0:y1, x0:x1]), connectivity=8)
+    li = lab[p[:, 1].astype(np.int64) - y0, p[:, 0].astype(np.int64) - x0]
+    top, hgt = (st[li, cv2.CC_STAT_TOP] + y0).astype(np.float32), st[li, cv2.CC_STAT_HEIGHT].astype(np.float32)
     keep = (nr[:, 1] > 0.5) & (p[:, 1] >= top + 0.65 * hgt - 1)
     return p[keep], nr[keep]
 
@@ -433,8 +458,9 @@ def ends_on_objects(masks, n, W, H, a0=None, long_side=512):
 class Emitter:
 
     def __init__(self, kind, n, fps, W, H, P, rng, a=None, b=None, masks=None, drawing=None, area=None, depth=None,
-                 cam=None, attach="track", frames=None):
+                 cam=None, attach="track", frames=None, memo=None):
         self.kind, self.n, self.fps, self.W, self.H, self.P, self.rng = kind, n, fps, W, H, P, rng
+        self.memo = memo
         self.cam = cam or Camera(n)
         self.depth = depth or Depth(None, W, H)
         self.a = self._path(a, n, (W / 2, H / 2))
@@ -462,12 +488,22 @@ class Emitter:
                 raise ValueError(f"emitter '{kind}' needs an object mask")
             m = np.asarray(masks, np.float32).reshape(-1, *np.asarray(masks).shape[-2:])
             sy, sx = H / m.shape[1], W / m.shape[2]
-            self.pts, self.nrm = [], []
-            for i in range(n):
-                mi = m[min(i, len(m) - 1)]
-                p, nr = _bottom_points(mi) if kind == "object bottom edge" else _mask_points(mi, kind == "object contour")
-                self.pts.append(p * [sx, sy])
-                self.nrm.append(nr)
+            key = ("points", kind, n, W, H, m.shape)
+            if memo is not None and key in memo:
+                self.pts, self.nrm = list(memo[key][0]), list(memo[key][1])
+            else:
+                self.pts, self.nrm = [], []
+                last = None
+                for i in range(n):
+                    mi = m[min(i, len(m) - 1)]
+                    at = (mi.__array_interface__["data"][0], mi.strides)
+                    if last is None or last[0] != at:
+                        p, nr = _bottom_points(mi) if kind == "object bottom edge" else _mask_points(mi, kind == "object contour")
+                        last = (at, p * [sx, sy], nr)
+                    self.pts.append(last[1])
+                    self.nrm.append(last[2])
+                if memo is not None:
+                    memo[key] = (list(self.pts), list(self.nrm))
         elif kind == "drawing":
             if not drawn:
                 raise ValueError("emitter 'drawing' needs a drawing (strokes painted in the mask editor)")
@@ -482,8 +518,14 @@ class Emitter:
                     raise ValueError("a drawing hung on the object needs the object mask")
                 m = np.asarray(masks, np.float32).reshape(-1, *np.asarray(masks).shape[-2:])
                 sx, sy = W / m.shape[2], H / m.shape[1]
-                pm, self.dnrm = attach_to_object(p0 / [sx, sy], m[:n] if len(m) >= n else
-                                                 np.concatenate([m, np.repeat(m[-1:], n - len(m), 0)]), frames)
+                key = ("attached", n, W, H, m.shape, frames is None, p0.shape, p0.tobytes())
+                if memo is not None and key in memo:
+                    pm, self.dnrm = memo[key]
+                else:
+                    pm, self.dnrm = attach_to_object(p0 / [sx, sy], m[:n] if len(m) >= n else
+                                                     np.concatenate([m, np.repeat(m[-1:], n - len(m), 0)]), frames)
+                    if memo is not None:
+                        memo[key] = (pm, self.dnrm)
                 self.dpath = pm * [sx, sy]
             elif self.b is not None:
                 v0 = self.b[0] - self.a[0]
@@ -587,7 +629,7 @@ class Emitter:
         return np.stack([np.convolve(np.pad(v[:, j], 2, mode="edge"), k, mode="valid") for j in range(2)], 1)
 
     def frame(self, t):
-        return int(np.clip(round(t * self.fps), 0, self.n - 1))
+        return min(max(int(round(t * self.fps)), 0), self.n - 1)
 
     def _lerp(self, path, t):
         f = np.clip(t * self.fps, 0, self.n - 1)
@@ -695,7 +737,44 @@ def _dolly(P, cam, dep, n, W, H):
     return foe, zb, P["fly"] * (1.0 - 1.0 / sc), sc
 
 
-def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
+LOOK_ONLY = ("size", "size_var", "fine_size", "size_start", "size_end", "opacity", "fade_in", "fade_out", "flicker",
+             "flicker_hz", "flicker_size")
+
+
+def _record_look(P, t, age, lt, land_t, size0, phase, sz, ps):
+    al = P["opacity"] * fade(age, P["fade_in"], P["fade_out"])
+    if lt.any():
+        tl = t[lt] if np.ndim(t) else t
+        al[lt] = P["opacity"] * np.clip(1 - (tl - land_t[lt]) / max(P["land_fade"], 1e-3), 0, 1)
+    if P["flicker"] > 0:
+        hz = P["flicker_hz"]
+        if P.get("flicker_size", 0) > 0:
+            hz = hz * (P["size"] / np.maximum(size0, 1e-3)) ** (0.5 * P["flicker_size"])
+        al *= 1 - P["flicker"] * 0.5 * (1 + np.sin(2 * np.pi * hz * t + phase))
+    size = size0 * (P["size_start"] + (P["size_end"] - P["size_start"]) * age) * sz * ps
+    return size, al
+
+
+def relook(rec, P):
+    lk = rec.get("_look")
+    if lk is None or lk["dolly"]:
+        return None
+    fi, a = np.nonzero(lk["on"])
+    size0 = lk["size0"].copy()
+    m = lk["main"]
+    size0[m] = P.get("size", 4.0) * (1 + P.get("size_var", 0.0) * lk["sym5"][m])
+    size0[m & lk["fine"]] *= P["fine_size"]
+    t = lk["t"][fi]
+    age = np.clip((t - lk["born"][a]) / lk["life"][a], 0, 1)
+    sz = lk["sz"][fi, a] if lk["sz"] is not None else np.ones(len(a))
+    size, al = _record_look(P, t, age, lk["lt"][fi, a], lk["land_t"][a], size0[a], lk["phase"][a], sz, lk["ps"])
+    out = dict(rec)
+    out["size"], out["alpha"] = np.zeros_like(rec["size"]), np.zeros_like(rec["alpha"])
+    out["size"][fi, a], out["alpha"][fi, a] = size, al
+    return out
+
+
+def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False):
     n, fps, W, H, cam, dep = em.n, em.fps, em.W, em.H, em.cam, em.depth
     rng = np.random.default_rng(seed)
     ps = min(W, H) / REF
@@ -726,7 +805,7 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
 
     max_alive = int(P["max_particles"])
     st = {k: np.zeros(cap) for k in ("x", "y", "z", "vx", "vy", "born", "life", "size0", "rot", "spin", "rnd", "phase",
-                                      "land_t", "grav", "drag", "px", "py", "rid", "foff")}
+                                      "land_t", "grav", "drag", "px", "py", "rid", "foff", "sym5", "main", "fine")}
     alive = np.zeros(cap, bool)
     landed = np.zeros(cap, bool)
     behind = np.zeros(cap, bool)
@@ -735,6 +814,9 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
     rec = {k: np.full((n, cap), np.nan if k == "x" else 0.0, np.float32)
            for k in ("x", "y", "z", "vx", "vy", "size", "alpha", "vis", "age", "rot") + (("zd",) if dolly is not None else ())}
     stats = dict(spawned=0, children=0, landed=0, bounced=0, killed_by_target=0, capacity=max_alive, capped=0)
+    look = None
+    if look_state:
+        look = dict(t=np.zeros(n), on=np.zeros((n, cap), bool), lt=np.zeros((n, cap), bool), sz=np.zeros((n, cap)) if dep else None)
 
     def grow(need):
         nonlocal cap, alive, landed, behind, kind
@@ -747,6 +829,10 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
         kind = np.concatenate([kind, np.zeros(new - cap, np.int8)])
         for k in rec:
             rec[k] = np.concatenate([rec[k], np.full((n, new - cap), np.nan if k == "x" else 0.0, np.float32)], 1)
+        if look is not None:
+            for k in ("on", "lt", "sz"):
+                if look[k] is not None:
+                    look[k] = np.concatenate([look[k], np.zeros((n, new - cap), look[k].dtype)], 1)
         cap = new
 
     def sfac(z):
@@ -760,7 +846,8 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
             return
         grow(used + k)
         ids = np.asarray(ids[:k], np.int64)
-        U = lambda c: hash_u(ids, ns, c, seed=seed).astype(np.float64)
+        hu = hash_u(ids[None], ns, np.arange(17)[:, None], seed=seed).astype(np.float64)
+        U = lambda c: hu[c]
         idx = np.arange(used, used + k)
         used += k
         if at is None:
@@ -808,9 +895,12 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
         st["x"][idx], st["y"][idx] = wx, wy
         st["born"][idx] = t
         st["life"][idx] = np.maximum(0.05, src.get("life", 1.0) * (1 + src.get("life_var", 0.0) * sym(4)))
-        st["size0"][idx] = src.get("size", 4.0) * (1 + src.get("size_var", 0.0) * sym(5))
+        s5 = sym(5)
+        st["size0"][idx] = src.get("size", 4.0) * (1 + src.get("size_var", 0.0) * s5)
+        st["sym5"][idx], st["main"][idx], st["fine"][idx] = s5, src is P, 0.0
         if src is P and P.get("fine_share", 0) > 0:
             fine = U(16) < P["fine_share"]
+            st["fine"][idx] = fine
             st["size0"][idx[fine]] *= P["fine_size"]
             st["life"][idx[fine]] *= P["fine_life"]
             st["vx"][idx[fine]] *= P["fine_speed"]
@@ -863,11 +953,12 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
     cid = 0
     t_burst = P["start"] + P["burst_at"]
     fired = False
+    rec_noise = None
     for s in range(steps):
         if s % 16 == 0:
             interrupted()
         t = (s - pre_steps) * dt
-        fi = int(np.clip(round(t * fps), 0, n - 1))
+        fi = min(max(int(round(t * fps)), 0), n - 1)
         if t0 - 1e-9 <= t <= t_end and (em.contact is None or em.contact[fi]):
             acc += rate_c * dt
             kc = int(acc)
@@ -906,17 +997,15 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
                     sy = foe[1] + (sy - foe[1]) * kd / sc[i]
                 sz = sfac(z)
                 fx, fy = noise(st["x"][a] / ps, st["y"][a] / ps, t)
+                rec_noise = (s, a, fx, fy)
                 age = np.clip((t - st["born"][a]) / st["life"][a], 0, 1)
                 lt = landed[a]
-                al = P["opacity"] * fade(age, P["fade_in"], P["fade_out"])
-                if lt.any():
-                    al[lt] = P["opacity"] * np.clip(1 - (t - st["land_t"][a][lt]) / max(P["land_fade"], 1e-3), 0, 1)
-                if P["flicker"] > 0:
-                    hz = P["flicker_hz"]
-                    if P.get("flicker_size", 0) > 0:
-                        hz = hz * (P["size"] / np.maximum(st["size0"][a], 1e-3)) ** (0.5 * P["flicker_size"])
-                    al *= 1 - P["flicker"] * 0.5 * (1 + np.sin(2 * np.pi * hz * t + st["phase"][a]))
-                size = st["size0"][a] * (P["size_start"] + (P["size_end"] - P["size_start"]) * age) * sz * ps
+                size, al = _record_look(P, t, age, lt, st["land_t"][a], st["size0"][a], st["phase"][a], sz, ps)
+                if look is not None:
+                    look["t"][i] = t
+                    look["on"][i, a], look["lt"][i, a] = True, lt
+                    if look["sz"] is not None:
+                        look["sz"][i, a] = sz
                 if dolly is not None:
                     size = size * kd
                     al = al * np.clip((den - 0.05) / 0.15, 0, 1)
@@ -957,7 +1046,10 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
                 ay += fay
             nvx = vx + ax * dt
             nvy = vy + ay * dt
-            fx, fy = noise(x / ps, y / ps, t)
+            if rec_noise is not None and rec_noise[0] == s and np.array_equal(rec_noise[1], live):
+                fx, fy = rec_noise[2], rec_noise[3]
+            else:
+                fx, fy = noise(x / ps, y / ps, t)
             sz = sfac(z)
             if flow is not None and P["motion_carry"] > 0:
                 sx, sy = cam.to_screen(x, y, fi)
@@ -1017,6 +1109,11 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None):
     rec["foff"] = st["foff"][:used]
     stats["used"] = used
     rec["stats"] = stats
+    if look is not None:
+        rec["_look"] = dict(t=look["t"], on=look["on"][:, :used], lt=look["lt"][:, :used],
+                            sz=None if look["sz"] is None else look["sz"][:, :used], ps=ps, dolly=dolly is not None,
+                            **{k: st[k][:used].copy() for k in ("born", "life", "size0", "phase", "land_t", "sym5")},
+                            main=st["main"][:used] > 0, fine=st["fine"][:used] > 0)
     return rec
 
 
@@ -1340,18 +1437,26 @@ def draw_trails(sp, P, rec, i, a, raster, style, k):
 
 
 
-def bolt_path(p0, p1, rng, rough, levels=6, fine=None):
-    pts = [np.asarray(p0, np.float64), np.asarray(p1, np.float64)]
+def _midpoints(q, g, rough, levels, fine=None):
+    j = 0
     for lv in range(levels):
         r = rough * (1.0 - 0.45 * lv / max(levels - 1, 1)) if fine is None else rough + (fine - rough) * lv / max(levels - 1, 1)
-        new = [pts[0]]
-        for a, b in zip(pts[:-1], pts[1:]):
-            d = b - a
-            L = np.hypot(*d) + 1e-6
-            nrm = np.array([-d[1], d[0]]) / L
-            new += [(a + b) / 2 + nrm * rng.normal() * r * L, b]
-        pts = new
-    return np.array(pts)
+        a, b = q[:, :-1], q[:, 1:]
+        d = b - a
+        L = np.hypot(d[..., 0], d[..., 1]) + 1e-6
+        nrm = np.stack([-d[..., 1], d[..., 0]], -1) / L[..., None]
+        k = a.shape[1]
+        mid = (a + b) / 2 + nrm * g[:, j:j + k, None] * r * L[..., None]
+        j += k
+        new = np.empty((len(q), 2 * q.shape[1] - 1, 2))
+        new[:, 0::2], new[:, 1::2] = q, mid
+        q = new
+    return q
+
+
+def bolt_path(p0, p1, rng, rough, levels=6, fine=None):
+    q = np.array([[np.asarray(p0, np.float64), np.asarray(p1, np.float64)]])
+    return _midpoints(q, rng.normal(size=(1, 2 ** levels - 1)), rough, levels, fine)[0]
 
 
 def _ground_point(em, i, p0, length):
@@ -1457,10 +1562,8 @@ def _jag(path, rng, rough, ps, pitch=0.0):
     m = max(2, int(d[-1] / max(10 * ps, pitch)) + 1)
     u = np.linspace(0, d[-1], m)
     s = np.stack([np.interp(u, d, path[:, 0]), np.interp(u, d, path[:, 1])], 1)
-    pts = [s[0]]
-    for a, b in zip(s[:-1], s[1:]):
-        pts += list(bolt_path(a, b, rng, rough, 3)[1:])
-    return np.array(pts)
+    q = _midpoints(np.stack([s[:-1], s[1:]], 1), rng.normal(size=(len(s) - 1, 7)), rough, 3)
+    return np.concatenate([s[:1], q[:, 1:].reshape(-1, 2)])
 
 
 def _forks(out_i, pts, rng, nk, w, z, R, rel, depth=1, fine=None, val=0.8):
@@ -1531,6 +1634,8 @@ def make_paths(P, em, seed, target=None):
         R = P["roughness"]
         fine = P["fine_rough"] if P["fine_rough"] > 0 else None
         w = P["width"] * ps
+        memo = em.memo if em.memo is not None else {}
+        last = None
         for i in range(n):
             t = i / fps
             if not (t0 <= t <= t1):
@@ -1538,7 +1643,15 @@ def make_paths(P, em, seed, target=None):
             mk = em.masks[min(i, len(em.masks) - 1)]
             sx, sy = W / mk.shape[1], H / mk.shape[0]
             hub = em.a[i] / [sx, sy] if (em.has_a and P["climb_from"] == "center") else None
-            parts = climb_parts(mk > 0.5, hub)
+            key = ("climb", i, len(em.masks), mk.shape, None if hub is None else hub.tobytes())
+            at = (mk.__array_interface__["data"][0], mk.strides, key[4])
+            if key in memo:
+                parts = memo[key]
+            elif last is not None and last[0] == at:
+                parts = memo[key] = last[1]
+            else:
+                parts = memo[key] = climb_parts(mk > 0.5, hub)
+            last = (at, parts)
             if not parts:
                 continue
             rng = np.random.default_rng(seed * 7919 + i // rr)

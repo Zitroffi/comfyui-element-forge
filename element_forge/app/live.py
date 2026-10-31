@@ -250,6 +250,16 @@ def sim_key(inputs, sigs, settings, mode, frame, seconds):
     return hashlib.sha1(json.dumps(parts, default=str, sort_keys=True).encode()).hexdigest()[:20]
 
 
+IN_P = ("settings", "speed", "size", "life", "direction", "spread", "follow", "start_seconds", "depth_offset", "motion_carry")
+
+
+def motion_key(inputs, sigs, P, mode, frame, seconds):
+    parts = [[k, [sigs.get(v[0]), v[1]] if is_link(v) else v] for k in SETUP_ARGS if k not in IN_P for v in [inputs.get(k)]]
+    parts.append({a: b for a, b in P.items() if a not in LOOK and a not in pt.LOOK_ONLY and not a.startswith("_")})
+    parts.append([mode, frame if mode == "hold" else None, seconds if mode == "hold" else None])
+    return "m" + hashlib.sha1(json.dumps(parts, default=str, sort_keys=True).encode()).hexdigest()[:19]
+
+
 def preroll_seconds(P, em):
     if P["start"] > 0:
         return 0.0
@@ -268,38 +278,30 @@ def look_of(P):
 def encode(s, P, premask=True):
     rec, em, paths = s["rec"], s["em"], s["paths"]
     n, W, H = em.n, em.W, em.H
-    ids, xs, ys, rs, als, ages, vxs, vys, rots, offs = [], [], [], [], [], [], [], [], [], [0]
     dof = float(P.get("dof", 0) or 0)
     foc = P["focus"] if P.get("focus", -1) >= 0 else float(getattr(em, "zref", 0.5))
-    for i in range(n):
-        a = np.nonzero(np.isfinite(rec["x"][i]))[0] if rec["x"].size else np.zeros(0, np.int64)
-        if len(a):
-            x, y = rec["x"][i, a].astype(np.float64), rec["y"][i, a].astype(np.float64)
-            r = rec["size"][i, a].astype(np.float64)
-            al = rec["alpha"][i, a].astype(np.float64) * (rec["vis"][i, a] if premask else 1.0)
-            if dof > 0:
-                coc = dof * min(W, H) / pt.REF * np.abs(rec["z"][i, a] - foc)
-                re_ = np.sqrt(r ** 2 + coc ** 2)
-                al = al * (r / np.maximum(re_, 1e-6)) ** 2
-                r = re_
-            k = (al > 1e-3) & (np.abs(x) < 4000) & (np.abs(y) < 4000)
-            a, x, y, r, al = a[k], x[k], y[k], r[k], al[k]
-            ids.append(a.astype(np.uint32))
-            xs.append(np.round(x * 8).astype(np.int16))
-            ys.append(np.round(y * 8).astype(np.int16))
-            rs.append(np.clip(np.round(r * 16), 0, 65535).astype(np.uint16))
-            als.append(np.clip(np.round(al * 255), 0, 255).astype(np.uint8))
-            ages.append(np.clip(np.round(rec["age"][i, a] * 255), 0, 255).astype(np.uint8))
-            vxs.append(np.clip(np.round(rec["vx"][i, a]), -32767, 32767).astype(np.int16))
-            vys.append(np.clip(np.round(rec["vy"][i, a]), -32767, 32767).astype(np.int16))
-            rots.append(np.round(np.mod(rec["rot"][i, a], 2 * np.pi) / (2 * np.pi) * 255).astype(np.uint8))
-        offs.append(offs[-1] + (len(a) if len(a) else 0))
-    cat = lambda xs_, t: np.concatenate(xs_).astype(t) if xs_ else np.zeros(0, t)
+    fi, a = np.nonzero(np.isfinite(rec["x"])) if rec["x"].size else (np.zeros(0, np.int64), np.zeros(0, np.int64))
+    x, y = rec["x"][fi, a].astype(np.float64), rec["y"][fi, a].astype(np.float64)
+    r = rec["size"][fi, a].astype(np.float64)
+    al = rec["alpha"][fi, a].astype(np.float64) * (rec["vis"][fi, a] if premask else 1.0)
+    if dof > 0:
+        coc = dof * min(W, H) / pt.REF * np.abs(rec["z"][fi, a] - foc)
+        re_ = np.sqrt(r ** 2 + coc ** 2)
+        al = al * (r / np.maximum(re_, 1e-6)) ** 2
+        r = re_
+    k = (al > 1e-3) & (np.abs(x) < 4000) & (np.abs(y) < 4000)
+    fi, a, x, y, r, al = fi[k], a[k], x[k], y[k], r[k], al[k]
+    offs = np.zeros(n + 1, np.int64)
+    offs[1:] = np.cumsum(np.bincount(fi, minlength=n)[:n])
     cap = rec["x"].shape[1] if rec["x"].ndim == 2 else 0
     pcol = rec.get("pcol")
-    arrays = {"offs": np.asarray(offs, np.uint32), "id": cat(ids, np.uint32), "x": cat(xs, np.int16), "y": cat(ys, np.int16),
-              "r": cat(rs, np.uint16), "a": cat(als, np.uint8), "age": cat(ages, np.uint8), "vx": cat(vxs, np.int16),
-              "vy": cat(vys, np.int16), "rot": cat(rots, np.uint8),
+    arrays = {"offs": offs.astype(np.uint32), "id": a.astype(np.uint32), "x": np.round(x * 8).astype(np.int16),
+              "y": np.round(y * 8).astype(np.int16), "r": np.clip(np.round(r * 16), 0, 65535).astype(np.uint16),
+              "a": np.clip(np.round(al * 255), 0, 255).astype(np.uint8),
+              "age": np.clip(np.round(rec["age"][fi, a] * 255), 0, 255).astype(np.uint8),
+              "vx": np.clip(np.round(rec["vx"][fi, a]), -32767, 32767).astype(np.int16),
+              "vy": np.clip(np.round(rec["vy"][fi, a]), -32767, 32767).astype(np.int16),
+              "rot": np.round(np.mod(rec["rot"][fi, a], 2 * np.pi) / (2 * np.pi) * 255).astype(np.uint8),
               "rnd": np.clip(np.round(np.asarray(rec.get("rnd", np.zeros(cap)), np.float64) * 255), 0, 255).astype(np.uint8),
               "pcol": (np.clip(np.round(np.asarray(pcol) * 255), 0, 255).astype(np.uint8).reshape(-1)
                        if pcol is not None else np.zeros(0, np.uint8))}
@@ -308,9 +310,11 @@ def encode(s, P, premask=True):
         for pts, w, a, _z in (paths[i] or []):
             pts = np.asarray(pts, np.float64)
             if pts.ndim == 3:
-                av = np.broadcast_to(np.asarray(a, np.float64), (len(pts),))
-                for j in range(len(pts)):
-                    pf.append(np.concatenate([[i, 2, w], [pts[j, 0, 0], pts[j, 0, 1], av[j], pts[j, 1, 0], pts[j, 1, 1], av[j]]]))
+                blk = np.empty((len(pts), 9))
+                blk[:, 0], blk[:, 1], blk[:, 2] = i, 2, w
+                blk[:, 3], blk[:, 4], blk[:, 6], blk[:, 7] = pts[:, 0, 0], pts[:, 0, 1], pts[:, 1, 0], pts[:, 1, 1]
+                blk[:, 5] = blk[:, 8] = np.broadcast_to(np.asarray(a, np.float64), (len(pts),))
+                pf.append(blk.reshape(-1))
                 continue
             if len(pts) < 2:
                 continue
@@ -336,6 +340,8 @@ RUNNER = Runner()
 SIM_CACHE = collections.OrderedDict()
 CAMERAS = collections.OrderedDict()
 DEPTHS = collections.OrderedDict()
+MEMOS = collections.OrderedDict()
+MOTIONS = {}
 WORKER = concurrent.futures.ThreadPoolExecutor(1, thread_name_prefix="ef-live")
 LATEST = [0]
 
@@ -600,9 +606,19 @@ async def compute(body, check):
             while len(DEPTHS) > 2:
                 DEPTHS.popitem(last=False)
         args["depth"] = DEPTHS[dk]
+    mot = motion_key(inputs, sigs, P, mode, frame, seconds)
+    was = SIM_CACHE.get(MOTIONS.get(mot)) if key not in SIM_CACHE and P["path"] == "particles" else None
+    again = pt.relook(was["rec"], P) if was is not None and was["P"]["path"] == "particles" else None
     if key in SIM_CACHE:
         s = SIM_CACHE[key]
         SIM_CACHE.move_to_end(key)
+    elif again is not None:
+        s = dict(was, rec=again, P=P)
+        header["relook"] = True
+        SIM_CACHE[key] = s
+        while len(SIM_CACHE) > SIMS:
+            SIM_CACHE.popitem(last=False)
+        MOTIONS[mot] = key
     else:
         if mode == "hold":
             n = max(2, int(round(seconds * fps)))
@@ -622,22 +638,32 @@ async def compute(body, check):
                 while len(CAMERAS) > 4:
                     CAMERAS.popitem(last=False)
         check()
+        mk = json.dumps([[sigs.get(inputs[k][0]), inputs[k][1]] if is_link(inputs.get(k)) else None for k in ("plate", "mask", "drawing")]
+                        + [mode, frame if mode == "hold" else None])
+        memo = MEMOS.setdefault(mk, {})
+        MEMOS.move_to_end(mk)
+        while len(MEMOS) > 2:
+            MEMOS.popitem(last=False)
         if body.get("profile"):
             import cProfile
             import io
             import pstats
             prof = cProfile.Profile()
-            s = prof.runcall(PN.setup, **args, cam=cam)
+            s = prof.runcall(PN.setup, **args, cam=cam, memo=memo)
             out = io.StringIO()
             pstats.Stats(prof, stream=out).sort_stats("cumtime").print_stats(18)
             header["profile"] = out.getvalue()[-6000:]
         else:
-            s = PN.setup(**args, cam=cam)
+            s = PN.setup(**args, cam=cam, memo=memo)
         s["plate"] = args["plate"]
         s.pop("pl", None)
+        s["em"].memo = None
         SIM_CACHE[key] = s
         while len(SIM_CACHE) > SIMS:
             SIM_CACHE.popitem(last=False)
+        MOTIONS[mot] = key
+        for m_ in [m_ for m_, k_ in MOTIONS.items() if k_ not in SIM_CACHE]:
+            del MOTIONS[m_]
     if float(P.get("plate_color", 0) or 0) > 0 and "pcol" not in s["rec"]:
         s["rec"]["pcol"] = pt.plate_colours(s["rec"], PN._np(s["plate"])[..., :3])
     t_sim = time.time() - t1
@@ -655,10 +681,21 @@ def _job(seq, body):
             raise Superseded()
     PN.LIVE.check = check
     try:
-        return asyncio.run(compute(body, check))
+        return pack(*asyncio.run(compute(body, check)))
     finally:
         PN.LIVE.check = None
         RUNNER.trim()
+
+
+LOOPBACK = ("127.0.0.1", "::1", "::ffff:127.0.0.1", "localhost")
+
+
+def _local(request):
+    try:
+        host = request.url.host or ""
+    except Exception:
+        host = ""
+    return (request.remote or "") in LOOPBACK and host in LOOPBACK
 
 
 routes = server.PromptServer.instance.routes
@@ -670,12 +707,13 @@ async def ef_live(request):
     LATEST[0] += 1
     seq = LATEST[0]
     try:
-        header, arrays = await asyncio.get_running_loop().run_in_executor(WORKER, _job, seq, body)
+        data = await asyncio.get_running_loop().run_in_executor(WORKER, _job, seq, body)
     except Superseded:
         return web.json_response({"error": "superseded"}, status=409)
     except (ValueError, KeyError, Missing) as e:
         return web.json_response({"error": str(e)}, status=400)
-    resp = web.Response(body=pack(header, arrays), content_type="application/octet-stream")
+    resp = web.Response(body=data, content_type="application/octet-stream")
     resp.headers["Cache-Control"] = "no-store"
-    resp.enable_compression()
+    if not _local(request):
+        resp.enable_compression()
     return resp

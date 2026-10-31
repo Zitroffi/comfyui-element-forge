@@ -142,3 +142,58 @@ def has_true_hdr():
         return "RTXTrueHDR" in comfy_nodes.NODE_CLASS_MAPPINGS
     except ImportError:
         return False
+
+
+def srgb_decode(S):
+    S = S.clamp(0, 1)
+    return torch.where(S <= 0.04045, S / 12.92, ((S + 0.055) / 1.055) ** 2.4)
+
+
+def rtx_sr(srgb_chunk, scale=2.0):
+    import nodes as comfy_nodes
+    cls = comfy_nodes.NODE_CLASS_MAPPINGS.get("RTXVideoSuperResolution")
+    if cls is None:
+        raise ValueError("NVIDIA x2 needs NVIDIA's RTX nodes (ComfyUI_Nvidia_VFX_Nodes) and an RTX card")
+    fn = getattr(cls(), getattr(cls, "FUNCTION", "execute"))
+    out = fn(images=srgb_chunk, resize_type={"resize_type": "scale by multiplier", "scale": float(scale)}, quality="ULTRA",
+             strength=1.0, image_encoding="10-bit RGB (RGB10A2)")
+    out = out[0] if isinstance(out, (tuple, list)) else getattr(out, "result", [out])[0]
+    return out[..., :3].float().cpu()
+
+
+def has_rtx_sr():
+    try:
+        import nodes as comfy_nodes
+        return "RTXVideoSuperResolution" in comfy_nodes.NODE_CLASS_MAPPINGS
+    except ImportError:
+        return False
+
+
+PQ_M1, PQ_M2, PQ_C1, PQ_C2, PQ_C3 = 2610 / 16384, 2523 / 4096 * 128, 3424 / 4096, 2413 / 4096 * 32, 2392 / 4096 * 32
+REC709_TO_2020 = torch.tensor([[0.6274, 0.3293, 0.0433], [0.0691, 0.9195, 0.0114], [0.0164, 0.0880, 0.8956]])
+LUMA_2020 = torch.tensor([0.2627, 0.6780, 0.0593])
+
+
+def pq_nits(E):
+    p = E.clamp(0, 1) ** (1 / PQ_M2)
+    return 10000.0 * ((p - PQ_C1).clamp(min=0) / (PQ_C2 - PQ_C3 * p)) ** (1 / PQ_M1)
+
+
+def nits_pq(L):
+    y = (L.clamp(0, 10000) / 10000.0) ** PQ_M1
+    return ((PQ_C1 + PQ_C2 * y) / (1 + PQ_C3 * y)) ** PQ_M2
+
+
+def hdr_plate_only(plate_srgb, plate_lin, comp_lin, through):
+    P = pq_nits(true_hdr(plate_srgb).float().cpu()[..., :3])
+    lum = LUMA_2020.to(P)
+    m = REC709_TO_2020.to(P)
+    lin = plate_lin @ m.T
+    out = []
+    for k in range(P.shape[0]):
+        y_in, y_out = (lin[k] * lum).sum(-1), (P[k] * lum).sum(-1)
+        sel = (y_in > 0.05) & (y_in < 0.6)
+        g = float((y_out[sel] / y_in[sel]).median()) if int(sel.sum()) > 256 else 203.0
+        eff = ((comp_lin[k] - plate_lin[k] * through[k]) @ m.T).clamp(min=0) * g
+        out.append(nits_pq(P[k] * through[k] + eff))
+    return torch.stack(out)

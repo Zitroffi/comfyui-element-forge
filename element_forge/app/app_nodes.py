@@ -646,19 +646,27 @@ class EFFinishStack:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-            "layers": ("STRING", {"default": "[]", "multiline": True, "tooltip": "JSON list, bottom to top: {run_folder, settings, start, end, fade_in, fade_out, keys} (frames). keys (optional): {offset_x | offset_y | scale | stretch | rotation | brightness: [[frame, value, ease], ...]}, ease even / in / out / smooth. All runs must come from the same clip."}),
+            "layers": ("STRING", {"default": "[]", "multiline": True, "tooltip": "JSON list, bottom to top: {run_folder, settings, start, end, fade_in, fade_out, keys} (frames). keys (optional): {offset_x | offset_y | scale | stretch | rotation | brightness: [[frame, value, ease], ...]}, ease even / in / out / smooth. All runs must come from the same clip. Empty with plate connected: the clip without an effect."}),
             "common": ("STRING", {"default": "{}", "multiline": True, "tooltip": "Post settings for the whole comp (plate grade, haze, finish) as JSON; the groups element/light/glow/smoke are taken per layer."}),
             "out_folder": ("STRING", {"default": "element-forge/studio/comp", "tooltip": "Folder for the result, relative to the ComfyUI output folder (comp.mp4, comp_#####.exr, stack.json)."}),
             "write_exr": ("BOOLEAN", {"default": True}),
             "fps": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 240.0, "step": 0.001, "tooltip": "0 = read from the first run's MP4."}),
             "chunk": ("INT", {"default": 8, "min": 1, "max": 128}),
         }, "optional": {
-            "write_layers": ("BOOLEAN", {"default": False, "tooltip": "Also write every effect's passes (light, element, smoke, glow) as they go into the comp, the plate and the depth as EXR sequences under layers/."}),
+            "write_layers": ("BOOLEAN", {"default": False, "tooltip": "Also write every effect's passes (light, element, smoke, glow) as they go into the comp, the plate and the depth as EXR sequences under layers/. passes, when set, decides instead."}),
             "comp_name": ("STRING", {"default": "Element Forge shot", "tooltip": "Name of the export (kept for older calls)."}),
             "format": (["mp4", "prores", "h265", "png8", "png16", "exr"], {"default": "mp4", "tooltip": "The comp as H.264 MP4 (8 bit), ProRes 422 HQ (10 bit, .mov), H.265 (10 bit), a PNG sequence (8 or 16 bit) or an EXR sequence (half, linear). comp.mp4 is always written too, to watch it."}),
             "frame_start": ("INT", {"default": 0, "min": 0, "max": 100000, "tooltip": "First frame of the export (0 = the clip's first)."}),
             "frame_end": ("INT", {"default": -1, "min": -1, "max": 100000, "tooltip": "Last frame of the export, inclusive (-1 = the clip's last)."}),
             "hdr": ("BOOLEAN", {"default": False, "tooltip": "H.265 only: HDR10 (PQ, BT.2020) through NVIDIA RTX TrueHDR; needs an RTX card and NVIDIA's nodes."}),
+            "passes": ("STRING", {"default": "", "tooltip": "The passes written as EXR under layers/, comma separated: effects (light, element, smoke, glow of every effect), plate, depth, normals, mask (the object's mask). Empty: as write_layers."}),
+            "upscale": (["off", "plate", "comp"], {"default": "off", "tooltip": "NVIDIA RTX Super Resolution x2: off; plate (only the plate, the effects are scaled up as they are); comp (the finished comp with the effects). The passes come at the same size."}),
+            "hdr_on": (["comp", "plate"], {"default": "comp", "tooltip": "With hdr: TrueHDR on the finished comp, or on the plate alone (the effects keep their own scene-linear brightness on top)."}),
+            "plate": ("IMAGE", {"tooltip": "The clip (sRGB) for an export without an effect, when layers is empty."}),
+            "depth": ("IMAGE", {"tooltip": "Depth of the clip without an effect (near = 1)."}),
+            "normals": ("IMAGE", {"tooltip": "Normals of the clip without an effect."}),
+            "mask": ("MASK", {"tooltip": "The object's mask of the clip without an effect (point A)."}),
+            "mask_b": ("MASK", {"tooltip": "The mask of point B; joined with mask."}),
         }}
 
     RETURN_TYPES = ("IMAGE", "STRING")
@@ -668,67 +676,105 @@ class EFFinishStack:
     CATEGORY = "Element Forge/App"
     DESCRIPTION = ("Renders the comp of several runs of one plate at full resolution: the plate of the first run graded once, "
                    "then every run's element, light, glow and smoke with its own post settings and visibility window "
-                   "(start/end with fades), then haze and finish for the whole comp.")
+                   "(start/end with fades), then haze and finish for the whole comp. Without runs it exports the clip alone "
+                   "with its passes. NVIDIA x2 and HDR can go on the plate only or on the whole comp.")
 
     def stack(self, layers, common, out_folder, write_exr, fps, chunk, write_layers=False, comp_name="Element Forge shot",
-              format="mp4", frame_start=0, frame_end=-1, hdr=False):
-        from ..output.video_out import CompWriter, srgb_encode, true_hdr
+              format="mp4", frame_start=0, frame_end=-1, hdr=False, passes="", upscale="off", hdr_on="comp",
+              plate=None, depth=None, normals=None, mask=None, mask_b=None):
+        from ..output.video_out import CompWriter, srgb_encode, srgb_decode, true_hdr, rtx_sr, hdr_plate_only
         if hdr and format != "h265":
             raise ValueError("HDR is written as H.265 10 bit: choose format h265")
         L = json.loads(layers) if isinstance(layers, str) else layers
-        if not L:
+        if not L and plate is None:
             raise ValueError("No layers.")
         base = os.path.realpath(folder_paths.get_output_directory())
         od = os.path.realpath(os.path.join(base, out_folder))
         if os.path.commonpath([base, od]) != base:
             raise ValueError("out_folder must be inside the ComfyUI output folder")
         os.makedirs(od, exist_ok=True)
+        want = ({p.strip() for p in str(passes).split(",") if p.strip()} if str(passes).strip()
+                else ({"effects", "plate", "depth"} if write_layers else set()))
         cs = merge_settings(common)
         runs = []
         for ly in L:
             d = run_dir(ly["run_folder"])
             runs.append((ly, merge_settings(ly.get("settings") or {}), pass_files(d), d))
-        files0 = runs[0][2]
-        n = len(files0["plate"])
-        h, w = read_exr(files0["plate"][0]).shape[:2]
-        fps = fps or run_fps(runs[0][3])
-        glow = EFGlow()
         to = lambda a: torch.from_numpy(np.stack(a)) if a and a[0] is not None else None
+        if runs:
+            files0 = runs[0][2]
+            n = len(files0["plate"])
+            h, w = read_exr(files0["plate"][0]).shape[:2]
+            fps = fps or run_fps(runs[0][3])
+            more = {p: sorted(glob.glob(os.path.join(runs[0][3], f"{p}_*.exr")))[-n:] for p in ("normals", "mask")}
+            more = {p: fs for p, fs in more.items() if fs}
+            plate_at = lambda idx: to([load_frame(files0, "plate", i, h, w) for i in idx])
+            depth_at = lambda idx: to([load_frame(files0, "depth", i, h, w) for i in idx]) if "depth" in files0 else None
+            normals_at = lambda idx: to([load_frame(more, "normals", i, h, w) for i in idx]) if "normals" in more else None
+            mask_at = lambda idx: to([load_frame(more, "mask", i, h, w) for i in idx]) if "mask" in more else None
+        else:
+            n, h, w = plate.shape[:3]
+            fps = fps or 25.0
+            m = mask if mask_b is None or mask is None else torch.maximum(mask, mask_b)
+            m = mask_b if m is None else m
+            frame = lambda a, idx: a[[min(i, a.shape[0] - 1) for i in idx]].float().cpu()
+            plate_at = lambda idx: srgb_decode(frame(plate, idx)[..., :3])
+            depth_at = lambda idx: frame(depth, idx)[..., :3] if depth is not None else None
+            normals_at = lambda idx: frame(normals, idx)[..., :3] if normals is not None else None
+            mask_at = lambda idx: frame(m, idx)[..., None].repeat(1, 1, 1, 3) if m is not None else None
+        sr = str(upscale) if str(upscale) in ("plate", "comp") else "off"
+        h_o, w_o = (max(8, round(h * 2 / 8) * 8), max(8, round(w * 2 / 8) * 8)) if sr != "off" else (h, w)
+
+        def fit(x):
+            if x is None or tuple(x.shape[1:3]) == (h_o, w_o):
+                return x
+            return F.interpolate(x.permute(0, 3, 1, 2).float(), size=(h_o, w_o), mode="bilinear", align_corners=False).permute(0, 2, 3, 1)
+
+        def sr_lin(x):
+            return fit(srgb_decode(rtx_sr(srgb_encode(x))))
+        glow = EFGlow()
         previews = []
-        names, passes = [], []
+        names, layer_passes = [], []
         for j, (ly, ss, files, _) in enumerate(runs):
             nm = "".join(c for c in str(ly.get("name") or f"effect {j + 1}") if c.isalnum() or c in " _-").strip().replace(" ", "_").lower() or f"effect{j + 1}"
             names.append(f"{j + 1:02d}_{nm}")
             ps = []
-            if "light" in files and ss["light"]["strength"] > 0:
-                ps.append("light")
-            if "element" in files and ss["element"].get("visible", True):
-                ps.append("element")
-            if "smoke" in files and ss["smoke"]["opacity"] > 0:
-                ps.append("smoke")
-            if "element" in files and ss["glow"]["exposure"] > -29:
-                ps.append("glow")
-            passes.append(ps)
+            if "effects" in want:
+                if "light" in files and ss["light"]["strength"] > 0:
+                    ps.append("light")
+                if "element" in files and ss["element"].get("visible", True):
+                    ps.append("element")
+                if "smoke" in files and ss["smoke"]["opacity"] > 0:
+                    ps.append("smoke")
+                if "element" in files and ss["glow"]["exposure"] > -29:
+                    ps.append("glow")
+            layer_passes.append(ps)
         lay_dir = os.path.join(od, "layers")
         def put(sub, i, rgb, a=None):
             os.makedirs(os.path.join(lay_dir, sub), exist_ok=True)
             _exr_layer(os.path.join(lay_dir, sub, f"{sub}_{i + 1:05d}.exr"), rgb, a)
-        ss0, fl0 = runs[0][1], runs[0][2]
-        focus = (run_focus(fl0, n, h, w, int(ss0["element"]["time_offset"]))
-                 if cs["dof"]["amount"] > 0 and cs["dof"]["focus"] < 0 else None)
+        def put_all(sub, idx, X, A=None):
+            X, A = fit(X), fit(A)
+            for k, i in enumerate(idx):
+                put(sub, i, X[k].numpy(), None if A is None else A[k].numpy())
+        focus = None
+        if runs:
+            ss0, fl0 = runs[0][1], runs[0][2]
+            focus = (run_focus(fl0, n, h, w, int(ss0["element"]["time_offset"]))
+                     if cs["dof"]["amount"] > 0 and cs["dof"]["focus"] < 0 else None)
         a0 = max(0, min(n - 1, int(frame_start)))
         a1 = n - 1 if int(frame_end) < 0 else max(a0, min(n - 1, int(frame_end)))
-        view = CompWriter(od, "mp4", fps, w, h)
-        own = CompWriter(od, format, fps, w, h, hdr=hdr) if format != "mp4" or hdr else None
+        view = CompWriter(od, "mp4", fps, w_o, h_o)
+        own = CompWriter(od, format, fps, w_o, h_o, hdr=hdr) if format != "mp4" or hdr else None
+        missing = sorted(p for p in want & {"depth", "normals", "mask"}
+                         if {"depth": depth_at, "normals": normals_at, "mask": mask_at}[p]([a0]) is None)
         try:
             for c0 in range(a0, a1 + 1, chunk):
                 idx = list(range(c0, min(a1 + 1, c0 + chunk)))
-                dep = to([load_frame(files0, "depth", i, h, w) for i in idx]) if "depth" in files0 else None
-                P = dof_plate(cs, grade_plate(cs["plate"], to([load_frame(files0, "plate", i, h, w) for i in idx])), dep, idx, focus)
+                dep = depth_at(idx)
+                P = dof_plate(cs, grade_plate(cs["plate"], plate_at(idx)), dep, idx, focus)
                 C = P
-                if write_layers:
-                    for k, i in enumerate(idx):
-                        put("plate", i, P[k].numpy())
+                T = torch.ones(P.shape[:-1] + (1,), dtype=P.dtype)
                 terms = {}
                 for j, (ly, ss, files, _) in enumerate(runs):
                     wgt = fade_weight(ly, idx) * key_weight(ly.get("keys"), idx)
@@ -743,48 +789,69 @@ class EFFinishStack:
                 for j, (ly, ss, files, _) in enumerate(runs):
                     wgt = fade_weight(ly, idx) * key_weight(ly.get("keys"), idx)
                     if float(wgt.max()) <= 0:
-                        if write_layers:
-                            zero = np.zeros((h, w, 3), np.float32)
+                        if layer_passes[j]:
+                            zero = np.zeros((h_o, w_o, 3), np.float32)
                             for i in idx:
-                                for p in passes[j]:
-                                    put(f"{names[j]}_{p}", i, zero, np.zeros((h, w, 1), np.float32) if p in ("element", "smoke") else None)
+                                for p in layer_passes[j]:
+                                    put(f"{names[j]}_{p}", i, zero, np.zeros((h_o, w_o, 1), np.float32) if p in ("element", "smoke") else None)
                         continue
                     t = terms[j][0]
                     if len(terms) > 1 and ss["lit"]["others"] > 0:
                         t = lit_by(t, (Lsum - t["L"] * wgt).clamp(min=0), P, ss["lit"]["others"])
                     C = add_layer(C, t, wgt)
-                    if write_layers:
-                        for k, i in enumerate(idx):
-                            kk = float(wgt[k])
-                            for p in passes[j]:
-                                if p == "light":
-                                    put(f"{names[j]}_light", i, (t["L"][k] * kk).numpy())
-                                elif p == "element":
-                                    put(f"{names[j]}_element", i, (t["Ec"][k] * kk).numpy(), (t["Ea"][k] * kk).numpy() if t["mode"] == "over" else None)
-                                elif p == "smoke" and t["S"] is not None:
-                                    put(f"{names[j]}_smoke", i, (t["S"][0][k] * kk).numpy(), (t["S"][1][k] * kk).numpy())
-                                elif p == "glow":
-                                    put(f"{names[j]}_glow", i, (t["G"][k] * kk).numpy())
-                if write_layers and dep is not None:
-                    for k, i in enumerate(idx):
-                        put("depth", i, dep[k][..., :1].repeat(1, 1, 3).numpy())
-                C = finish_comp(cs, C, dep, idx)
+                    if t.get("visible", True) and t["mode"] == "over":
+                        T = T * (1 - t["Ea"] * wgt)
+                    if t["S"] is not None:
+                        T = T * (1 - t["S"][1] * wgt)
+                    for p in layer_passes[j]:
+                        if p == "light":
+                            put_all(f"{names[j]}_light", idx, t["L"] * wgt)
+                        elif p == "element":
+                            put_all(f"{names[j]}_element", idx, t["Ec"] * wgt, t["Ea"] * wgt if t["mode"] == "over" else None)
+                        elif p == "smoke" and t["S"] is not None:
+                            put_all(f"{names[j]}_smoke", idx, t["S"][0] * wgt, t["S"][1] * wgt)
+                        elif p == "glow":
+                            put_all(f"{names[j]}_glow", idx, t["G"] * wgt)
+                P_o, T_o, dep_o = P, T, dep
+                if sr == "plate":
+                    Pc = P.clamp(0, 1)
+                    detail = sr_lin(Pc) - fit(Pc)
+                    C = fit(C) + detail * fit(T)
+                    P_o, T_o, dep_o = fit(P) + detail, fit(T), fit(dep)
+                elif sr == "comp" and ("plate" in want or (hdr and hdr_on == "plate")):
+                    P_o, T_o, dep_o = sr_lin(P), fit(T), fit(dep)
+                elif sr == "comp":
+                    dep_o = fit(dep)
+                if "plate" in want:
+                    put_all("plate", idx, P_o)
+                for p, get in (("depth", lambda: dep), ("normals", lambda: normals_at(idx)), ("mask", lambda: mask_at(idx))):
+                    if p in want and p not in missing:
+                        x = get()
+                        put_all(p, idx, x[..., :1].repeat(1, 1, 1, 3) if p == "depth" else x[..., :3])
+                C = finish_comp(cs, C, dep if sr == "comp" else dep_o, idx)
+                if sr == "comp":
+                    C = sr_lin(C)
                 srgb = linear_to_srgb(C.clamp(0, 1))
                 for k, i in enumerate(idx):
                     if write_exr and format != "exr":
                         _exr_comp(os.path.join(od, f"comp_{i + 1:05d}.exr"), C[k].numpy())
                 view.add(C, idx)
                 if own is not None:
-                    own.add(true_hdr(srgb_encode(C)) if hdr else C, idx)
-                small = F.interpolate(srgb.permute(0, 3, 1, 2), scale_factor=512 / max(h, w), mode="area") if max(h, w) > 512 else srgb.permute(0, 3, 1, 2)
+                    if hdr and hdr_on == "plate":
+                        Pf = finish_comp(cs, P_o, dep_o, idx)
+                        own.add(hdr_plate_only(srgb_encode(Pf), Pf, C, T_o), idx)
+                    else:
+                        own.add(true_hdr(srgb_encode(C)) if hdr else C, idx)
+                small = F.interpolate(srgb.permute(0, 3, 1, 2), scale_factor=512 / max(h_o, w_o), mode="area") if max(h_o, w_o) > 512 else srgb.permute(0, 3, 1, 2)
                 previews.append(small.permute(0, 2, 3, 1))
         finally:
             view.close()
             if own is not None:
                 own.close()
-        rep = {"layers": [ly["run_folder"] for ly in L], "frames": n, "size": [w, h], "fps": fps,
+        rep = {"layers": [ly["run_folder"] for ly in L], "frames": n, "size": [w_o, h_o], "fps": fps,
                "out": os.path.relpath(od, base).replace("\\", "/"), "exr": bool(write_exr), "format": format, "hdr": bool(hdr),
-               "range": [a0, a1], "file": (own.files[0] if own is not None and own.files else "comp.mp4")}
+               "range": [a0, a1], "file": (own.files[0] if own is not None and own.files else "comp.mp4"),
+               "passes": sorted(want - set(missing)), "missing": missing, "upscale": sr, "hdr_on": hdr_on if hdr else None}
         with open(os.path.join(od, "stack.json"), "w", encoding="utf-8") as f:
             json.dump({"layers": L, "common": cs, "report": rep}, f, indent=1)
         return (torch.cat(previews).float(), json.dumps(rep))
