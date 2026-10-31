@@ -66,12 +66,11 @@ Choose from fire, lightning, sparks, smoke, magic, weather, debris, liquid and d
 ### All features
 
 <details>
-<summary><b>1 · Clip</b> &nbsp;·&nbsp; load, analyse, grade</summary>
+<summary><b>1 · Clip</b> &nbsp;·&nbsp; load, analyse</summary>
 <br>
 
 - **Sources**<br>Load a video or a still picture. In a node graph, EF Shot also accepts frames with a frame rate.
 - **Analysis**<br>Depth, surface normals and camera motion are worked out once per clip. Every effect on the clip reuses them.
-- **Clip grade**<br>Brightness, warmth, colour strength and a depth blur that keeps the focus on the effect.
 
 </details>
 
@@ -87,51 +86,50 @@ Choose from fire, lightning, sparks, smoke, magic, weather, debris, liquid and d
 </details>
 
 <details>
-<summary><b>3 · Effect · Basic</b> &nbsp;·&nbsp; 26 styles, three ways to make them</summary>
+<summary><b>3 · Effect · Basic</b> &nbsp;·&nbsp; 26 styles, your words, overlay or inpaint</summary>
 <br>
 
 - **Styles**<br>26 styles in ten groups, from flames and lightning to snow, liquid and dissolve, plus your own effect.
-- **Three routes**<br>**Overlay** generates the element separately. **Inpaint** generates it inside the footage for contact with surfaces. **Drawn styles** use particles without AI generation.
 - **Words**<br>Describe the look, motion and contact. **Enhance** can refine them when a language model is installed. With the optional Bonsai model, **Describe what you want** suggests a style and its words; you see each change before you apply it.
-- **Guides**<br>Guide the AI with the object's shape, a path you paint on the canvas, or simulated particles.
-- **Preview first**<br>Start with a fast **Preview**, then **Make final** for the full-size version. **Add passes** creates missing passes without generating the effect again.
-- **NVIDIA**<br>Optional NVIDIA upscaling and HDR.
+- **Three routes**<br>**Overlay** generates the element separately. **Inpaint** generates it inside the footage for contact with surfaces. **Drawn styles** use particles without AI generation.
+- **Several effects**<br>**＋ Effect** adds another effect to the same clip, each with its own settings and versions.
 
 </details>
 
 <details>
-<summary><b>3 · Effect · Advanced</b> &nbsp;·&nbsp; live particle simulation, without AI</summary>
+<summary><b>3 · Effect · Advanced</b> &nbsp;·&nbsp; live particle simulation, guides for the AI</summary>
 <br>
 
 - **Live, without AI**<br>The **Emitter** shows every control of a particle style. The live preview simulates the particles on your clip with the same engine and seed as the run.
 - **Part of the scene**<br>The clip's depth hides particles behind nearer objects and lets them bounce, stick, slide or die on surfaces. The object's mask and track carry the emitter; the clip's motion and the camera move them along.
 - **Three uses**<br>Keep the simulation as the finished effect, let it guide LTX-2.5, or draw it over the AI element.
+- **Guides for the AI**<br>Besides the particles, the AI can follow the object's shape or a path you paint on the canvas.
 - **Out of the box**<br>Every particle style starts from tested values. Changed values are marked and go back one by one.
 - **Keep it**<br>**Save as my effect** stores the emitter values for every clip. See [Make your own effects](#make-your-own-effects).
 
 </details>
 
 <details>
-<summary><b>4 · Scene & finish</b> &nbsp;·&nbsp; light, glow, timing, versions</summary>
+<summary><b>4 · Scene & finish</b> &nbsp;·&nbsp; light, glow, placement, timing, clip grade</summary>
 <br>
 
 - **Light and colour**<br>Set the light the effect throws on the scene, its glow, brightness and colour. An effect can also be **lit by the other effects**, such as smoke near a flame.
 - **Placement and timing**<br>Move, scale and rotate the effect in the canvas. The timeline sets start, end and fades; Advanced adds keyframes.
-- **Several effects**<br>Add several effects to one clip, each with its own settings and versions.
-- **Versions**<br>Keep versions, compare them and restore their settings.
+- **Clip grade**<br>Brightness, warmth, colour strength and a depth blur that keeps the focus on the effect.
 
 </details>
 
 <details>
-<summary><b>5 · Output</b> &nbsp;·&nbsp; formats, EXR passes, NVIDIA, element library</summary>
+<summary><b>5 · Output</b> &nbsp;·&nbsp; preview, versions, formats, EXR passes, NVIDIA</summary>
 <br>
 
+- **Preview and final**<br>Start with a fast **Preview**, then **Make final** for the full-size version. **Add passes** creates missing passes without generating the effect again.
+- **Versions**<br>Every run becomes a version. Show and compare versions and restore their settings.
 - **Formats**<br>Export the composite as MP4, ProRes, H.265 10-bit, PNG or EXR.
 - **Passes**<br>Export separate scene-linear EXR passes for your compositor: effect passes, plate, depth, normals and the object's mask, each on its own.
 - **The clip alone**<br>Export a clip without an effect, with its passes, NVIDIA upscaling or HDR.
-- **NVIDIA on the plate or the comp**<br>Run NVIDIA upscaling and HDR on the plate only, with the effects kept as they are, or on the finished comp.
+- **Upscaling and HDR**<br>**LTX × 2** adds detail in a second pass; **NVIDIA × 2** is fast. In the export, NVIDIA upscaling and HDR run on the plate only, with the effects kept as they are, or on the finished comp.
 - **Element library**<br>Save an AI element to a library and place it in other shots without generating it again.
-- **Other generators**<br>Bring frames from another generator into the placement workflow with **EF Element from Images**.
 
 </details>
 
@@ -141,6 +139,7 @@ Choose from fire, lightning, sparks, smoke, magic, weather, debris, liquid and d
 
 - **Template**<br>The **Element Forge** template uses the same graphs as the app, as ordinary ComfyUI nodes.
 - **Building blocks**<br>**EF Unpack** exposes the footage, element, alpha and passes. Compositing tools include glow, depth light, unmult, deflicker and dither.
+- **Other generators**<br>Bring frames from another generator into the placement workflow with **EF Element from Images**.
 - **Scripting**<br>The graphs in `api_workflows/` can be used for scripting.
 
 </details>
