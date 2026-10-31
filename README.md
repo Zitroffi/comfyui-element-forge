@@ -28,26 +28,35 @@ https://github.com/user-attachments/assets/468b014c-f544-41fe-b26f-fd6da37d78a3
 
 ## What you can do
 
+The app guides you through five steps:
+
 <table>
   <tr>
-    <td colspan="3" valign="top">
-      <h3>Build particle simulations live, without AI</h3>
-      In <b>Advanced</b> mode, build your own particle simulation and watch it on your clip while you change it. The live preview needs no AI. The particles already belong to the scene: the clip's depth hides them behind nearer objects and lets them bounce, stick or slide on surfaces, the object's mask and track carry the emitter, and the clip's motion and the camera move them along.<br><br>
-      Keep the simulation as the finished effect, let it guide the AI, or save it as your own effect. The particle styles do the same out of the box, with tested values.
+    <td width="33%" valign="top">
+      <h3>1 · Clip</h3>
+      Load a <b>video or a picture</b>. <b>Depth, normals and camera motion</b> are worked out once per clip.
+    </td>
+    <td width="33%" valign="top">
+      <h3>2 · Position & Track</h3>
+      Click where the effect belongs. It follows a <b>point, an object or the camera</b>, and <b>hides behind the object</b> with its mask.
+    </td>
+    <td width="33%" valign="top">
+      <h3>3 · Effect · Basic</h3>
+      Choose one of <b>26 styles</b> or <b>describe your own</b>. <b>LTX-2.5</b> generates it on your clip; drawn styles need no AI.
     </td>
   </tr>
   <tr>
     <td width="33%" valign="top">
-      <h3>Place effects in the scene</h3>
-      Follow a point, object or camera motion, and use masks to hide an effect behind foreground objects.
+      <h3>3 · Effect · Advanced</h3>
+      Build particle simulations <b>live, without AI</b>. Depth, masks and tracks let them <b>hide, collide and move with the scene</b>.
     </td>
     <td width="33%" valign="top">
-      <h3>Shape the finished look</h3>
-      Adjust light, glow, colour and placement in the app. Keep versions and combine several effects on one clip.
+      <h3>4 · Scene & finish</h3>
+      Change light, glow, colour and placement <b>live, without a new run</b>. Combine <b>several effects</b> on one clip.
     </td>
     <td width="33%" valign="top">
-      <h3>Continue in your compositor</h3>
-      Export a finished video or separate scene-linear EXR passes for further work.
+      <h3>5 · Output</h3>
+      Compare versions and export video or <b>scene-linear EXR passes</b>, with <b>NVIDIA × 2 or HDR</b>, even for the clip alone.
     </td>
   </tr>
 </table>
@@ -57,7 +66,7 @@ Choose from fire, lightning, sparks, smoke, magic, weather, debris, liquid and d
 ### All features
 
 <details>
-<summary><b>Clip and scene</b> &nbsp;·&nbsp; load, analyse, grade</summary>
+<summary><b>1 · Clip</b> &nbsp;·&nbsp; load, analyse, grade</summary>
 <br>
 
 - **Sources**<br>Load a video or a still picture. In a node graph, EF Shot also accepts frames with a frame rate.
@@ -67,7 +76,7 @@ Choose from fire, lightning, sparks, smoke, magic, weather, debris, liquid and d
 </details>
 
 <details>
-<summary><b>Position and tracking</b> &nbsp;·&nbsp; points, objects, camera, masks</summary>
+<summary><b>2 · Position & Track</b> &nbsp;·&nbsp; points, objects, camera, masks</summary>
 <br>
 
 - **What it follows**<br>Click where the effect belongs. It follows that **point**, the whole **object**, the **scene** while the camera moves, or stays fixed on **screen**.
@@ -78,7 +87,7 @@ Choose from fire, lightning, sparks, smoke, magic, weather, debris, liquid and d
 </details>
 
 <details>
-<summary><b>Effects and generation</b> &nbsp;·&nbsp; 26 styles, three ways to make them</summary>
+<summary><b>3 · Effect · Basic</b> &nbsp;·&nbsp; 26 styles, three ways to make them</summary>
 <br>
 
 - **Styles**<br>26 styles in ten groups, from flames and lightning to snow, liquid and dissolve, plus your own effect.
@@ -91,7 +100,19 @@ Choose from fire, lightning, sparks, smoke, magic, weather, debris, liquid and d
 </details>
 
 <details>
-<summary><b>Scene and finish</b> &nbsp;·&nbsp; light, glow, timing, versions</summary>
+<summary><b>3 · Effect · Advanced</b> &nbsp;·&nbsp; live particle simulation, without AI</summary>
+<br>
+
+- **Live, without AI**<br>The **Emitter** shows every control of a particle style. The live preview simulates the particles on your clip with the same engine and seed as the run.
+- **Part of the scene**<br>The clip's depth hides particles behind nearer objects and lets them bounce, stick, slide or die on surfaces. The object's mask and track carry the emitter; the clip's motion and the camera move them along.
+- **Three uses**<br>Keep the simulation as the finished effect, let it guide LTX-2.5, or draw it over the AI element.
+- **Out of the box**<br>Every particle style starts from tested values. Changed values are marked and go back one by one.
+- **Keep it**<br>**Save as my effect** stores the emitter values for every clip. See [Make your own effects](#make-your-own-effects).
+
+</details>
+
+<details>
+<summary><b>4 · Scene & finish</b> &nbsp;·&nbsp; light, glow, timing, versions</summary>
 <br>
 
 - **Light and colour**<br>Set the light the effect throws on the scene, its glow, brightness and colour. An effect can also be **lit by the other effects**, such as smoke near a flame.
@@ -102,7 +123,7 @@ Choose from fire, lightning, sparks, smoke, magic, weather, debris, liquid and d
 </details>
 
 <details>
-<summary><b>Output and reuse</b> &nbsp;·&nbsp; formats, EXR passes, element library</summary>
+<summary><b>5 · Output</b> &nbsp;·&nbsp; formats, EXR passes, NVIDIA, element library</summary>
 <br>
 
 - **Formats**<br>Export the composite as MP4, ProRes, H.265 10-bit, PNG or EXR.
@@ -178,7 +199,7 @@ Start with a short clip and an overlay effect.
 ## Make your own effects
 
 1. **Describe it**<br>Choose **Your own effect** and describe any element in words. It is generated with LTX-2.5 and stays on the point you click. Things that glow work best.
-2. **Shape it with particles**<br>Switch the app to **Advanced**. In **Effect**, the **Emitter** shows every control of a particle style. Changed values are highlighted and can be reset one by one. The **live preview** simulates the particles on your clip with the same engine and seed as the run.
+2. **Shape it with particles**<br>Switch the app to **Advanced**. In **Effect**, the **Emitter** shows every control of a particle style. Changed values are highlighted and can be reset one by one. The **live preview** simulates the particles on your clip with the same engine and seed as the run. It needs no AI, and the particles already react to the scene: they hide behind nearer objects, collide with surfaces and move with the clip.
 3. **Keep it**<br>**Save as my effect** stores the style, its words, the emitter values and the switches. Clip, position and track stay with the shot. Your saved effects appear under **My effects** for every clip, ready to load, rename or delete.
 
 ### Particles in detail
