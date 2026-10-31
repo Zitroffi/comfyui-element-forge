@@ -157,6 +157,7 @@ Particle styles also ask where the particles start. Some need a click, others th
 - **Your effect in words**<br>The description, split into **Look**, **Motion** and **Contact** with suggestions to click. The AI follows best below 200 words.
 - **✦ Enhance**<br>Rewrites your words with the text model.
 - **Describe what you want** <sub>Bonsai</sub><br>Type a sentence such as *blue sparks flying off the skateboard*. Bonsai reads it with the clip's first frame and proposes a style and its words. You see each change and **Apply** it as one undo step, or **Discard** it.
+- **Particles in your words** <sub>Bonsai</sub><br>Basic, particle styles: type how the particles should behave, such as *slow green sparks that spiral up*, and press **✦ Fill in**. The proposal shows each value with its reason; **Apply** sets the ticked ones, **Undo** takes them back. In Advanced the set values are marked in the emitter.
 - **AI seed**<br>**Keep it** to repeat a result; off, every run uses a new seed.
 - **Night or dark clip**<br>Darkens the clip for night and lets the effect light it. The AI and the light pass are made on the darkened clip, so run again to see a change.
 
@@ -348,17 +349,20 @@ Shown in **Effect** in Advanced mode. Values left alone keep the style's tested 
 
 - **Closed**<br>Each group shows its main values in one line, and a badge counts the values you changed.
 - **Open**<br>A changed value has a bar in the accent colour; **×** takes it back to the style's value, which the small tick under the slider marks. **More … settings** at the end of a group names what it holds.
+- **✦ Fill from the prompt** <sub>Bonsai</sub><br>Bonsai reads the effect's words against the style's own and proposes the emitter values that change, each with its reason, about 20 s. Untick what you do not want, then **Apply**; **Undo** takes all of them back. Every value stays within its slider's range and at most five times or a fifth of the value now.
 - **While you change a value**<br>Colour, glow, trail, opacity, motion blur and Merge draw at once, even while you drag. A value that changes the simulation keeps its place in the panel; the old particles dim and **Updating the particles…** shows in the canvas until the new simulation is there.
 
 | Group | Controls |
 |:---|:---|
-| **Source** | Emitter shape, maximum particles alive at once |
+| **Source** | Emitter shape and size, maximum particles alive at once |
 | **Emission** | Rate, burst and when it comes, timing, pre-roll |
-| **Motion** | Direction mode (angle, outward, against motion, random) and direction, spread, speed and its variation, lift; how far the particles follow the emitter (strength, lag) and how much the clip carries them |
-| **Particle** | Life, size and their variation, size at birth and at the end, colour over life, sprite, trail, glow, flicker (speed, by size), small particles (share, size, speed, life), fade in and out, motion blur, opacity |
+| **Motion** | Direction mode (angle, outward, against motion, random) and direction, spread, speed and its variation, lift; how far the particles follow the emitter (strength, lag) and how much the clip carries them; bunch to the centre of the spread, speed at the end of the life, speed limit |
+| **Particle** | Life, size and their variation, size at birth and at the end, colour over life and its variation, sprite, trail, glow, flicker (speed, by size), small particles (share, size, speed, life), fade in and out, motion blur, opacity, spin |
 | **Merge** | Merge into one body: blur, choke, edge, fill, only while young |
-| **Forces** | Gravity, wind (sideways, up and down), drag, turbulence (size, change), vortex, attraction to B, flocking |
-| **Contact & depth** | Collision (none, bounce, stick, slide, die), bounce, friction, depth offset and spread, hidden by the scene |
+| **Forces** | Gravity, wind (sideways, up and down), drag, turbulence (size, change, fades in, calmed by drag), vortex, attraction to B, flocking (reach, pull) |
+| **Contact & depth** | Collision (none, bounce, stick, slide, die), bounce, friction, lying time of sticking particles, depth offset and spread, hidden by the scene |
+
+**Calm particles**: lower the speed, set **Speed at the end** below 1 so they come to rest, a **Speed limit**, **Spin** 0, and **Drag calms turbulence** or **Turbulence fades in** so the swirl does not take over. For AI styles (fire, orb, your own effect) the speed is set by the AI; set the guide to **Particles** to get the emitter's speed.
 
 Lightning paths have their own look (width, glow, jaggedness, branches, new shape every few frames); Dissolve has its own emission, motion, particle and force controls.
 

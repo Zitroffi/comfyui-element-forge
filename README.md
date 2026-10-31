@@ -245,13 +245,15 @@ The AI can also follow an object's shape (a flame wraps round a fist) or a path 
 
 | Group | Controls |
 |:---|:---|
-| **Source** | Emitter shape, maximum particles alive at once |
+| **Source** | Emitter shape and size, maximum particles alive at once |
 | **Emission** | Rate, burst, timing, pre-roll |
-| **Motion** | Direction and spread, speed and its variation, how far the particles follow the emitter and the clip |
-| **Particle** | Life, size and colour over life, sprite, trail, glow, flicker, fades, motion blur, opacity, a second class of small particles |
+| **Motion** | Direction and spread, speed and its variation, speed at the end, speed limit, how far the particles follow the emitter and the clip |
+| **Particle** | Life, size and colour over life, sprite, trail, glow, flicker, fades, motion blur, opacity, spin, a second class of small particles |
 | **Merge** | Blur, choke, edge and fill of a single body |
-| **Forces** | Gravity, wind, drag, turbulence, vortex, attraction to B, flocking |
-| **Contact & depth** | Collision, bounce, friction, depth offset and spread, hidden by the scene |
+| **Forces** | Gravity, wind, drag, turbulence (fades in, calmed by drag), vortex, attraction to B, flocking |
+| **Contact & depth** | Collision, bounce, friction, lying time, depth offset and spread, hidden by the scene |
+
+With the optional Bonsai model, **✦ Fill from the prompt** proposes these values from the effect's words; you tick what to apply.
 
 In a node graph, connect **EF Particles** to EF Element for the same settings. See the [node reference](docs/nodes.md#options).
 

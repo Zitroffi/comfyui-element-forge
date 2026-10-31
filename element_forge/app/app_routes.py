@@ -730,7 +730,9 @@ def analysis_graph(values, ltx=None):
     def edit(g):
         g["analysis_keep"] = {"class_type": "EFSaveAnalysis", "inputs": {
             "clip": clip or g["101"]["inputs"]["file"], "plate": ["167", 0], "fps": ["167", 2], "depth": [KEPT_DEPTH, 0],
-            "normals": [KEPT_NORMALS, 0], "depth_model": depth_model(g)}, "_meta": {"title": "Keep the scene analysis"}}
+            "normals": [KEPT_NORMALS, 0], "depth_model": depth_model(g),
+            "depth_edge": int(g.get(KEPT_DEPTH, {}).get("inputs", {}).get("edge_radius", AN.DEPTH_EDGE))},
+            "_meta": {"title": "Keep the scene analysis"}}
     graph = upstream(build_graph("check", clip_values, "analysis", ltx=ltx, edit=edit, kept=False), ["analysis_keep"])
     return graph, graph["analysis_keep"]["inputs"]["clip"]
 

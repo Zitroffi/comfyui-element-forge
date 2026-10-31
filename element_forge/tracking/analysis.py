@@ -58,6 +58,8 @@ def analysis_info(clip, frames=None):
         return None
     if frames is not None and int(info.get("frames", -1)) != int(frames):
         return None
+    if "depth" in info.get("parts", []) and depth_edge_of(info) != DEPTH_EDGE:
+        return None
     return info
 
 
@@ -128,6 +130,14 @@ def camera_motion(plate):
 DEPTH_VDA, DEPTH_DC = "Video Depth Anything", "DepthCrafter"
 
 
+DEPTH_EDGE = 0
+
+
+def depth_edge_of(info):
+    info = info or {}
+    return int(info.get("depth_edge", 0 if "depth_model" in info else 6))
+
+
 def depth_model_of(info):
     return (info or {}).get("depth_model") or DEPTH_VDA
 
@@ -146,6 +156,8 @@ class EFSaveAnalysis:
                 "normals": ("IMAGE", {"tooltip": "Normals of every frame (EF MoGe Normals)."}),
                 "depth_model": ("STRING", {"default": DEPTH_VDA, "tooltip": "The model that made the depth: a run takes the "
                                            "kept depth only if it asks for the same model."}),
+                "depth_edge": ("INT", {"default": DEPTH_EDGE, "min": 0, "max": 64, "tooltip": "The edge filter of EF Deflicker that "
+                                       "made the depth: an analysis with another one counts as not done."}),
             },
         }
 
@@ -156,7 +168,7 @@ class EFSaveAnalysis:
     DESCRIPTION = ("Keeps the scene analysis of a clip in output/element-forge/clips/<clip>/ (depth and normals as 16 bit, "
                    "the camera's motion, MP4 previews). Later runs of the clip with the same frames take it from there.")
 
-    def save(self, clip, plate, fps, depth=None, normals=None, depth_model=None):
+    def save(self, clip, plate, fps, depth=None, normals=None, depth_model=None, depth_edge=DEPTH_EDGE):
         d = clip_folder(clip, make=True)
         p = plate.detach().cpu().float().numpy()
         f, h, w = p.shape[:3]
@@ -170,6 +182,7 @@ class EFSaveAnalysis:
             _preview(os.path.join(d, "depth.mp4"), np.repeat(g, 3, axis=-1), fps)
             info["parts"].append("depth")
             info["depth_model"] = depth_model or DEPTH_VDA
+            info["depth_edge"] = int(depth_edge)
         if normals is not None:
             nor = normals.detach().cpu().float().numpy()[..., :3]
             info["range"]["normals"] = _save16(os.path.join(d, "normals.npy"), nor)
