@@ -28,40 +28,40 @@ https://github.com/user-attachments/assets/468b014c-f544-41fe-b26f-fd6da37d78a3
 
 ## What you can do
 
+Choose from fire, lightning, sparks, smoke, magic, weather, debris, liquid and dissolve styles, or describe your own effect. The app identifies experimental styles before you generate.
+
 The app guides you through five steps:
 
 <table>
   <tr>
     <td width="33%" valign="top">
       <h3>1 · Clip</h3>
-      Load a <b>video or a picture</b>. <b>Depth, normals and camera motion</b> are worked out once per clip.
+      <p>Load a <b>video or a picture</b>. <b>Depth, normals and camera motion</b> are worked out once per clip.</p><br>
     </td>
     <td width="33%" valign="top">
       <h3>2 · Position & Track</h3>
-      Click where the effect belongs. It follows a <b>point, an object or the camera</b>, and <b>hides behind the object</b> with its mask.
+      <p>Click where the effect belongs. It follows a <b>point, an object or the camera</b>, and <b>hides behind the object</b> with its mask.</p><br>
     </td>
     <td width="33%" valign="top">
       <h3>3 · Effect · Basic</h3>
-      Choose one of <b>26 styles</b> or <b>describe your own</b>. <b>LTX-2.5</b> generates it on your clip; drawn styles need no AI.
+      <p>Choose one of <b>26 styles</b> or <b>describe your own</b>. <b>LTX-2.5</b> generates it on your clip; drawn styles need no AI.</p><br>
     </td>
   </tr>
   <tr>
     <td width="33%" valign="top">
       <h3>3 · Effect · Advanced</h3>
-      Build particle simulations <b>live, without AI</b>. Depth, masks and tracks let them <b>hide, collide and move with the scene</b>.
+      <p>Build particle simulations <b>live, without AI</b>. Depth, masks and tracks let them <b>hide, collide and move with the scene</b>.</p><br>
     </td>
     <td width="33%" valign="top">
       <h3>4 · Scene & finish</h3>
-      Change light, glow, colour and placement <b>live, without a new run</b>. Combine <b>several effects</b> on one clip.
+      <p>Change light, glow, colour and placement <b>live, without a new run</b>. Combine <b>several effects</b> on one clip.</p><br>
     </td>
     <td width="33%" valign="top">
       <h3>5 · Output</h3>
-      Compare versions and export video or <b>scene-linear EXR passes</b>, with <b>NVIDIA × 2 or HDR</b>, even for the clip alone.
+      <p>Compare versions and export video or <b>scene-linear EXR passes</b>, with <b>NVIDIA × 2 or HDR</b>, even for the clip alone.</p><br>
     </td>
   </tr>
 </table>
-
-Choose from fire, lightning, sparks, smoke, magic, weather, debris, liquid and dissolve styles, or describe your own effect. The app identifies experimental styles before you generate.
 
 ### All features
 
