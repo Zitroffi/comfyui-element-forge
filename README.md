@@ -11,6 +11,7 @@
 <p align="center">
   <a href="#get-started">Get started</a> ·
   <a href="#your-first-effect">Your first effect</a> ·
+  <a href="#make-your-own-effects">Your own effects</a> ·
   <a href="#more-examples">Examples</a> ·
   <a href="#documentation">Documentation</a>
 </p>
@@ -30,6 +31,67 @@ https://github.com/user-attachments/assets/468b014c-f544-41fe-b26f-fd6da37d78a3
 - **Continue in your compositor.** Export a finished video or separate scene-linear EXR passes for further work.
 
 Choose from fire, lightning, sparks, smoke, magic, weather, debris, liquid and dissolve styles, or describe your own effect. The app identifies experimental styles before you generate.
+
+<details>
+<summary><strong>Clip and scene</strong></summary>
+
+- Load a video or a still picture. In a node graph, EF Shot also accepts frames with a frame rate.
+- Analysis runs once per clip: depth, surface normals and camera motion. Every effect on the clip reuses it.
+- Grade the clip under the effects: brightness, warmth, colour strength and a depth blur that keeps the focus on the effect.
+
+</details>
+
+<details>
+<summary><strong>Position and tracking</strong></summary>
+
+- Click where the effect belongs. It follows that **point**, the whole **object**, the **scene** while the camera moves, or stays fixed on **screen**.
+- Shift-click a second point for effects that connect two positions, such as lightning or energy.
+- An object word helps find what to follow. The track check shows the path before you generate.
+- Hide an effect behind the selected object with its mask, or keep the base of an effect on its tracked point.
+
+</details>
+
+<details>
+<summary><strong>Effects and generation</strong></summary>
+
+- 26 styles in ten groups, from flames and lightning to snow, liquid and dissolve, plus your own effect.
+- **Overlay** generates the element separately. **Inpaint** generates it inside the footage for contact with surfaces. **Drawn styles** use particles without AI generation.
+- Describe the look, motion and contact in words. **Enhance** can refine them when a language model is installed.
+- With the optional Bonsai model, **Describe what you want** suggests a style and its words. You see each change before you apply it.
+- Guide the AI with the object's shape, a path you paint on the canvas, or simulated particles.
+- Start with a fast **Preview**, then **Make final** for the full-size version. **Add passes** creates missing passes without generating the effect again.
+- Optional NVIDIA upscaling and HDR.
+
+</details>
+
+<details>
+<summary><strong>Scene and finish</strong></summary>
+
+- Set the light the effect throws on the scene, its glow, brightness and colour. An effect can also be **lit by the other effects**, such as smoke near a flame.
+- Move, scale and rotate the effect in the canvas. The timeline sets start, end and fades; Advanced adds keyframes.
+- Add several effects to one clip, each with its own settings and versions.
+- Keep versions, compare them and restore their settings.
+
+</details>
+
+<details>
+<summary><strong>Output and reuse</strong></summary>
+
+- Export the composite as MP4, ProRes, H.265 10-bit, PNG or EXR.
+- Export separate scene-linear EXR passes for your compositor.
+- Save an AI element to a library and place it in other shots without generating it again.
+- Bring frames from another generator into the placement workflow with **EF Element from Images**.
+
+</details>
+
+<details>
+<summary><strong>Node graph</strong></summary>
+
+- The **Element Forge** template uses the same graphs as the app, as ordinary ComfyUI nodes.
+- **EF Unpack** exposes the footage, element, alpha and passes. Compositing tools include glow, depth light, unmult, deflicker and dither.
+- The graphs in `api_workflows/` can be used for scripting.
+
+</details>
 
 ## Get started
 
@@ -71,6 +133,61 @@ Start with a short clip and an overlay effect.
 The app keeps versions so you can compare results and restore their settings. For supported previews, **Make final** creates a full-size version; **Add passes** provides missing layers without another effect generation.
 
 Prefer a node graph? Open the **Element Forge** template instead. It uses the same underlying graphs as the app. See [the workflow guide](docs/usage.md#use-the-workflow).
+
+## Make your own effects
+
+1. **Describe it.** Choose **Your own effect** and describe any element in words. It is generated with LTX-2.5 and stays on the point you click. Things that glow work best.
+2. **Shape it with particles.** Switch the app to **Advanced**. In **Effect**, the **Emitter** shows every control of a particle style. Changed values are highlighted and can be reset one by one. The **live preview** simulates the particles on your clip with the same engine and seed as the run.
+3. **Keep it.** **Save as my effect** stores the style, its words, the emitter values and the switches. Clip, position and track stay with the shot. Your saved effects appear under **My effects** for every clip, ready to load, rename or delete.
+
+<details>
+<summary><strong>How the particle simulation works</strong></summary>
+
+Element Forge has its own particle engine. It uses the clip's analysis, so particles behave like part of the scene.
+
+- **Emitter.** Particles start at a point, between two points, along a drawn path, in an area, across the whole frame, on an object, along its outline or bottom edge, or in groups placed in depth.
+- **Birth.** Each particle gets a life, size, speed and direction: at an angle, outward from the object, against the emitter's motion (grinding sparks) or random. Rate and bursts decide when they appear. Pre-roll runs the simulation before the clip starts, so snow or rain already fills the first frame.
+- **Forces.** Every step applies gravity, wind, drag, swirling turbulence (curl noise), a vortex around the emitter, attraction to point B and flocking, where neighbours pull together into streams and drops.
+- **Motion from the clip.** Particles take on part of the emitter's movement. Optical flow of the footage lets moving things carry them along, such as a hand sweeping through smoke. The measured camera motion keeps them in place in the scene while the camera moves.
+- **Depth and contact.** Each particle has a depth in the scene. Nearer objects hide it, and where it meets a surface it can bounce, stick, slide or die. Rain and liquid drops splash on impact.
+- **Look.** Sprites (soft, dot, flake, puff, wisp, streak, spark or chunk), colour and size over the particle's life, trails, motion blur, flicker and glow. **Merge into one body** blurs neighbouring particles together for liquid edges or fire tongues.
+- **Paths.** Lightning is drawn as jagged, branching bolts that change shape every few frames. Climbing arcs run along the thin parts of an object. Cracks and frost grow across a surface.
+- **Dissolve.** The object's mask crumbles into particles while the background behind it is filled in.
+- **Seed.** The same particle seed gives the same particles in the live preview and in the run. **New seed** tries other particles with the same settings.
+
+</details>
+
+<details>
+<summary><strong>Particles and the AI</strong></summary>
+
+Particles can be the whole effect or steer the AI.
+
+| Route | What happens |
+|---|---|
+| Particles only | The simulation is the finished effect. No AI generation; the fastest route. |
+| Particles guide the AI | The particles set where and how the element moves. LTX-2.5 paints its look. |
+| Also draw the particles | Drawn particles are added over the AI element. |
+
+The AI can also follow an object's shape (a flame wraps round a fist) or a path you paint, or work from the prompt alone. **Guide strength** sets how closely it follows.
+
+</details>
+
+<details>
+<summary><strong>Emitter controls</strong></summary>
+
+| Group | Controls |
+|---|---|
+| Source | Emitter shape, maximum particles alive at once |
+| Emission | Rate, burst, timing, pre-roll |
+| Motion | Direction and spread, speed and its variation, how far the particles follow the emitter and the clip |
+| Particle | Life, size and colour over life, sprite, trail, glow, flicker, fades, motion blur, opacity, a second class of small particles |
+| Merge | Blur, choke, edge and fill of a single body |
+| Forces | Gravity, wind, drag, turbulence, vortex, attraction to B, flocking |
+| Contact & depth | Collision, bounce, friction, depth offset and spread, hidden by the scene |
+
+In a node graph, connect **EF Particles** to EF Element for the same settings. See the [node reference](docs/nodes.md#options).
+
+</details>
 
 ## More examples
 
