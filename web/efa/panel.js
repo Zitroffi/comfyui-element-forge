@@ -7,7 +7,7 @@ import { loadRtx, hasRtx, ltxForBuild, loadSystem, systemNotes } from "./ui/mach
 import * as C from "./ui/comfy.js";
 import { editBrush } from "./ui/stage.js";
 import { initLive, poke as pokeLive, refresh as refreshLive, liveMode, setLiveMode, livePreviews } from "./live.js";
-import { emitterPanel, emitterKind, ownValues, SHAPES, SHAPE, shapeOf, shapeFixed, setAdv, effStyle } from "./emitter.js";
+import { emitterPanel, basicFill, emitterKind, ownValues, SHAPES, SHAPE, shapeOf, shapeFixed, setAdv, effStyle } from "./emitter.js";
 import { initShotLine, lineState, describe as describeLine, typedByHand } from "./shotline.js";
 import { enhance, enhancer, bonsaiStatus, wordDiff, hasBonsai, bonsaiSetup, startBonsaiSetup, resetBonsai } from "./ui/enhance.js";
 import { initWish, suggestButton, wishResults } from "./wish.js";
@@ -842,6 +842,7 @@ function effectBody() {
   }
   const run = effStyle(st, e);
   if (livePreviews(run) && S.getShot().clip) kids.push(...liveBlock(e, adv, run));
+  if (!adv && livePreviews(run) && S.getShot().clip) kids.push(...basicFill(emitterCtx(e, run)));
   if (adv) kids.push(h("div", { class: "field emitter" }, ...emitterPanel({ ...emitterCtx(e, run), st0: st })));
   kids.push(...saveRows(mx));
   return kids;

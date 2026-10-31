@@ -1,6 +1,7 @@
 import { h, fmtSec } from "./ui/lib.js";
 import * as S from "./ui/state.js";
 import { previewSimLook } from "./ui/stage.js";
+import { fillRows } from "./fill.js";
 
 export const FOLLOW_STRENGTH = "Follows motion: strength";
 export const FOLLOW_LAG = "Follows motion: lag";
@@ -374,6 +375,50 @@ function resetAll(ctx) {
   }, "emitter");
 }
 
+const ALL_PARTICLE_KEYS = [...Object.values(PARTICLES).flatMap((g) => [...g.main, ...g.more]),
+  key("inherit", "Takes the emitter's motion", 0, 1, 0.05), key("motion_carry", "Carried by the clip", 0, 1, 0.05)];
+function fillControls(ctx) {
+  const a = ctx.amount || 1;
+  const dirActs = ctx.P.direction_mode === "angle" || ctx.P.direction_mode === "against motion";
+  const dir = dirActs && !ctx.st.placement?.startsWith("ab")
+    ? [{ k: "direction", label: "Direction", min: 0, max: 359, step: 1, unit: "°", tip: "0 up, 90 right, 180 down, 270 left", int: true, angle: true,
+      now: Math.round(ctx.e.dir ?? ctx.B.direction ?? 0) }] : [];
+  return dir.concat(ALL_PARTICLE_KEYS.map((c) => {
+    const get = c.get || ((p) => p[c.k]);
+    const scale = c.k === "rate" || c.k === "burst" ? a : 1;
+    const now = get(ctx.P);
+    if (typeof now !== "number") return null;
+    return { k: c.k, label: c.label, min: c.min, max: c.max, step: c.step, unit: c.unit || "", tip: c.tip || "", int: !!c.int, now: now * scale };
+  }).filter(Boolean));
+}
+function applyFill(ctx, r) {
+  const o = { ...ctx.own }, a = ctx.amount || 1;
+  const before = { values: ctx.f?.emitter_values || "", dir: ctx.e.dir };
+  const put = (k, v) => { if (same(v, ctx.B[k])) delete o[k]; else o[k] = v; };
+  const wind = [...(ctx.P.wind || [0, 0])];
+  for (const c of r.changes) {
+    if (c.key === "direction") setDir(c.to);
+    else if (c.key === "wind") wind[0] = c.to;
+    else if (c.key === "windy") wind[1] = c.to;
+    else put(c.key, c.key === "rate" || c.key === "burst" ? c.to / a : c.to);
+  }
+  if (r.changes.some((c) => c.key === "wind" || c.key === "windy")) put("wind", wind);
+  if (r.mode) put("direction_mode", r.mode);
+  if (r.collide) put("collide", r.collide);
+  if (r.sprite) put("sprite", r.sprite);
+  if (r.colors) put("colors", r.colors);
+  write(ctx, o);
+  return () => {
+    ctx.api.setFx("emitter_values", before.values);
+    if (r.changes.some((c) => c.key === "direction")) setDir(before.dir);
+  };
+}
+
+export function basicFill(ctx) {
+  if (ctx.kind !== "particles" || !ctx.P || !ctx.B || (ctx.P.path && ctx.P.path !== "particles")) return [];
+  return [h("div", { class: "field fill-basic" }, ...fillRows(ctx, fillControls(ctx), (r) => applyFill(ctx, r), true))];
+}
+
 export function emitterPanel(ctx) {
   const { kind, st, e, P, B, ui } = ctx;
   const out = [];
@@ -385,7 +430,9 @@ export function emitterPanel(ctx) {
     out.push(...guideRows(ctx), h("p", { class: "muted small" }, S.getShot().clip ? "The values show once the live preview has answered." : "Pick a clip: the values show with the live preview."));
     return out;
   }
-  return out.concat(kind === "dissolve" ? dissolveGroups(ctx) : P.path && P.path !== "particles" ? pathGroups(ctx) : particleGroups(ctx));
+  if (kind === "dissolve") return out.concat(dissolveGroups(ctx));
+  if (P.path && P.path !== "particles") return out.concat(pathGroups(ctx));
+  return out.concat(fillRows(ctx, fillControls(ctx), (r) => applyFill(ctx, r)), particleGroups(ctx));
 }
 
 function particleGroups(ctx) {

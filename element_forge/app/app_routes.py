@@ -16,6 +16,7 @@ from ..bonsai import bonsai
 from ..bonsai import bonsai_rt
 from ..bonsai import setup_bonsai as SB
 from .app_graph import without_unused
+from . import particle_assist as PA
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PACK_ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -1091,6 +1092,28 @@ async def ef_bonsai(request):
     except RuntimeError as e:
         return web.json_response({"error": str(e)}, status=503)
     return web.json_response({"text": text, "seconds": secs, "tokens_per_second": tps})
+
+
+@routes.post("/element-forge/api/bonsai/particles")
+async def ef_bonsai_particles(request):
+    body = await request.json()
+    try:
+        system, text, sch, controls = PA.request(body)
+    except ValueError as e:
+        return web.json_response({"error": str(e)}, status=400)
+    image = None
+    if body.get("clip"):
+        p = _clip_path(body["clip"], stills=True)
+        if p:
+            image = await asyncio.to_thread(first_frame, p, max(0.0, float(body.get("time") or 0)))
+    try:
+        answer, secs, tps = await asyncio.to_thread(bonsai.chat, text, system, image, sch, 900, 0.2, True)
+        out = PA.read(answer, controls, body.get("now") or {}, body.get("stops"))
+    except RuntimeError as e:
+        return web.json_response({"error": str(e)}, status=503)
+    except ValueError as e:
+        return web.json_response({"error": str(e)}, status=502)
+    return web.json_response({**out, "seconds": secs, "tokens_per_second": tps})
 
 
 _bonsai_setup = {"state": "idle"}

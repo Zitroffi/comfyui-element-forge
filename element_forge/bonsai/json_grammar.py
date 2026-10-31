@@ -1,6 +1,7 @@
 import json
 
 SPACE = 'ws ::= | " " | "\\n" [ \\t]{0,20}'
+COMPACT_SPACE = 'ws ::= | " "'
 PRIMITIVES = {
     "string": r'"\"" char* "\"" ws',
     "number": r'"-"? ("0" | [1-9] [0-9]{0,15}) ("." [0-9]+)? ([eE] [-+]? [0-9]+)? ws',
@@ -79,5 +80,6 @@ class _Builder:
 def schema_to_grammar(schema):
     b = _Builder()
     top = b.visit(schema, "root-value")
-    lines = [f"root ::= {top}"] + [f"{k} ::= {v}" for k, v in b.rules.items()] + [SPACE, CHAR]
+    space = COMPACT_SPACE if isinstance(schema, dict) and schema.get("x-compact") else SPACE
+    lines = [f"root ::= {top}"] + [f"{k} ::= {v}" for k, v in b.rules.items()] + [space, CHAR]
     return "\n".join(lines) + "\n"
