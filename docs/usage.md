@@ -81,7 +81,7 @@ The gear at the top of the panel shows this computer's choices and every model w
 | **LTX model** | INT8 is the default. GGUF Q4 needs about 8 GB less memory and is slower on RTX 20 cards. |
 | **INT8 attention** | Faster on cards like the RTX 2080 Ti, about a quarter off the LTX time. Not with GGUF. |
 | **Text encoder** | The text encoder file LTX uses. |
-| **Text model** | Writes **Enhance**, the scene sentence for Inpaint and **Describe what you want**. Bonsai 2 runs beside ComfyUI's queue and can look at the clip; Gemma 4 E2B is a short ComfyUI job. |
+| **Text model** | Writes **Enhance**, the scene sentence for Inpaint and **Describe what you want**; Bonsai also fills the particle values from the prompt. Bonsai 2 runs beside ComfyUI's queue and can look at the clip; Gemma 4 E2B is a short ComfyUI job. |
 | **NVIDIA** | Super Resolution and TrueHDR. Greyed out without an RTX card and ComfyUI's NVIDIA nodes. |
 | **Depth model** | Video Depth Anything, or DepthCrafter when its nodes are installed: clean edges without a fringe, much slower (about 15 more minutes for 81 frames on an RTX 2080 Ti), non-commercial licence. A run reuses the kept depth only when the same model is chosen. |
 

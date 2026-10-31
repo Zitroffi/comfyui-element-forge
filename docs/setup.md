@@ -68,7 +68,7 @@ Start with the defaults. Add these only when you need their features.
 
 ### Bonsai 2
 
-Bonsai adds prompt help and **Describe what you want**, which can set up an effect from a sentence and the clip's first frame.
+Bonsai adds prompt help, **Describe what you want**, which can set up an effect from a sentence and the clip's first frame, and **✦ Fill from the prompt**, which sets the particle values from the effect's words.
 
 In the app, open **Advanced → Effect → Description → Install Bonsai 2**. The installer shows the download size and filenames, checks their published hashes, and installs the model and runtime. No restart is needed.
 

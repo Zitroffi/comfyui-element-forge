@@ -90,7 +90,7 @@ The app guides you through five steps:
 <br>
 
 - **Styles**<br>26 styles in ten groups, from flames and lightning to snow, liquid and dissolve, plus your own effect.
-- **Words**<br>Describe the look, motion and contact. **Enhance** can refine them when a language model is installed. With the optional Bonsai model, **Describe what you want** suggests a style and its words; you see each change before you apply it.
+- **Words**<br>Describe the look, motion and contact. **Enhance** can refine them when a language model is installed. With the optional Bonsai model, **Describe what you want** suggests a style and its words; you see each change before you apply it. For particle styles, **Particles in your words** turns a sentence such as *slow green sparks that spiral up* into emitter values.
 - **Three routes**<br>**Overlay** generates the element separately. **Inpaint** generates it inside the footage for contact with surfaces. **Drawn styles** use particles without AI generation.
 - **Several effects**<br>**＋ Effect** adds another effect to the same clip, each with its own settings and versions.
 
@@ -105,6 +105,8 @@ The app guides you through five steps:
 - **Three uses**<br>Keep the simulation as the finished effect, let it guide LTX-2.5, or draw it over the AI element.
 - **Guides for the AI**<br>Besides the particles, the AI can follow the object's shape or a path you paint on the canvas.
 - **Out of the box**<br>Every particle style starts from tested values, marked on each slider. Changed values are highlighted and go back one by one.
+- **Fill from the prompt**<br>With the optional Bonsai model, **✦ Fill from the prompt** reads the effect's words and proposes the emitter values to change, each with its reason. You tick what to apply and undo it in one step.
+- **Calm or lively**<br>Speed at the end, a speed limit, spin and turbulence that fades in or is calmed by drag make slow, drifting particles as easy as fast bursts.
 - **Keep it**<br>**Save as my effect** stores the emitter values for every clip. See [Make your own effects](#make-your-own-effects).
 
 </details>
@@ -198,7 +200,7 @@ Start with a short clip and an overlay effect.
 ## Make your own effects
 
 1. **Describe it**<br>Choose **Your own effect** and describe any element in words. It is generated with LTX-2.5 and stays on the point you click. Things that glow work best.
-2. **Shape it with particles**<br>Switch the app to **Advanced**. In **Effect**, the **Emitter** shows every control of a particle style. Changed values are highlighted and can be reset one by one. The **live preview** simulates the particles on your clip with the same engine and seed as the run. It needs no AI, and the particles already react to the scene: they hide behind nearer objects, collide with surfaces and move with the clip.
+2. **Shape it with particles**<br>Switch the app to **Advanced**. In **Effect**, the **Emitter** shows every control of a particle style. Changed values are highlighted and can be reset one by one. **✦ Fill from the prompt** sets them from your words with the optional Bonsai model. The **live preview** simulates the particles on your clip with the same engine and seed as the run. It needs no AI, and the particles already react to the scene: they hide behind nearer objects, collide with surfaces and move with the clip.
 3. **Keep it**<br>**Save as my effect** stores the style, its words, the emitter values and the switches. Clip, position and track stay with the shot. Your saved effects appear under **My effects** for every clip, ready to load, rename or delete.
 
 ### Particles in detail
@@ -247,10 +249,10 @@ The AI can also follow an object's shape (a flame wraps round a fist) or a path 
 |:---|:---|
 | **Source** | Emitter shape and size, maximum particles alive at once |
 | **Emission** | Rate, burst, timing, pre-roll |
-| **Motion** | Direction and spread, speed and its variation, speed at the end, speed limit, how far the particles follow the emitter and the clip |
-| **Particle** | Life, size and colour over life, sprite, trail, glow, flicker, fades, motion blur, opacity, spin, a second class of small particles |
+| **Motion** | Direction and spread, bunching to the centre, speed and its variation, speed at the end, speed limit, how far the particles follow the emitter and the clip |
+| **Particle** | Life, size and colour over life, colour variation, sprite, trail, glow, flicker, fades, motion blur, opacity, spin, a second class of small particles |
 | **Merge** | Blur, choke, edge and fill of a single body |
-| **Forces** | Gravity, wind, drag, turbulence (fades in, calmed by drag), vortex, attraction to B, flocking |
+| **Forces** | Gravity, wind, drag, turbulence (fades in, calmed by drag), vortex, attraction to B, flocking (reach, pull) |
 | **Contact & depth** | Collision, bounce, friction, lying time, depth offset and spread, hidden by the scene |
 
 With the optional Bonsai model, **✦ Fill from the prompt** proposes these values from the effect's words; you tick what to apply.
