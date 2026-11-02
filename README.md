@@ -29,9 +29,9 @@ https://github.com/user-attachments/assets/468b014c-f544-41fe-b26f-fd6da37d78a3
 ## Control, not just generation
 
 <p align="center">
-  <img src="docs/assets/examples/control-katana.gif" alt="The same katana clip twice. Left: the AI guided by the whole object turns sword, hand and handle into one glowing tube. Right: guided by particles on the blade only, sparks come from the blade while the steel, hand and handle stay as filmed." width="880">
+  <img src="docs/assets/examples/control-katana.gif" alt="The same katana clip twice. Left: only the object's mask guides the AI, and it turns sword, hand and handle into one glowing tube. Right: Element Forge guides it with particles on the blade, sparks come from the blade while the steel, hand and handle stay as filmed." width="880">
 </p>
-<p align="center"><sub>Same clip, same model and seed. Left: the AI follows the shape of the whole object. Right: particles born only on the blade guide it, and the blade's contour is kept, so hand and handle stay as filmed.</sub></p>
+<p align="center"><sub>Same clip, same model and seed. Left: only the object's mask guides the AI, so the whole sword becomes the effect. Right: Element Forge's particles, born only on the blade, guide it, and the blade's contour is kept, so hand and handle stay as filmed.</sub></p>
 
 <table>
   <tr>
