@@ -42,7 +42,7 @@ Full-scene guides may encourage LTX to reconstruct the surrounding person or bac
 
 ## Preserve the original object
 
-**EF Object Protection** creates effect visibility that is exactly zero inside the thresholded protected surface. Grow expands the protected area; feather softens only outside it. Connect an existing particle region/depth visibility mask to `visibility` to multiply the two. Connect `effect_visibility` to the holdout input of EF Place Layer.
+**EF Object Protection** creates effect visibility that is exactly zero inside the thresholded protected surface. `strength` sets how much of the effect the object hides: 1 removes all of it (the default), 0.8 leaves a fifth of it on the object. Grow expands the protected area; feather softens only outside it. Connect an existing particle region/depth visibility mask to `visibility` to multiply the two. Connect `effect_visibility` to the holdout input of EF Place Layer.
 
 The protected object can be broader than the emitter. For example, only the blade emits while the whole original sword is protected. Do not automatically turn every emission exclusion into a permanent holdout: a particle may legitimately travel in front of it.
 
@@ -68,7 +68,7 @@ Total pipeline durations include model loading, text encoding, cached nodes, gen
 ## In the app
 
 - **Position → Object → Mask frame, Add, Leave out**: the frame the mask is set on (**Use this frame** at the playhead), points and words to add (Ctrl-click) and to leave out (Alt-click). The mask frame shows the tracked object in blue and the parts left out in red. In the one workflow these are the settings **Mask frame**, **Mask: add points**, **Mask: add words**, **Leave out: points** (`x, y; x, y` in pixels of the clip) and **Leave out: words**. On the first frame without added points or words, the click's own chain runs as before and **EF Leave Out Parts** / **EF Leave Out (track)** take the parts out; otherwise **EF Mask At Frame** (chosen by **EF Mask Mode**) finds everything on the mask frame and tracks it both ways. Everything after it (emitter, window, dissolve, mask pass) uses the mask without them; the depth stays the full scene's. A saved track keeps the parts left out with it.
-- **Position → Object → In front of the effect**: for every placement. **The parts left out are in front too** picks the whole object (default) or only what is left. In the area this is **EF Object Protection** on the placement's holdout.
+- **Position → Object → In front of the effect**: for every placement. **The parts left out are in front too** picks the whole object (default) or only what is left. **How much it hides** (1 = all of the effect) and **Soft edge** (how far outside the object the effect fades in, 2 px by default) set how it cuts. In the area this is **EF Object Protection** on the placement's holdout.
 - **Effect → Source → Drawn for the AI as: Depth**: the merged guide of EF Particle Depth Guides, made inside EF Particles from its own simulation (guide style `depth`). **Depth shows** (`depth_guide`: object / scene) and **Object as** (`depth_edge`: 0 = whole object, else the inner edge's width in guide pixels).
 
 With a mask frame of its own, **All alike** and two objects by the word (A and B) do not apply; the strict restore after glow is available as a node in a graph of your own.

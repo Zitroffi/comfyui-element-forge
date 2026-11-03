@@ -44,6 +44,20 @@ Particle guidance can steer AI generation or create a finished drawn effect. Sta
 | EF Dither | Reduce visible banding in low-bit-depth output. |
 | EF MoGe Normals | Estimate surface normals for lighting, and the shot's depth range (far / near) and field of view for EF Depth Light. |
 
+## Depth and mask tools
+
+Also under **Element Forge / Tools**, for graphs of your own. The app uses the same parts; details in [Particle depth and mask tools](particle-depth.md).
+
+| Tool | Purpose |
+|---|---|
+| EF Select Object Mask · EF Mask Point | Select the object with SAM3 from points or words, with explicit exclusions. |
+| EF Mask At Frame · EF Mask Mode | Set the mask on a frame of your choice with points and words to add or leave out, tracked both ways. Mask Mode tells whether this route is needed. |
+| EF Leave Out Parts · EF Leave Out (track) | Take parts such as a hand or a handle out of the object's mask through the clip. |
+| EF Mask Fixes | Correct the object's mask on other frames with parts to add and to leave out. |
+| EF Particle Depth Guides | Depth guides for LTX: the object or the whole scene, merged with the visible particles. |
+| EF Object Protection | Keep the effect off the original object: how much it hides, grow, and a soft edge outside it. |
+| EF Restore Protected Object | After glow, restore the protected pixels exactly from the plate. |
+
 ## Building blocks
 
 These support custom graphs and the supplied app routes. Their inputs expose the detailed controls.
