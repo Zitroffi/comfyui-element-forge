@@ -33,7 +33,18 @@ export const isLive = () => !!live?.ready;
 export function togglePlay() {
   const v = media();
   if (!v.getAttribute("src")) return;
+  if (v === video && video.error) return revive(true);
   if (v.paused) v.play().catch(() => {}); else v.pause();
+}
+const shown = new Set();
+const revived = new Map();
+function revive(play) {
+  const t = video.currentTime, on = play ?? !video.paused;
+  video.load();
+  video.addEventListener("loadedmetadata", () => {
+    video.currentTime = Math.min(t, video.duration || t);
+    if (on) video.play().catch(() => {});
+  }, { once: true });
 }
 
 const DPR = () => window.devicePixelRatio || 1;
@@ -169,7 +180,7 @@ function renderToolbar() {
   toolbar.replaceChildren(...list.map((t) => {
     const [ic, name, key, tip] = TOOLS[t];
     return h("button", { class: "tool" + (S.ui.tool === t ? " on" : ""), title: `${tip} (${key})`, "aria-pressed": String(S.ui.tool === t),
-      onclick: () => { S.setUI({ tool: t }); } }, icon(ic), h("span", {}, name));
+      onclick: () => { S.setUI({ tool: t }); } }, icon(ic), h("span", { "data-t": name }, name));
   }), ...brushButtons());
   root.dataset.tool = S.ui.tool;
 }
@@ -178,9 +189,9 @@ function brushButtons() {
   const e = eff();
   if (S.ui.step !== "where" || !e?.adv?.["Own object mask (off = click)"] || !e.paint?.mask?.length) return [];
   return [e.paint.maskHidden
-    ? h("button", { class: "tool", title: "Show the strokes of your mask again to touch them up; track again afterwards", onclick: () => editBrush(true) }, icon("brush"), h("span", {}, "Edit brush"))
+    ? h("button", { class: "tool", title: "Show the strokes of your mask again to touch them up; track again afterwards", onclick: () => editBrush(true) }, icon("brush"), h("span", { "data-t": "Edit brush" }, "Edit brush"))
     : null,
-  h("button", { class: "tool", title: "Clear the strokes of your mask", onclick: clearBrush }, icon("close"), h("span", {}, "Clear brush"))].filter(Boolean);
+  h("button", { class: "tool", title: "Clear the strokes of your mask", onclick: clearBrush }, icon("close"), h("span", { "data-t": "Clear brush" }, "Clear brush"))].filter(Boolean);
 }
 
 function boxOf(e) {
@@ -737,7 +748,20 @@ function tinted(url, rgb = [106, 168, 255]) {
   return null;
 }
 
+const T0 = { mark: "#f5c84b", sel: "#7fb0ff", add: "#6fcf97", leave: "#f27a7a", line: "#a6a6ae", float: "#1d1d20", tx: "#f2f2f4", ff: "Inter, Segoe UI, sans-serif" };
+let T = T0;
+function tokens() {
+  const cs = getComputedStyle(overlay), v = (n, d) => cs.getPropertyValue(n).trim() || d;
+  return { mark: v("--ac", T0.mark), sel: v("--focus", T0.sel), add: v("--ok", T0.add), leave: v("--err", T0.leave), line: v("--tx2", T0.line),
+    float: v("--sf1", T0.float), tx: v("--tx", T0.tx), ff: v("--ff", T0.ff) };
+}
+function rgba(hex, a) {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  return m ? `rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},${a})` : hex;
+}
+
 function draw() {
+  T = tokens();
   const r = box();
   const d = DPR() * r.k;
   if (overlay.width !== Math.round(r.width * d) || overlay.height !== Math.round(r.height * d)) {
@@ -761,7 +785,7 @@ function draw() {
       ctx.save();
       ctx.setLineDash(e.box ? [] : [6, 5]);
       line(3, "rgba(0,0,0,.55)"); ctx.strokeRect(p0.x, p0.y, p1.x - p0.x, p1.y - p0.y);
-      line(1.5, sel === "box" ? "#6aa8ff" : "#f5c84b"); ctx.strokeRect(p0.x, p0.y, p1.x - p0.x, p1.y - p0.y);
+      line(1.5, sel === "box" ? T.sel : T.mark); ctx.strokeRect(p0.x, p0.y, p1.x - p0.x, p1.y - p0.y);
       ctx.restore();
       const adv = S.ui.mode === "advanced";
       let gw, gh;
@@ -771,7 +795,7 @@ function draw() {
         [gw, gh] = [w.gw, w.gh];
         if (adv && (Math.abs(w.w - b.w) > 2 || Math.abs(w.h - b.h) > 2)) {
           const q0 = toScreen(w), q1 = toScreen({ x: w.x + w.w, y: w.y + w.h });
-          ctx.save(); ctx.setLineDash([2, 4]); line(1, "rgba(245,200,75,.6)"); ctx.strokeRect(q0.x, q0.y, q1.x - q0.x, q1.y - q0.y); ctx.restore();
+          ctx.save(); ctx.setLineDash([2, 4]); line(1, rgba(T.mark, .6)); ctx.strokeRect(q0.x, q0.y, q1.x - q0.x, q1.y - q0.y); ctx.restore();
         }
       }
       if (tools().includes("frame") && !resultActive()) {
@@ -800,7 +824,7 @@ function draw() {
       pc.lineCap = pc.lineJoin = "round";
       for (const s0 of strokes) {
         pc.globalCompositeOperation = s0.erase ? "destination-out" : "source-over";
-        pc.strokeStyle = pc.fillStyle = target === "mask" ? "#6aa8ff" : "#f5c84b";
+        pc.strokeStyle = pc.fillStyle = target === "mask" ? T.sel : T.mark;
         pc.lineWidth = s0.r * 2 * view.s;
         pc.beginPath();
         const q0 = toScreen({ x: s0.pts[0][0], y: s0.pts[0][1] });
@@ -821,7 +845,7 @@ function draw() {
     const { a, tip } = arrowTip(e);
     const pa = toScreen(a), pt = toScreen(tip);
     line(4, "rgba(0,0,0,.5)"); arrow(pa, pt);
-    line(2, sel === "dir" ? "#6aa8ff" : "#f5c84b"); arrow(pa, pt);
+    line(2, sel === "dir" ? T.sel : T.mark); arrow(pa, pt);
     handle(pt, hover?.kind === "dir" || drag?.kind === "dir", true);
     if (e.dir != null) label(pt.x + 10, pt.y - 10, s.dir === "dissolve" ? `crumbles ${directionWords(e.dir)}` : `moves ${directionWords(e.dir)}`);
   }
@@ -835,14 +859,14 @@ function draw() {
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(shapeFrame(m, i), q0.x, q0.y, q1.x - q0.x, q1.y - q0.y);
       ctx.restore();
-      ctx.save(); ctx.setLineDash([3, 4]); line(1, "rgba(190,140,255,.7)"); ctx.strokeRect(q0.x, q0.y, q1.x - q0.x, q1.y - q0.y); ctx.restore();
+      ctx.save(); ctx.setLineDash([3, 4]); line(1, rgba(T.line, .7)); ctx.strokeRect(q0.x, q0.y, q1.x - q0.x, q1.y - q0.y); ctx.restore();
     }
   }
   if (drag?.guides?.length) {
     const c0 = toScreen({ x: 0, y: 0 }), c1 = toScreen({ x: clip().width, y: clip().height });
     ctx.save();
     ctx.setLineDash([4, 4]);
-    line(1, "#ff4fd8");
+    line(1, T.sel);
     for (const g of drag.guides) {
       ctx.beginPath();
       if (g.x != null) { const x = toScreen({ x: g.x, y: 0 }).x; ctx.moveTo(x, c0.y); ctx.lineTo(x, c1.y); }
@@ -858,7 +882,7 @@ function draw() {
     ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.closePath();
     ctx.setLineDash([6, 5]);
     line(3, "rgba(0,0,0,.55)"); ctx.stroke();
-    line(1.5, sel === "place" ? "#6aa8ff" : "#f5c84b"); ctx.stroke();
+    line(1.5, sel === "place" ? T.sel : T.mark); ctx.stroke();
     ctx.restore();
     for (const k of resultHandles(q)) handle(toScreen(q.at(...UNIT[k])), (hover?.kind === "rsize" && hover.k === k) || (drag?.kind === "rsize" && drag.k === k));
     const c0 = toScreen(q.centre);
@@ -875,13 +899,13 @@ function draw() {
     const q = toScreen(p);
     ctx.beginPath(); ctx.arc(q.x, q.y, 9, 0, Math.PI * 2);
     ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fill();
-    line(2.5, sel === k ? "#6aa8ff" : "#f5c84b"); ctx.stroke();
+    line(2.5, sel === k ? T.sel : T.mark); ctx.stroke();
     ctx.beginPath(); ctx.arc(q.x, q.y, 2.5, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill();
     label(q.x + 12, q.y - 10, k.toUpperCase());
   }
   const fixHere = e && S.ui.step === "where" ? fixesOf(e).find((f) => f.frame === frameHere()) : null;
-  const ringsHere = !e || S.ui.step !== "where" ? [] : atMaskFrame(e) ? [[ADD_PTS, "#5ad17a", ptsOf(e, ADD_PTS)], [LEAVE_PTS, "#ff6060", ptsOf(e, LEAVE_PTS)]]
-    : fixHere ? [[ADD_PTS, "#5ad17a", fixHere.add], [LEAVE_PTS, "#ff6060", fixHere.leave]] : [];
+  const ringsHere = !e || S.ui.step !== "where" ? [] : atMaskFrame(e) ? [[ADD_PTS, T.add, ptsOf(e, ADD_PTS)], [LEAVE_PTS, T.leave, ptsOf(e, LEAVE_PTS)]]
+    : fixHere ? [[ADD_PTS, T.add, fixHere.add], [LEAVE_PTS, T.leave, fixHere.leave]] : [];
   for (const [k, col, pts] of ringsHere) for (const p of pts) {
     const q = toScreen(p);
     ctx.beginPath(); ctx.arc(q.x, q.y, 8, 0, Math.PI * 2);
@@ -895,19 +919,19 @@ function draw() {
     const i = clamp(Math.round(playhead() * fps), 0, emit.length - 1);
     const path = (pts) => { ctx.beginPath(); pts.forEach(([x, y], j) => { const q = toScreen({ x, y }); if (j) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); }); };
     ctx.save();
-    path(emit); line(1.5, "rgba(245,200,75,.5)"); ctx.stroke();
-    path(tip.slice(Math.max(0, i - 15), i + 1)); line(2, "rgba(106,168,255,.75)"); ctx.stroke();
+    path(emit); line(1.5, rgba(T.mark, .5)); ctx.stroke();
+    path(tip.slice(Math.max(0, i - 15), i + 1)); line(2, rgba(T.sel, .75)); ctx.stroke();
     const pe = toScreen({ x: emit[i][0], y: emit[i][1] }), pq = toScreen({ x: tip[i][0], y: tip[i][1] });
     ctx.beginPath(); ctx.moveTo(pe.x, pe.y); ctx.lineTo(pq.x, pq.y);
-    line(5, "rgba(0,0,0,.5)"); ctx.stroke(); line(2.5, "#6aa8ff"); ctx.stroke();
-    ctx.beginPath(); ctx.arc(pq.x, pq.y, 4, 0, Math.PI * 2); ctx.fillStyle = "#6aa8ff"; ctx.fill();
+    line(5, "rgba(0,0,0,.5)"); ctx.stroke(); line(2.5, T.sel); ctx.stroke();
+    ctx.beginPath(); ctx.arc(pq.x, pq.y, 4, 0, Math.PI * 2); ctx.fillStyle = T.sel; ctx.fill();
     ctx.restore();
   }
 }
 function handle(p, active, round = false) {
   ctx.beginPath();
   if (round) ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); else ctx.rect(p.x - 5, p.y - 5, 10, 10);
-  ctx.fillStyle = active ? "#6aa8ff" : "#fff"; ctx.fill();
+  ctx.fillStyle = active ? T.sel : "#fff"; ctx.fill();
   ctx.lineWidth = 1.5; ctx.strokeStyle = "rgba(0,0,0,.7)"; ctx.stroke();
 }
 function arrow(a, b) {
@@ -918,10 +942,10 @@ function arrow(a, b) {
   ctx.stroke();
 }
 function label(x, y, t) {
-  ctx.font = "600 11px Inter, Segoe UI, sans-serif";
-  const w = ctx.measureText(t).width + 10;
-  ctx.fillStyle = "rgba(0,0,0,.65)"; ctx.beginPath(); ctx.roundRect(x - 2, y - 11, w, 17, 4); ctx.fill();
-  ctx.fillStyle = "#fff"; ctx.fillText(t, x + 3, y + 1);
+  ctx.font = `600 11.5px ${T.ff}`;
+  const w = ctx.measureText(t).width + 16;
+  ctx.fillStyle = rgba(T.float, .94); ctx.beginPath(); ctx.roundRect(x - 2, y - 12, w, 19, 9.5); ctx.fill();
+  ctx.fillStyle = T.tx; ctx.fillText(t, x + 6, y + 2);
 }
 
 let currentClip = null;
@@ -1127,7 +1151,7 @@ function syncSim() {
   const busy = mine && L.status === "running" && !L.lookOnly;
   syncStatus(busy);
   if (viewNote) viewNote.hidden = !(L?.data && c && L.clip === c.name && L.effect === eff()?.id && S.ui.media && S.ui.step === "effect" && !frozen);
-  const show = mine && !!L.data;
+  const show = mine && !!L.data && L.status !== "failed";
   if (sim) sim.canvas.classList.toggle("stale", show && busy);
   if (!show) { if (sim) sim.canvas.hidden = true; return; }
   if (!sim) {
@@ -1212,8 +1236,13 @@ export function mountStage(el) {
   root.addEventListener("focusout", () => { spaceDown = false; });
   new ResizeObserver(() => (view.fitted ? fit() : draw())).observe(root);
   video.addEventListener("loadedmetadata", () => { if (view.fitted) fit(); });
+  video.addEventListener("loadeddata", () => { if (video.getAttribute("src")) shown.add(video.getAttribute("src")); });
   video.addEventListener("error", () => {
-    if (video.getAttribute("src")) document.dispatchEvent(new CustomEvent("ef:media-error", { detail: { url: video.getAttribute("src") } }));
+    const url = video.getAttribute("src");
+    if (!url) return;
+    const n = revived.get(url) || 0;
+    if (shown.has(url) && n < 3) { revived.set(url, n + 1); revive(); return; }
+    document.dispatchEvent(new CustomEvent("ef:media-error", { detail: { url } }));
   });
   S.subscribe(render);
   render();
@@ -1261,19 +1290,19 @@ function renderViewSwitch() {
   const onResult = !!S.ui.media && !ana;
   const exp = S.ui.checkExposure || 0;
   const show = (part, label, tip) => pre[part] ? h("button", { "aria-pressed": String(ana === part), title: tip,
-    onclick: () => S.setUI({ media: { url: pre[part], label, analysis: part }, compare: false }) }, label) : null;
+    onclick: () => S.setUI({ media: { url: pre[part], label, analysis: part }, compare: false }) }, h("span", { "data-t": label }, label)) : null;
   viewSwitch.replaceChildren(...[
-    h("button", { "aria-pressed": String(!S.ui.media), title: "Your clip without the effect", onclick: () => S.setUI({ media: null, compare: false, pass: null }) }, "Clip"),
+    h("button", { "aria-pressed": String(!S.ui.media), title: "Your clip without the effect", onclick: () => S.setUI({ media: null, compare: false, pass: null }) }, h("span", { "data-t": "Clip" }, "Clip")),
     show("depth", "Depth", "Depth of the scene (near = bright), from the analysis"),
     show("normals", "Normals", "Which way the surfaces face, from the analysis"),
     result?.live ? h("button", { "aria-pressed": String(onResult && !!S.ui.compare), title: "Before and after with a line to drag",
-      onclick: () => S.setUI({ media: result, compare: true }) }, "Compare") : null,
-    result ? h("button", { "aria-pressed": String(onResult && !S.ui.compare && !S.ui.pass), title: "What was made", onclick: () => S.setUI({ media: result, compare: false, pass: null }) }, result.label || "Result") : null,
+      onclick: () => S.setUI({ media: result, compare: true }) }, h("span", { "data-t": "Compare" }, "Compare")) : null,
+    result ? h("button", { "aria-pressed": String(onResult && !S.ui.compare && !S.ui.pass), title: "What was made", onclick: () => S.setUI({ media: result, compare: false, pass: null }) }, h("span", { "data-t": result.label || "Result" }, result.label || "Result")) : null,
     ...(result?.live ? [["element", "Element", "The element alone, with its alpha"], ["light", "Light", "The light it throws on the scene"], ["glow", "Glow", "The glow alone"]] : [])
       .map(([p, label, tip]) => h("button", { "aria-pressed": String(onResult && !S.ui.compare && S.ui.pass === p), title: tip,
-        onclick: () => S.setUI({ media: result, compare: false, pass: p }) }, label)),
+        onclick: () => S.setUI({ media: result, compare: false, pass: p }) }, h("span", { "data-t": label }, label))),
     h("button", { class: "exposure", "aria-pressed": String(!!exp), title: "Check exposure: brightens the view to show banding in dark gradients (view only)",
-      onclick: () => S.setUI({ checkExposure: EXPOSURE[(EXPOSURE.indexOf(exp) + 1) % EXPOSURE.length] || null }) }, exp ? `+${exp} stops` : "Exposure"),
+      onclick: () => S.setUI({ checkExposure: EXPOSURE[(EXPOSURE.indexOf(exp) + 1) % EXPOSURE.length] || null }) }, h("span", { "data-t": exp ? `+${exp} stops` : "Exposure" }, exp ? `+${exp} stops` : "Exposure")),
   ].filter(Boolean));
   video.style.filter = exp ? `brightness(${2 ** exp})` : "";
 }

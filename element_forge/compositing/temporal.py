@@ -180,6 +180,7 @@ class EFMaskSteady:
         if radius <= 0 or n < 2:
             return (mask,)
         x = m.detach().cpu().float().numpy()[..., None].copy()
+        x[islands(x[..., 0] > 0.5)] = 0
         H, W = x.shape[1:3]
         pl = to_np(plate)[..., :3]
         s = EFDeflicker.flow_scale(H, W)
@@ -187,7 +188,25 @@ class EFMaskSteady:
         gray = np.stack([cv2.resize((pl[min(i, len(pl) - 1)] @ LUMA).astype(np.float32), size, interpolation=cv2.INTER_AREA)
                          for i in range(n)])
         avg = EFDeflicker().temporal(x, gray, int(radius))[..., 0]
-        return (to_t(hysteresis(avg, min(0.95, threshold + 0.15), max(0.05, threshold - 0.2)).astype(np.float32)),)
+        out = hysteresis(avg, min(0.95, threshold + 0.15), max(0.05, threshold - 0.2))
+        out[islands(out)] = False
+        return (to_t(out.astype(np.float32)),)
+
+
+def islands(on, longest=2, empty=10):
+    full = on.reshape(len(on), -1).sum(1) >= empty
+    out, i, n = np.zeros(len(on), bool), 0, len(on)
+    while i < n:
+        if not full[i]:
+            i += 1
+            continue
+        j = i
+        while j < n and full[j]:
+            j += 1
+        if i > 0 and j < n and j - i <= longest:
+            out[i:j] = True
+        i = j
+    return out
 
 
 def hysteresis(avg, high, low):

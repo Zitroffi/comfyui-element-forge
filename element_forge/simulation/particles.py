@@ -27,6 +27,7 @@ BASE = dict(
     life=1.0, life_var=0.3,
     speed=100.0, speed_var=0.3, direction=0.0, spread=30.0, direction_mode="angle",
     lift=0.0,
+    edge_share=0.5,
     contact_only=0.0,
     contact_gap=0.015, contact_tol=0.04,
     ab_on_objects=0.0,
@@ -35,6 +36,7 @@ BASE = dict(
     inherit=0.5, radius=6.0, band="volume",
     size=4.0, size_var=0.3, size_start=1.0, size_end=1.0,
     fade_in=0.1, fade_out=0.3, opacity=1.0, flicker=0.0, flicker_hz=2.0,
+    fade_in_max=0.0,
     flicker_size=0.0,
     fine_share=0.0,
     fine_size=0.4,
@@ -43,9 +45,12 @@ BASE = dict(
     gravity=0.0, wind=[0.0, 0.0], drag=0.0,
     turbulence=0.0, turb_scale=150.0, turb_speed=0.3,
     vortex=0.0, attract=0.0, kill_radius=12.0,
+    centres_follow=1.0,
     collide="none", restitution=0.4, friction=0.7, land_fade=2.0, land_tol=0.06,
     children=None,
     depth_offset=0.0, depth_spread=0.0, depth_spread_near=False, depth_softness=0.02,
+    flow_around=0.0,
+    obstacle_depth=0.1,
     depth_far=0.0,
     fly=0.0,
     sprite="soft", shutter=0.0, trail=0,
@@ -75,6 +80,11 @@ BASE = dict(
     fine_rough=0.0,
     fork_depth=1,
     climb_zigzag=0.0,
+    rand_rate=6.0,
+    rand_length=160.0,
+    rand_length_var=0.5,
+    rand_life=0.12,
+    rand_aim="random",
     crack_step=6.0, crack_turn=0.35, crack_branch=0.12, crack_length=900.0, crack_speed=300.0,
     crack_seeds=1,
     crack_taper=0.0,
@@ -176,7 +186,7 @@ PRESETS = {
                       turb_scale=150.0, turb_speed=0.4, sprite="soft", glow=2.0,
                       colors=[[0.0, [0.9, 1.0, 0.35]], [1.0, [0.9, 1.0, 0.35]]], guide_style="volume"),
     "magic dust": dict(rate=160.0, life=1.2, life_var=0.4, speed=60.0, direction_mode="outward", spread=25.0,
-                       inherit=0.8, size=2.2, fade_in=0.2, fade_out=0.5, gravity=-40.0, drag=1.0, turbulence=25.0,
+                       inherit=0.8, size=2.2, fade_in=0.2, fade_in_max=0.08, fade_out=0.5, gravity=-40.0, drag=1.0, turbulence=25.0,
                        turb_scale=200.0, turb_fade=0.3, flicker=0.5, flicker_hz=8.0, flicker_size=1.0,
                        sprite="soft", trail=4, glow=1.5,
                        colors=[[0.0, [0.75, 1.0, 1.0]], [1.0, [0.6, 0.35, 1.0]]], guide_style="lines"),
@@ -225,8 +235,18 @@ PRESETS = {
                    max_particles=64, guide_style="volume"),
 }
 PRESETS["explosion side"] = dict(PRESETS["explosion"], spread=45.0, spread_falloff=0.3, direction=90.0, gravity=-900.0, roll=0.0)
-EMITTERS = ["point A", "line A-B", "drawing", "object mask", "object contour", "object bottom edge", "area", "whole frame", "groups"]
-OBJECT_EMITTERS = ("object mask", "object contour", "object bottom edge")
+_SPIRIT = dict(colors=[[0.0, [0.6, 0.25, 0.95]], [1.0, [0.6, 0.25, 0.95]]], color_var=0.2, glow=2.0, motion_carry=0.0, burst=0.0,
+               fade_in=0.0, roll=0.0, depth_spread=0.06, depth_softness=0.045, centres_follow=0.0, flow_around=1.0,
+               obstacle_depth=0.1, guide_style="depth", depth_guide="object", depth_edge=2.0)
+PRESETS["spirit threads"] = dict(PRESETS["magic dust"], **_SPIRIT, rate=1500.0, trail=12, gravity=-120.0, turbulence=180.0, size=2.0,
+                                 wind=[90.0, 0.0], speed=140.0, spread=85.0, life=1.6, vortex=350.0, attract=900.0, edge_share=0.5)
+PRESETS["spirit ribbons"] = dict(PRESETS["magic dust"], **_SPIRIT, rate=700.0, trail=24, gravity=-40.0, turbulence=50.0, turb_scale=300.0,
+                                 size=3.0, wind=[140.0, 0.0], speed=90.0, spread=40.0, life=2.2, vortex=120.0, attract=200.0, edge_share=0.7)
+PRESETS["spirit veil"] = dict(PRESETS["magic dust"], **_SPIRIT, rate=1800.0, trail=14, gravity=-140.0, turbulence=120.0, turb_scale=320.0,
+                              size=4.0, wind=[0.0, 0.0], speed=70.0, spread=50.0, life=2.0, vortex=80.0, attract=0.0, edge_share=0.7)
+EMITTERS = ["point A", "line A-B", "drawing", "object mask", "object contour", "object edge + area", "object bottom edge", "area",
+            "whole frame", "groups"]
+OBJECT_EMITTERS = ("object mask", "object contour", "object edge + area", "object bottom edge")
 LINE_ATTACH = ["track", "image", "object"]
 
 
@@ -269,7 +289,7 @@ def turb_calm(P, age, life, drag):
 
 def fade(age, fade_in, fade_out):
     a = np.ones_like(age)
-    if fade_in > 0:
+    if np.any(np.asarray(fade_in) > 0):
         a = np.minimum(a, smoothstep(age / fade_in))
     if fade_out > 0:
         a = np.minimum(a, smoothstep((1.0 - age) / fade_out))
@@ -433,6 +453,22 @@ def _mask_points(m, contour, step=2, mb=None):
     return np.stack([xs * step + x0, ys * step + y0], 1).astype(np.float32), None
 
 
+def _edge_area_points(m):
+    mb = (m > 0.5).astype(np.uint8)
+    pe, ne = _mask_points(m, True, mb=mb)
+    pa, _ = _mask_points(m, False, mb=mb)
+    if not len(pa):
+        return pe, ne, len(pe)
+    y0, y1, x0, x1 = _mask_box(mb, 2)
+    c = mb[y0:y1, x0:x1]
+    dist = cv2.distanceTransform(1 - c, cv2.DIST_L2, 3) - cv2.distanceTransform(c, cv2.DIST_L2, 3)
+    ix, iy = pa[:, 0].astype(np.int64) - x0, pa[:, 1].astype(np.int64) - y0
+    nx, ny = cv2.Sobel(dist, cv2.CV_32F, 1, 0, ksize=5)[iy, ix], cv2.Sobel(dist, cv2.CV_32F, 0, 1, ksize=5)[iy, ix]
+    ln = np.maximum(np.hypot(nx, ny), 1e-6)
+    na = np.stack([nx / ln, ny / ln], 1).astype(np.float32)
+    return np.concatenate([pe, pa]), np.concatenate([ne, na]), len(pe)
+
+
 def _bottom_points(m):
     mb = (m > 0.5).astype(np.uint8)
     p, nr = _mask_points(m, True, mb=mb)
@@ -533,7 +569,7 @@ class Emitter:
         self.a = self._path(a, n, (W / 2, H / 2))
         self.b = self._path(b, n, None) if b is not None else None
         self.area = area or [0.4, 0.4, 0.6, 0.6]
-        self.pts = self.nrm = None
+        self.pts = self.nrm = self.n_edge = None
         self.dpath = self.dnrm = None
         self.attach = attach if attach in LINE_ATTACH else "track"
         self.groups = None
@@ -557,20 +593,27 @@ class Emitter:
             sy, sx = H / m.shape[1], W / m.shape[2]
             key = ("points", kind, n, W, H, m.shape)
             if memo is not None and key in memo:
-                self.pts, self.nrm = list(memo[key][0]), list(memo[key][1])
+                self.pts, self.nrm, self.n_edge = list(memo[key][0]), list(memo[key][1]), list(memo[key][2])
             else:
-                self.pts, self.nrm = [], []
+                self.pts, self.nrm, self.n_edge = [], [], []
                 last = None
                 for i in range(n):
                     mi = m[min(i, len(m) - 1)]
                     at = (mi.__array_interface__["data"][0], mi.strides)
                     if last is None or last[0] != at:
-                        p, nr = _bottom_points(mi) if kind == "object bottom edge" else _mask_points(mi, kind == "object contour")
-                        last = (at, p * [sx, sy], nr)
+                        ne = 0
+                        if kind == "object bottom edge":
+                            p, nr = _bottom_points(mi)
+                        elif kind == "object edge + area":
+                            p, nr, ne = _edge_area_points(mi)
+                        else:
+                            p, nr = _mask_points(mi, kind == "object contour")
+                        last = (at, p * [sx, sy], nr, ne)
                     self.pts.append(last[1])
                     self.nrm.append(last[2])
+                    self.n_edge.append(last[3])
                 if memo is not None:
-                    memo[key] = (list(self.pts), list(self.nrm))
+                    memo[key] = (list(self.pts), list(self.nrm), list(self.n_edge))
         elif kind == "drawing":
             if not drawn:
                 raise ValueError("emitter 'drawing' needs a drawing (strokes painted in the mask editor)")
@@ -698,6 +741,16 @@ class Emitter:
     def frame(self, t):
         return min(max(int(round(t * self.fps)), 0), self.n - 1)
 
+    def first_on(self, t):
+        if self.kind not in OBJECT_EMITTERS or self.pts is None:
+            return t
+        on = lambda i: len(self.pts[i]) > 0 and (self.contact is None or bool(self.contact[i]))
+        i0 = self.frame(t)
+        for i in range(i0, self.n):
+            if on(i):
+                return t if i == i0 else i / self.fps
+        return None
+
     def _lerp(self, path, t):
         f = np.clip(t * self.fps, 0, self.n - 1)
         i0 = int(np.floor(f))
@@ -730,6 +783,11 @@ class Emitter:
             if len(p) == 0:
                 return np.zeros((0, 2)), None, np.zeros(0)
             j = np.minimum((u[:, 0] * len(p)).astype(np.int64), len(p) - 1)
+            ne, na = self.n_edge[i], len(p) - self.n_edge[i]
+            if self.kind == "object edge + area" and ne and na:
+                edge = u[:, 1] < float(self.P.get("edge_share", 0.5))
+                j = np.where(edge, np.minimum((u[:, 0] * ne).astype(np.int64), ne - 1),
+                             ne + np.minimum((u[:, 0] * na).astype(np.int64), na - 1))
             pos = p[j].astype(np.float64)
             nrm = self.nrm[i][j] if self.nrm[i] is not None else None
         elif self.kind == "area":
@@ -741,13 +799,21 @@ class Emitter:
             else:
                 y = (-0.05 + 1.1 * u[:, 1]) * self.H
             pos = np.stack([(-0.1 + 1.2 * u[:, 0]) * self.W, y], 1)
+        base = pos
         r = self.P["radius"] * ps
         if r > 0:
             a, rr = 2 * np.pi * u[:, 2], r * np.sqrt(u[:, 3])
             pos = pos + np.stack([np.cos(a) * rr, np.sin(a) * rr], 1)
         if self.kind in ("area", "whole frame"):
             z = self.zlo + (self.zhi - self.zlo) * u[:, 4] ** 2 if self.depth else np.ones(k)
-        elif self.kind in OBJECT_EMITTERS + ("drawing", "line A-B") and self.depth:
+        elif self.kind in OBJECT_EMITTERS and self.depth:
+            q = max(4.0 * ps, 3.0)
+            if nrm is not None:
+                z = np.maximum(self.depth.at(i, base[:, 0], base[:, 1]), self.depth.at(i, base[:, 0] - nrm[:, 0] * q, base[:, 1] - nrm[:, 1] * q))
+            else:
+                z = np.max([self.depth.at(i, base[:, 0] + ox, base[:, 1] + oy) for ox, oy in ((0, 0), (q, 0), (-q, 0), (0, q), (0, -q))], 0)
+            z = z + self.P.get("depth_offset", 0.0)
+        elif self.kind in ("drawing", "line A-B") and self.depth:
             z = self.depth.at(i, pos[:, 0], pos[:, 1]) + self.P.get("depth_offset", 0.0)
         else:
             z = np.full(k, self.z[i])
@@ -779,8 +845,9 @@ def rate_curve_at(curve, u):
     return min(1.0, max(0.0, pts[-1][1]))
 
 
-def burst_times(P, n, fps):
-    t = P["start"] + P["burst_at"]
+def burst_times(P, n, fps, start=None):
+    start = P["start"] if start is None else start
+    t = start + P["burst_at"]
     end = P["end"] if P["end"] > 0 else (n - 1) / fps
     if P.get("burst_every", 0.0) <= 0:
         return [t]
@@ -788,7 +855,7 @@ def burst_times(P, n, fps):
     while t <= end + 1e-9 and len(out) < 1000:
         out.append(t)
         t += P["burst_every"]
-    return out or [P["start"] + P["burst_at"]]
+    return out or [start + P["burst_at"]]
 
 
 def _capacity(P, duration):
@@ -836,12 +903,15 @@ def _dolly(P, cam, dep, n, W, H):
     return foe, zb, P["fly"] * (1.0 - 1.0 / sc), sc
 
 
-LOOK_ONLY = ("size", "size_var", "fine_size", "size_start", "size_end", "opacity", "fade_in", "fade_out", "flicker",
+LOOK_ONLY = ("size", "size_var", "fine_size", "size_start", "size_end", "opacity", "fade_in", "fade_in_max", "fade_out", "flicker",
              "flicker_hz", "flicker_size", "flicker_duty")
 
 
-def _record_look(P, t, age, lt, land_t, size0, phase, sz, ps):
-    al = P["opacity"] * fade(age, P["fade_in"], P["fade_out"])
+def _record_look(P, t, age, lt, land_t, size0, phase, sz, ps, life):
+    fin = P["fade_in"]
+    if P.get("fade_in_max", 0.0) > 0 and fin > 0:
+        fin = np.minimum(fin, P["fade_in_max"] / np.maximum(life, 1e-6))
+    al = P["opacity"] * fade(age, fin, P["fade_out"])
     if lt.any():
         tl = t[lt] if np.ndim(t) else t
         al[lt] = P["opacity"] * np.clip(1 - (tl - land_t[lt]) / max(P["land_fade"], 1e-3), 0, 1)
@@ -873,7 +943,7 @@ def relook(rec, P):
     t = lk["t"][fi]
     age = np.clip((t - lk["born"][a]) / lk["life"][a], 0, 1)
     sz = lk["sz"][fi, a] if lk["sz"] is not None else np.ones(len(a))
-    size, al = _record_look(P, t, age, lk["lt"][fi, a], lk["land_t"][a], size0[a], lk["phase"][a], sz, lk["ps"])
+    size, al = _record_look(P, t, age, lk["lt"][fi, a], lk["land_t"][a], size0[a], lk["phase"][a], sz, lk["ps"], lk["life"][a])
     out = dict(rec)
     out["size"], out["alpha"] = np.zeros_like(rec["size"]), np.zeros_like(rec["alpha"])
     out["size"][fi, a], out["alpha"][fi, a] = size, al
@@ -911,7 +981,8 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
 
     max_alive = int(P["max_particles"])
     st = {k: np.zeros(cap) for k in ("x", "y", "z", "vx", "vy", "born", "life", "size0", "rot", "spin", "rnd", "phase",
-                                      "land_t", "grav", "drag", "px", "py", "rid", "foff", "sym5", "main", "fine", "pop")}
+                                      "land_t", "grav", "drag", "px", "py", "rid", "foff", "sym5", "main", "fine", "pop",
+                                      "cx0", "cy0", "bx0", "by0", "side")}
     alive = np.zeros(cap, bool)
     landed = np.zeros(cap, bool)
     behind = np.zeros(cap, bool)
@@ -1003,6 +1074,11 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
             st["vy"][idx] += P["inherit"] * em.vel[fi, 1] / (ps * sz)
         st["x"][idx], st["y"][idx] = wx, wy
         st["born"][idx] = t
+        if P["centres_follow"] < 1 and (P["vortex"] or P["attract"]):
+            fb = em.frame(t)
+            st["cx0"][idx], st["cy0"][idx] = cam.to_world(em.center[fb, 0], em.center[fb, 1], fb)
+            if tgt is not None:
+                st["bx0"][idx], st["by0"][idx] = cam.to_world(tgt[fb, 0], tgt[fb, 1], fb)
         st["life"][idx] = np.maximum(0.05, src.get("life", 1.0) * (1 + src.get("life_var", 0.0) * sym(4)))
         s5 = sym(5)
         st["size0"][idx] = src.get("size", 4.0) * (1 + src.get("size_var", 0.0) * s5)
@@ -1032,6 +1108,7 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
             g = 9.81 * REF / P["scene_height"]
         st["grav"][idx] = g
         st["pop"][idx] = 0.0
+        st["side"][idx] = 0.0
         st["drag"][idx] = src.get("drag", P["drag"])
         alive[idx] = True
         landed[idx] = False
@@ -1076,11 +1153,13 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
 
     acc = 0.0
     cid = 0
-    t_bursts = burst_times(P, n, fps)
+    t_on = em.first_on(P["start"])
+    t_on = P["start"] if t_on is None else t_on
+    t_bursts = burst_times(P, n, fps, t_on)
     nb = 0
     curve = P.get("rate_curve") or []
     c_end = P["end"] if P["end"] > 0 else (n - 1) / fps
-    c_len = max(c_end - P["start"], 1e-6)
+    c_len = max(c_end - t_on, 1e-6)
     rec_noise = None
     for s in range(steps):
         if s % 16 == 0:
@@ -1088,7 +1167,7 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
         t = (s - pre_steps) * dt
         fi = min(max(int(round(t * fps)), 0), n - 1)
         if t0 - 1e-9 <= t <= t_end and (em.contact is None or em.contact[fi]):
-            acc += rate_c * dt * (rate_curve_at(curve, (t - P["start"]) / c_len) if curve else 1.0)
+            acc += rate_c * dt * (rate_curve_at(curve, (t - t_on) / c_len) if curve else 1.0)
             kc = int(acc)
             acc -= kc
             groups = []
@@ -1131,7 +1210,7 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
                     fx, fy = fx * k, fy * k
                 age = np.clip((t - st["born"][a]) / st["life"][a], 0, 1)
                 lt = landed[a]
-                size, al = _record_look(P, t, age, lt, st["land_t"][a], st["size0"][a], st["phase"][a], sz, ps)
+                size, al = _record_look(P, t, age, lt, st["land_t"][a], st["size0"][a], st["phase"][a], sz, ps, st["life"][a])
                 if look is not None:
                     look["t"][i] = t
                     look["on"][i, a], look["lt"][i, a] = True, lt
@@ -1169,6 +1248,10 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
                 ay += P["roll"] * wr * side * rx / rl
             if P["vortex"] or P["attract"]:
                 cx, cy = cam.to_world(em.center[fi, 0], em.center[fi, 1], fi)
+                cf = min(max(float(P["centres_follow"]), 0.0), 1.0)
+                if cf < 1:
+                    cx = cf * cx + (1 - cf) * st["cx0"][live]
+                    cy = cf * cy + (1 - cf) * st["cy0"][live]
                 if P["vortex"]:
                     rx, ry = x - cx, y - cy
                     rl = np.maximum(np.hypot(rx, ry), 1e-6)
@@ -1176,6 +1259,9 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
                     ay += P["vortex"] * rx / rl
                 if P["attract"] and tgt is not None:
                     bx, by = cam.to_world(tgt[fi, 0], tgt[fi, 1], fi)
+                    if cf < 1:
+                        bx = cf * bx + (1 - cf) * st["bx0"][live]
+                        by = cf * by + (1 - cf) * st["by0"][live]
                     dx, dy = bx - x, by - y
                     dl = np.maximum(np.hypot(dx, dy), 1e-6)
                     ax += P["attract"] * dx / dl
@@ -1223,6 +1309,29 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
             k = turb_calm(P, age, st["life"][live], st["drag"][live])
             if k is not None:
                 fx, fy = fx * k, fy * k
+            if dep and P["flow_around"] > 0:
+                fa, T, m = min(float(P["flow_around"]), 1.0), float(P["obstacle_depth"]), max(float(P["depth_softness"]), 1e-3)
+                sx, sy = cam.to_screen(x, y, fi)
+                ex, ey = sx + (nvx + fx) * 0.12 * sz * ps, sy + (nvy + fy) * 0.12 * sz * ps
+                ga = dep.at(fi, ex, ey) - z
+                hit = np.nonzero((ga > 0) & (ga < 0.5 * T))[0]
+                if len(hit):
+                    hs = 6.0 * ps
+                    gx = dep.at(fi, ex[hit] + hs, ey[hit]) - dep.at(fi, ex[hit] - hs, ey[hit])
+                    gy = dep.at(fi, ex[hit], ey[hit] + hs) - dep.at(fi, ex[hit], ey[hit] - hs)
+                    gl = np.maximum(np.hypot(gx, gy), 1e-9)
+                    nx, ny = gx / gl, gy / gl
+                    hvx, hvy = nvx[hit], nvy[hit]
+                    vn = hvx * nx + hvy * ny
+                    w = fa * ((gl > 0.02) & (vn > 0))
+                    tx, ty = hvx - vn * nx, hvy - vn * ny
+                    tl = np.hypot(tx, ty)
+                    left = st["rnd"][live[hit]] < 0.5
+                    tx = np.where(tl > 1e-6, tx / np.maximum(tl, 1e-6), np.where(left, -ny, ny))
+                    ty = np.where(tl > 1e-6, ty / np.maximum(tl, 1e-6), np.where(left, nx, -nx))
+                    sp = np.hypot(hvx, hvy)
+                    nvx[hit] = hvx + w * (tx * sp - hvx)
+                    nvy[hit] = hvy + w * (ty * sp - hvy)
             st["vx"][live], st["vy"][live] = nvx, nvy
             st["x"][live] = x + (0.5 * (vx + nvx) + fx) * dt * sz * ps
             st["y"][live] = y + (0.5 * (vy + nvy) + fy) * dt * sz * ps
@@ -1230,6 +1339,19 @@ def simulate(P, em, seed=0, amount=1.0, target=None, flow=None, look_state=False
                 w = 2 * np.pi * P["sway_hz"] * (0.7 + 0.6 * st["rnd"][live])
                 ph = st["phase"][live]
                 st["x"][live] += P["sway"] * sz * ps * (np.sin(w * (t + dt) + ph) - np.sin(w * t + ph))
+            if dep and P["flow_around"] > 0:
+                sx, sy = cam.to_screen(st["x"][live], st["y"][live], fi)
+                d = dep.at(fi, sx, sy)
+                gap = d - z
+                side = st["side"][live]
+                near = (gap > -T) & (gap < T + 2 * m)
+                side = np.where(near, side, 0.0)
+                inside = (gap > -0.3 * m) & near
+                deep = np.maximum(gap, ga)
+                side = np.where(inside & (side == 0), np.where(deep < 0.5 * T, 1.0, -1.0), side)
+                tz = np.where(side > 0, np.maximum(z, d + 0.3 * m), np.minimum(z, d - 1.1 * m))
+                z = np.where(inside & (side != 0), z + (tz - z) * fa, z)
+                st["z"][live], st["side"][live] = z, side
             if ch_age > 0:
                 due = (st["pop"][live] == 0) & (kind[live] == 0) & ((t + dt - st["born"][live]) / st["life"][live] >= ch_age)
                 if due.any():
@@ -1797,7 +1919,8 @@ def _strikes(P, em, seed, out, tgt, ps):
     L, dec = max(P["strike_leader"], 1e-3), max(P["strike_decay"], 1e-3)
     k3 = math.log(3.0) / dec
     fine = P["fine_rough"] if P["fine_rough"] > 0 else None
-    for e, tb in enumerate(burst_times(P, n, fps)):
+    t_on = em.first_on(P["start"])
+    for e, tb in enumerate(burst_times(P, n, fps, P["start"] if t_on is None else t_on)):
         rng = np.random.default_rng(seed * 7919 + 104729 * (e + 1))
         i0 = min(max(int(round(tb * fps)), 0), n - 1)
         side = rng.uniform(-1.0, 1.0) * P["strike_spread"] * ps
@@ -1891,6 +2014,59 @@ def _strikes(P, em, seed, out, tgt, ps):
                     out[i].append((br, w * 0.5, op * first, z))
 
 
+def _random_bolts(P, em, seed, out, ps):
+    n, fps = em.n, em.fps
+    t_on = em.first_on(P["start"])
+    if t_on is None:
+        return
+    t1 = min(P["end"] if P["end"] > 0 else 1e9, (n - 1) / fps)
+    c_len = max(t1 - t_on, 1e-6)
+    curve = P.get("rate_curve") or []
+    rng = np.random.default_rng(seed * 7919 + 15485863)
+    life = max(P["rand_life"], 0.5 / fps)
+    nf = max(1, int(math.ceil(life * fps)))
+    R, fine, rr = P["roughness"], (P["fine_rough"] if P["fine_rough"] > 0 else None), max(1, int(P["reroll_frames"]))
+    w, aim, spr = P["width"] * ps, P.get("rand_aim", "random"), np.radians(P.get("spread", 30.0))
+    ride = em.has_a and em.kind in OBJECT_EMITTERS + ("point A", "line A-B", "drawing")
+    count = 0
+    for i in range(n):
+        t = i / fps
+        if t < t_on - 1e-9 or t > t1 + 1e-9:
+            continue
+        k = int(rng.poisson(max(P["rand_rate"], 0.0) / fps * (rate_curve_at(curve, (t - t_on) / c_len) if curve else 1.0)))
+        if k == 0:
+            continue
+        pos, nrm, z = em.sample(t, k, rng.uniform(0, 1, (k, 5)))
+        for j in range(len(pos)):
+            count += 1
+            u = rng.uniform(0, 1, 4)
+            if aim == "emitter":
+                th = np.radians(P.get("direction", 0.0)) + spr * (2 * u[0] - 1)
+            elif aim == "outward" and nrm is not None:
+                th = math.atan2(nrm[j, 0], -nrm[j, 1]) + spr * (2 * u[0] - 1)
+            elif aim == "outward" and em.kind in OBJECT_EMITTERS and len(em.pts[em.frame(t)]):
+                c = em.pts[em.frame(t)].mean(0)
+                th = math.atan2(pos[j, 0] - c[0], -(pos[j, 1] - c[1])) + spr * (2 * u[0] - 1)
+            else:
+                th = 2 * np.pi * u[0]
+            ln = max(4.0, P["rand_length"] * ps * (1 + P["rand_length_var"] * (2 * u[1] - 1)))
+            d = ln * np.array([math.sin(th), -math.cos(th)])
+            flick = 0.7 + 0.3 * u[2]
+            for f in range(i, min(n, i + nf)):
+                age = (f - i) / fps
+                p0 = pos[j] + ((em._lerp(em.a, f / fps) - em._lerp(em.a, t)) if ride else 0.0)
+                srng = np.random.default_rng([seed, count, (f - i) // rr])
+                main = bolt_path(p0, p0 + d, srng, R, 5, fine)
+                grow = 1.0 if P["grow_seconds"] <= 0 else min(1.0, (age + 1 / fps) / P["grow_seconds"])
+                keep = max(2, int(len(main) * grow))
+                val = flick * (1.0 - age / life) ** 0.7
+                out[f].append((main[:keep], w, np.full(keep, val), float(z[j])))
+                nb = int(P["branches"])
+                if nb > 0 and keep > 6:
+                    _forks(out[f], main[:keep], srng, int(srng.integers(0, nb + 1)), w, float(z[j]), R, 0.45,
+                           int(P["fork_depth"]), fine, 0.8 * val)
+
+
 def make_paths(P, em, seed, target=None):
     n, fps, W, H, cam = em.n, em.fps, em.W, em.H, em.cam
     em.crack_table = None
@@ -1926,6 +2102,8 @@ def make_paths(P, em, seed, target=None):
                 out[i].append((br, P["width"] * ps * 0.5, np.linspace(flick, 0.0, len(br)), em.z[i]))
     elif kind == "strike":
         _strikes(P, em, seed, out, tgt, ps)
+    elif kind == "random":
+        _random_bolts(P, em, seed, out, ps)
     elif kind == "climb":
         if em.masks is None:
             raise ValueError("a climbing path needs the object mask (the thin parts it climbs): click the object in Position and track it")
@@ -2355,7 +2533,18 @@ def masks_from(alpha_plate, rec, em, P, premask=True, grow=0.02, guide=None, pat
                 k = np.searchsorted(zw[ow], d.astype(np.float64) - soft)
                 h = np.minimum(h, (1.0 - np.where(k > 0, cw[np.clip(k - 1, 0, len(cw) - 1)], 0.0)).astype(np.float32))
             else:
-                h = np.minimum(h, np.where(cover, np.clip((zf - d) / soft + 1.0, 0, 1), 1.0).astype(np.float32))
+                if P.get("flow_around", 0) > 0:
+                    R = 3 * r
+                    zm = np.full((H + 2 * pd, W + 2 * pd), -np.inf, np.float32)
+                    np.maximum.at(zm, (yi[inb], xi[inb]), rec["z"][i, a][inb].astype(np.float32))
+                    zm = cv2.dilate(zm[pd:pd + H, pd:pd + W], cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * R + 1, 2 * R + 1)))
+                    m = (zm > -1e30).astype(np.float32)
+                    zm = np.where(m > 0, zm, 0.0).astype(np.float32)
+                    front = cv2.GaussianBlur(zm, (0, 0), R / 2) / np.maximum(cv2.GaussianBlur(m, (0, 0), R / 2), 1e-6)
+                    lift = float(P.get("obstacle_depth", 0.1))
+                    h = np.minimum(h, np.where(m > 0, np.clip((front - d + lift) / soft + 1.0, 0, 1), 1.0).astype(np.float32))
+                else:
+                    h = np.minimum(h, np.where(cover, np.clip((zf - d) / soft + 1.0, 0, 1), 1.0).astype(np.float32))
         if guide is not None and h.min() < 0.99:
             g = guide[min(i, len(guide) - 1)][..., :3].astype(np.float32)
             g = cv2.resize(g, (W, H), interpolation=cv2.INTER_AREA) if g.shape[:2] != (H, W) else g

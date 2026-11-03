@@ -81,11 +81,6 @@ def _styles():
     return cv.effect_styles(presets())
 
 
-def _particle_style(kind, style):
-    st = cv.style_def(presets(), kind, style) or {}
-    return bool((st.get("settings") or {}).get("Particles")) or st.get("variant") == "climb"
-
-
 def _light_gain(kind, style):
     eff = next((e for e in presets().get("effects", []) if e["id"] == kind), {})
     st = cv.style_def(presets(), kind, style) or {}
@@ -871,7 +866,7 @@ def chain_values(b):
     if lg.get("groups in depth"):
         adv["Groups in depth"] = True
     if tr:
-        adv[FOLLOWS] = bool(tr.get("motion")) and not _particle_style(kind, style)
+        adv[FOLLOWS] = bool(tr.get("motion"))
         if adv[FOLLOWS]:
             adv["Follows motion: strength"] = tr.get("motion strength", 1.0)
             adv["Follows motion: lag"] = tr.get("motion lag", 0.6)
@@ -914,8 +909,11 @@ def chain_values(b):
     models.pop("id", None)
     if sh.get("depth"):
         models["depth"] = sh["depth"]
-    look = {"light_strength": lg.get("light strength", 1.0) * _light_gain(kind, style), "glow_exposure": lg.get("glow exposure", 0.0),
-            "albedo_exposure": _light_albedo_exposure(kind, style, sh.get("night")), "light_color": _light_color(kind, style)}
+    tune = (cv.style_def(presets(), kind, style) or {}).get("look_tune") or {}
+    look = {"light_strength": lg.get("light strength", 1.0) * _light_gain(kind, style) * float(tune.get("light_strength", 1.0)),
+            "glow_exposure": lg.get("glow exposure", 0.0) + float(tune.get("glow_exposure", 0.0)),
+            "albedo_exposure": _light_albedo_exposure(kind, style, sh.get("night")), "light_color": _light_color(kind, style),
+            "element_gain": float(tune.get("element_gain", 1.0))}
     return st.get("variant") or "app", mode, v, models or None, look
 
 
@@ -979,6 +977,7 @@ def build_chain(b, wants=(), dry=False):
         cv.tune_look(g, look)
         if variant == "check":
             ar.keep_track(g, settings)
+            g.pop(ar.VIDEO_SAVES[0], None)
         if preview and ELEMENT_RGBA in g:
             shown_el = [ELEMENT_SHOWN if ELEMENT_SHOWN in g else ELEMENT_RGBA, 0]
             top = g.get(SOURCES["element"][0]) or {}

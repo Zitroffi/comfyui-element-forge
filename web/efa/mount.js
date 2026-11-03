@@ -12,8 +12,8 @@ import { addRun } from "./finish.js";
 import { noteQueued, takeRecipe } from "./versions.js";
 import { ltxForBuild, useModelsNode } from "./ui/machine.js";
 
+const DS_CSS_URL = new URL("./ds.css", import.meta.url).href;
 const CSS_URL = new URL("./efa.css", import.meta.url).href;
-const CARDS_CSS_URL = new URL("./cards.css", import.meta.url).href;
 const STEPS = [["where", "Where"], ["effect", "Effect"], ["look", "Look"]];
 const VIDEO_RE = /\.(mp4|mov|webm|mkv|m4v|avi)$/i;
 const IMAGE_RE = /\.(png|jpe?g|webp)$/i;
@@ -27,7 +27,7 @@ let panel = null;
 
 function ensureCss() {
   if (document.querySelector(`link[data-efa-css]`)) return;
-  document.head.append(h("link", { rel: "stylesheet", href: CSS_URL, "data-efa-css": "1" }), h("link", { rel: "stylesheet", href: CARDS_CSS_URL, "data-efa-cards-css": "1" }));
+  document.head.append(h("link", { rel: "stylesheet", href: DS_CSS_URL, "data-efa-ds-css": "1" }), h("link", { rel: "stylesheet", href: CSS_URL, "data-efa-css": "1" }));
 }
 
 function themeOf() {
@@ -51,7 +51,7 @@ function build() {
     h("p", {}, "Choose a clip in the Clip step, or drop a video or a picture onto this canvas. Then click where the effect goes."),
     h("button", { class: "btn primary", onclick: () => { picker.value = ""; picker.click(); } }, icon("upload"), "Choose a video or picture")));
   const steps = h("div", { class: "seg efa-steps", role: "group", "aria-label": "Step" },
-    ...STEPS.map(([id, t]) => h("button", { "data-step": id, title: `${t} step: its tools in the canvas`, onclick: () => S.setUI({ step: id }) }, t)));
+    ...STEPS.map(([id, t]) => h("button", { "data-step": id, title: `${t} step: its tools in the canvas`, onclick: () => S.setUI({ step: id }) }, h("span", { "data-t": t }, t))));
   const drop = h("div", { class: "efa-drop", "aria-hidden": "true" }, h("div", { class: "frame" }, "Drop the video to use it"));
   const helpList = h("dl", {});
   const help = h("div", { class: "help", role: "dialog", "aria-label": "Shortcuts", hidden: true },
@@ -86,6 +86,7 @@ function place() {
     ws.el.prepend(ws.cards);
     setRoot(ws.el);
   }
+  ws.cards.classList.toggle("efa-apart", ws.cards.parentElement !== ws.el);
   if (dock) dock.box.hidden = dock.showing !== "canvas";
   placeProgress();
   renderChrome();
@@ -99,8 +100,8 @@ function setDock(host) {
   dock = null;
   if (host) {
     const seg = h("div", { class: "seg efa-dock-seg", role: "group", "aria-label": "Show" },
-      h("button", { "data-show": "canvas", onclick: () => showInDock("canvas") }, "Canvas"),
-      h("button", { "data-show": "result", onclick: () => showInDock("result"), title: "ComfyUI's results of this workflow" }, "Result"));
+      h("button", { "data-show": "canvas", onclick: () => showInDock("canvas") }, h("span", { "data-t": "Canvas" }, "Canvas")),
+      h("button", { "data-show": "result", onclick: () => showInDock("result"), title: "ComfyUI's results of this workflow" }, h("span", { "data-t": "Result" }, "Result")));
     const box = h("div", { class: "efa-root efa-host efa-dock" }, h("div", { class: "efa-dock-body" }));
     box.dataset.theme = ws.el.dataset.theme;
     if (getComputedStyle(host).position === "static") host.style.position = "relative";

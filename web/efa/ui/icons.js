@@ -19,6 +19,7 @@ const P = {
   alert: "M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z",
   upload: "M12 3v12M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4",
   chevron: "m9 6 6 6-6 6",
+  info: "M12 16v-4M12 8h.01M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z",
   plus: "M12 5v14M5 12h14",
   gear: "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM12 5a7 7 0 1 0 0 14 7 7 0 0 0 0-14ZM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1",
   live: "M13 2 3 14h9l-1 8 10-12h-9l1-8Z",
@@ -29,6 +30,19 @@ const P = {
   eyeOff: "M9.9 5.2A9.8 9.8 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-2.4 3.3M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7c1.9 0 3.6-.6 5-1.4M3 3l18 18M9.9 9.9a3 3 0 0 0 4.2 4.2",
   pick: "m2 22 1-1h3l9-9M3 21v-3l9-9M15 6l3.4-3.4a2.1 2.1 0 0 1 3 3L18 9l.4.4a2.1 2.1 0 0 1-3 3l-3.8-3.8a2.1 2.1 0 0 1 3-3l.4.4",
   lock: "M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4",
+  target: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z",
+  reset: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5",
+  fire: "M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.4-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5Z",
+  lightning: "M13 2 3 14h9l-1 8 10-12h-9l1-8Z",
+  sparks: "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3ZM19 3v4M17 5h4M5 17v4M3 19h4",
+  smoke: "M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z",
+  magic: "m15 4 5 5M4 20 15 9M14 3l1 1M20 9l1 1M17 2v2M22 7h-2",
+  weather: "M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M9 4l3 2 3-2M9 20l3-2 3 2",
+  debris: "M4 18l3-7 5 2 3-6 5 11Z",
+  liquid: "M12 2.7S6 9 6 14a6 6 0 0 0 12 0c0-5-6-11.3-6-11.3Z",
+  dissolve: "M4 4h4v4H4zM12 4h4v4h-4zM8 8h4v4H8zM16 8h4v4h-4zM4 12h4v4H4zM12 12h4v4h-4zM8 16h4v4H8z",
+  own: "M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z",
+  shuffle: "M2 18h3.5a4 4 0 0 0 3.3-1.7l6.4-8.6A4 4 0 0 1 18.5 6H22M2 6h3.5a4 4 0 0 1 3.3 1.7l.7.9M14.5 15.4l.7.9a4 4 0 0 0 3.3 1.7H22M19 3l3 3-3 3M19 15l3 3-3 3",
 };
 
 export function icon(name, cls = "") {
@@ -36,7 +50,7 @@ export function icon(name, cls = "") {
   s.setAttribute("viewBox", "0 0 24 24");
   s.setAttribute("fill", "none");
   s.setAttribute("stroke", "currentColor");
-  s.setAttribute("stroke-width", "1.8");
+  s.setAttribute("stroke-width", "1.6");
   s.setAttribute("stroke-linecap", "round");
   s.setAttribute("stroke-linejoin", "round");
   s.setAttribute("aria-hidden", "true");

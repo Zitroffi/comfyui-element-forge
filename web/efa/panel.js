@@ -1,5 +1,6 @@
 import { h, fmtSec, getJSON, postJSON } from "./ui/lib.js";
 import { icon } from "./ui/icons.js";
+import { seg, toggle, link, note, info, valRow, groupEl, settle, inlineChoice, secFold, blk, surfaces } from "./ui/ds.js";
 import * as S from "./ui/state.js";
 import * as P from "./ui/presets.js";
 import { estimate, efaValues, frameBox, ltxFrames, valuesFor, canPreview, outputOf } from "./ui/run.js";
@@ -7,7 +8,7 @@ import { loadRtx, hasRtx, ltxForBuild, loadSystem, systemNotes } from "./ui/mach
 import * as C from "./ui/comfy.js";
 import { editBrush, seekTo, frameHere } from "./ui/stage.js";
 import { initLive, poke as pokeLive, refresh as refreshLive, liveMode, setLiveMode, livePreviews } from "./live.js";
-import { emitterPanel, basicFill, emitterKind, ownValues, SHAPES, SHAPE, shapeOf, shapeFixed, setAdv, effStyle, guideNow } from "./emitter.js";
+import { emitterPanel, emitterHead, emitterFill, basicFill, emitterKind, ownValues, SHAPES, SHAPE, shapeOf, shapeFixed, setAdv, effStyle, guideNow, changedCount } from "./emitter.js";
 import { initShotLine, lineState, describe as describeLine, typedByHand } from "./shotline.js";
 import { enhance, enhancer, bonsaiStatus, wordDiff, hasBonsai, bonsaiSetup, startBonsaiSetup, resetBonsai } from "./ui/enhance.js";
 import { initWish, suggestButton, wishResults, pictureRows } from "./wish.js";
@@ -22,7 +23,7 @@ import * as L from "./ui/look.js";
 
 const VIDEO_RE = /\.(mp4|mov|webm|mkv|m4v|avi)$/i;
 const IMAGE_RE = /\.(png|jpe?g|webp)$/i;
-const GLYPH = { fire: "🔥", lightning: "⚡", sparks: "✨", smoke: "☁", magic: "✦", weather: "❄", debris: "◆", liquid: "💧", dissolve: "░", own: "✎" };
+const kindIcon = (k) => icon(["fire", "lightning", "sparks", "smoke", "magic", "weather", "debris", "liquid", "dissolve", "own"].includes(k) ? k : "gen");
 const PLACE_HINT = {
   point: "Click the clip where it should sit; it hangs on your point. Drag the area in the canvas to size it.",
   window: "Click where it starts. The area in the canvas is where the AI works: drag it to move or size it.",
@@ -63,29 +64,26 @@ function timeTag(e, kind, s) {
   return h("span", { class: "cost " + k, title: tip },
     `${COST_WORD[k]} · ` + (est ? `${est.lo}–${est.hi} min` : gen ? "minutes" : "about a minute"));
 }
-const note = (kind, text, ...more) => h("p", { class: "note " + kind }, icon(kind === "err" ? "alert" : kind === "hint" ? "chevron" : "check"), h("span", {}, text, ...more));
 
-function seg(label, options, value, onpick) {
-  return h("div", { class: "seg wide", role: "radiogroup", "aria-label": label },
-    ...options.map(([v, t, tip]) => h("button", { role: "radio", "aria-checked": String(value === v), "aria-pressed": String(value === v),
-      title: tip || null, onclick: () => onpick(v) }, t)));
-}
-function toggle(label, value, onchange, tip) {
-  return h("label", { class: "toggle", title: tip || null }, h("input", { type: "checkbox", checked: !!value, onchange: (ev) => onchange(ev.target.checked) }),
-    h("span", { class: "track", "aria-hidden": "true" }), h("span", {}, label));
-}
-const link = (text, onclick) => h("button", { class: "link", onclick }, text);
-function group(key, title, body, { open: dflt = false, hint = "", preview = "", badge = "", cls = "" } = {}) {
+function group(key, title, body, { open: dflt = false, hint = "", preview = "", badge = "", cls = "", solo = null } = {}) {
   const isOpen = groups.has(key) ? groups.get(key) : dflt;
-  const flip = () => { groups.set(key, !isOpen); render(); };
-  return h("div", { class: "group" + (isOpen ? " open" : "") + (cls ? ` ${cls}` : ""), "data-group": key },
-    h("button", { class: "group-head", "aria-expanded": String(isOpen), onclick: flip }, icon("chevron", "chev"), h("span", {}, title),
-      badge ? h("span", { class: "group-badge" }, badge) : null,
-      hint ? h("span", { class: "group-hint", title: hint }, hint) : null),
-    !isOpen && preview ? h("p", { class: "group-preview", onclick: flip }, preview) : null,
-    isOpen ? h("div", { class: "group-body" }, ...[].concat(body()).filter(Boolean)) : null);
+  return groupEl({ key, title, open: isOpen, desc: preview, state: hint, badge, cls, onflip: flipOf(key, isOpen, solo),
+    flipTitle: solo ? "Shift-click keeps the other groups open" : null, body });
 }
-function fxText(name, placeholder, { area = false, label = "", num = false } = {}) {
+const flipOf = (key, isOpen, solo) => (ev) => {
+  if (!isOpen && solo && !ev?.shiftKey) for (const k of groups.keys()) if (k !== key && solo(k)) groups.set(k, false);
+  groups.set(key, !isOpen); render();
+};
+function section(e, key, title, rows, { sum = "", right = null, first = false } = {}) {
+  rows = [].concat(rows).flat(Infinity).filter(Boolean);
+  if (!rows.length) return [];
+  const k = `sec:${e.id}:${key}`, mine = (x) => x.startsWith(`sec:${e.id}:`);
+  if (first && ![...groups.keys()].some(mine)) groups.set(k, true);
+  const isOpen = !!groups.get(k);
+  return [secFold({ key, title, open: isOpen, sum, onflip: flipOf(k, isOpen, mine), flipTitle: "Shift-click keeps the other sections open" }, right),
+    isOpen ? blk(rows) : null];
+}
+function fxText(name, placeholder, { area = false, label = "", num = false, shown = "" } = {}) {
   const t = typed.get(name);
   const el = h(area ? "textarea" : "input", { "data-key": name, class: area ? "text area" : "text", placeholder, "aria-label": label || placeholder,
     spellcheck: area ? "true" : "false", oninput: (ev) => {
@@ -93,7 +91,7 @@ function fxText(name, placeholder, { area = false, label = "", num = false } = {
       if (cur) clearTimeout(cur.timer);
       typed.set(name, { value: v, timer: setTimeout(() => { typed.delete(name); api.setFx(name, num ? Math.max(0, Math.trunc(+v) || 0) : v); }, 300) });
     } });
-  el.value = t ? t.value : String(fx()[name] ?? "");
+  el.value = t ? t.value : String(fx()[name] ?? "") || shown;
   if (area) el.rows = 3;
   if (num) { el.inputMode = "numeric"; el.dataset.num = "1"; }
   return el;
@@ -119,7 +117,7 @@ function stepState(id) {
   if (id === "clip") return shot.clip ? "done" : "todo";
   if (!shot.clip) return "locked";
   if (id === "position") return !needsPoint(placed()) || e?.where.a ? "done" : "todo";
-  if (id === "effect") return st ? "done" : "todo";
+  if (id === "effect") return st ? (e?.seen ? "done" : "default") : "todo";
   if (!st) return id === "output" ? "todo" : "locked";
   if (id === "finish") return "todo";
   if (id === "output") return lastResult ? "done" : "todo";
@@ -132,14 +130,18 @@ function autoOpen() {
 
 function summary(id) {
   const shot = S.getShot(), e = effect(), st = style();
-  if (id === "clip") return shot.clip ? `${shot.clip.name} · ${fmtSec(shot.clip.seconds)}` : "";
+  if (id === "clip") return shot.clip ? `${midTrim(shot.clip.name, 16)} · ${fmtSec(shot.clip.seconds)}` : "";
   if (!e || !st) return "";
   if (id === "position") {
     if (!needsPoint(placed())) return "Whole picture";
     if (!e.where.a) return "";
     return [(wordOf() ? `“${wordOf()}”` : "Point set") + (e.where.b ? " · A → B" : ""), followsName(ownFollows() || styleFollows(st))].join(" · ");
   }
-  if (id === "effect") return `${P.effectDef(e.kind)?.name || e.kind} · ${st.name}`;
+  if (id === "effect") {
+    let n = 0;
+    try { n = changedCount({ ...emitterCtx(e, effStyle(st, e)), st0: st }); } catch { n = 0; }
+    return `${P.effectDef(e.kind)?.name || e.kind} · ` + (n ? `${n} changed` : e.seen ? st.name : "default");
+  }
   if (id === "finish") return shot.night ? "night" : (S.shownOf(e.id)?.status === "done" ? "live" : "");
   if (id === "output") {
     const o = outputOf(shot);
@@ -152,14 +154,15 @@ function summary(id) {
 function card(id, n, title, body) {
   const state = stepState(id);
   const isOpen = open === id && state !== "locked";
-  const num = state === "done" && !isOpen ? icon("check") : String(n);
+  if (isOpen && id === "effect") { const x = effect(); if (x && !x.seen) x.seen = true; }
+  const num = String(n);
   return h("section", { class: "card" + (isOpen ? " open" : ""), "data-state": state, "data-step": id },
     h("button", { class: "card-head", "aria-expanded": String(isOpen), disabled: state === "locked",
       title: state === "locked" ? (S.getShot().clip ? "Pick an effect first" : "Choose a video first") : null,
       onclick: () => setOpen(isOpen ? null : id) },
     h("span", { class: "num", "aria-hidden": "true" }, num), h("span", { class: "title" }, title),
     h("span", { class: "sum" }, summary(id))),
-    isOpen ? h("div", { class: "card-body" }, ...[].concat(body()).filter(Boolean)) : null);
+    isOpen ? h("div", { class: "card-body" }, ...surfaces([].concat(body()))) : null);
 }
 
 function setOpen(id) {
@@ -224,24 +227,34 @@ async function runAnalysis(c) {
 const anaMinutes = (c) => { const k = ltxFrames(c.frames) / 81; return `${Math.max(1, Math.round(2.5 * k))}–${Math.max(2, Math.round(4.5 * k))}`; };
 function analysisBlock(c) {
   const rec = keptOf(c), a = rec?.analysis, run = rec?.run;
-  const kids = [h("div", { class: "label", title: "Depth (Video Depth Anything), normals (MoGe) and the camera's motion of the clip, kept for this clip" }, "Analysis")];
+  const kids = [h("div", { class: "label" }, "Analysis", info("Analysis", "Depth (Video Depth Anything), normals (MoGe) and the camera's motion of the clip, kept for this clip"))];
   if (run?.status === "running") kids.push(note("ok", `Analysing the scene… ${run.phase}`));
   else if (a) {
     const show = (part, label) => a.previews?.[part] ? link(`Show ${label.toLowerCase()}`, () => { S.setUI({ media: { url: a.previews[part], label, analysis: part } }); api.show?.("canvas"); }) : null;
     kids.push(note("ok", `Depth, normals and camera are ready (${a.frames} frames). The run takes them from here. `, show("depth", "Depth"), " · ", show("normals", "Normals")));
   } else if (run && run.status !== "done") kids.push(note("err", run.error || "The analysis was stopped."));
-  else kids.push(h("p", { class: "muted small" }, rec?.loaded ? "Not analysed yet. Without it the run works out depth and normals itself; analysed first, the canvas shows them and later runs of this clip take them."
+  else kids.push(note("hint", rec?.loaded ? "Not analysed yet. Without it the run works out depth and normals itself; analysed first, the canvas shows them and later runs of this clip take them."
     : "Looking for a kept analysis…"));
-  if (run?.status !== "running") kids.push(h("button", { class: "btn small", onclick: () => runAnalysis(c), title: "Only the analysis of the clip, without the AI effect" },
-    a ? "Analyse the scene again" : `Analyse the scene (depth, normals, camera) · about ${anaMinutes(c)} min`));
+  if (run?.status !== "running") kids.push(h("button", { class: "btn small", onclick: () => runAnalysis(c), title: "Only the analysis of the clip (depth, normals, camera), without the AI effect" },
+    a ? "Analyse the scene again" : `Analyse the scene · about ${anaMinutes(c)} min`));
   return h("div", { class: "field analysis" }, ...kids);
 }
 const midTrim = (n, max = 24) => (n.length <= max ? n : `${n.slice(0, Math.ceil((max - 1) * 0.55))}…${n.slice(n.length - Math.floor((max - 1) * 0.45))}`);
+function fitNames(root) {
+  for (const el of root.querySelectorAll(".clip-name")) {
+    const full = el.dataset.full || (el.dataset.full = el.textContent);
+    el.textContent = full;
+    if (el.scrollWidth <= el.clientWidth + 1) continue;
+    let lo = 6, hi = full.length - 1;
+    while (lo < hi) { const m = Math.ceil((lo + hi) / 2); el.textContent = midTrim(full, m); if (el.scrollWidth <= el.clientWidth + 1) lo = m; else hi = m - 1; }
+    el.textContent = midTrim(full, lo);
+  }
+}
 function clipBadges(n) {
   const i = api.clipInfo?.(n);
   return [IMAGE_RE.test(n) ? h("span", { class: "badge still" }, "still") : null,
     i?.analysis ? h("span", { class: "badge scene", title: "Analysed: depth, normals, camera" }, "◆ analysed") : null,
-    i?.tracks ? h("span", { class: "badge", title: "Kept tracks of this clip" }, `${i.tracks} track${i.tracks > 1 ? "s" : ""}`) : null];
+    i?.tracks ? h("span", { class: "badge count", title: "Kept tracks of this clip" }, `${i.tracks} track${i.tracks > 1 ? "s" : ""}`) : null];
 }
 function clipBody() {
   const shot = S.getShot();
@@ -253,7 +266,7 @@ function clipBody() {
     if (c.still) {
       const len = h("input", { class: "text", type: "number", min: "0.5", max: "60", step: "0.5", value: String(c.seconds), "aria-label": "Length in seconds",
         onchange: (ev) => api.stillSeconds?.(ev.target.value) });
-      kids.push(h("div", { class: "field" }, h("div", { class: "label", title: "The picture is held this long; the effect moves over it" }, "Length (s)"),
+      kids.push(h("div", { class: "field" }, h("div", { class: "label" }, "Length (s)", info("Length (s)", "The picture is held this long; the effect moves over it")),
         h("div", { class: "row gap" }, len, h("span", { class: "muted small" }, `${c.frames} frames at ${c.fps} fps`))));
     }
     if (Math.min(c.width || 0, c.height || 0) > 1080 && !c.fullSize) {
@@ -273,7 +286,7 @@ function clipBody() {
     if (c.frames > 161) kids.push(note("hint", `Only the first ${fmtSec(161 / c.fps)} of the clip are used.`));
     if (c.seconds < 2) kids.push(note("hint", "The clip is shorter than our test clips (2 s and more): results may vary."));
   }
-  kids.push(group("clips", "Videos and pictures", () => pickerBody(shot), { open: !shot.clip, preview: shot.clip ? `${shot.clip.name} · change` : "" }));
+  kids.push(group("clips", "Videos and pictures", () => pickerBody(shot), { open: !shot.clip, preview: "pick or add a clip" }));
   if (shot.clip) kids.push(analysisBlock(shot.clip));
   return kids;
 }
@@ -284,21 +297,22 @@ function pickerBody(shot) {
   const names = withScene && anyScene ? all.filter((n) => api.clipInfo?.(n)?.analysis) : all;
   if (all.length) {
     const pick = (n) => { if (shot.clip?.name !== n) { advance = "clip"; groups.delete("clips"); } api.setClip(n); };
-    kids.push(h("div", { class: "row between" }, h("span", { class: "label" }, "In ComfyUI's input folder"),
+    kids.push(h("span", { class: "label" }, "In ComfyUI's input folder"));
+    kids.push(h("div", { class: "row between clip-filters" }, h("span", {}),
       h("div", { class: "row gap" }, anyScene ? h("button", { class: "chip" + (withScene ? " on" : ""), "aria-pressed": String(withScene),
         title: "Only clips that are analysed (depth, normals, camera)", onclick: () => { withScene = !withScene; render(); } }, "analysed") : null,
       h("div", { class: "seg clip-view", role: "radiogroup", "aria-label": "Show the clips as" },
         ...[["list", "List"], ["tiles", "Tiles"]].map(([v, t]) => h("button", { role: "radio", "aria-checked": String(clipView === v),
-          "aria-pressed": String(clipView === v), onclick: () => { clipView = v; render(); } }, t))))));
+          "aria-pressed": String(clipView === v), onclick: () => { clipView = v; render(); } }, h("span", { "data-t": t }, t)))))));
     kids.push(clipView === "tiles"
       ? h("div", { class: "clip-tiles", role: "listbox", "aria-label": "Videos and pictures in ComfyUI's input folder" }, ...names.map((n) =>
         h("button", { class: "clip-tile" + (shot.clip?.name === n ? " on" : ""), role: "option", "aria-selected": String(shot.clip?.name === n),
           title: n, onclick: () => pick(n) }, h("img", { src: thumb(n), alt: "", loading: "lazy", decoding: "async" }),
           h("span", { class: "clip-name" }, midTrim(n)),
           h("span", { class: "clip-meta" }, api.clipInfo?.(n)?.seconds ? h("span", { class: "muted" }, fmtSec(api.clipInfo(n).seconds)) : null, ...clipBadges(n)))))
-      : h("div", { class: "clip-list", role: "listbox", "aria-label": "Videos and pictures in ComfyUI's input folder" }, ...names.map((n) =>
+      : ((list) => (requestAnimationFrame(() => fitNames(list)), list))(h("div", { class: "clip-list", role: "listbox", "aria-label": "Videos and pictures in ComfyUI's input folder" }, ...names.map((n) =>
         h("button", { class: "clip-item" + (shot.clip?.name === n ? " on" : ""), role: "option", "aria-selected": String(shot.clip?.name === n),
-          onclick: () => pick(n) }, h("span", {}, n), ...clipBadges(n)))));
+          title: n, onclick: () => pick(n) }, h("span", { class: "clip-name" }, n), h("span", { class: "clip-meta" }, ...clipBadges(n)))))));
   }
   kids.push(h("button", { class: "drop-zone", onclick: () => api.chooseFile() }, icon("upload"),
     h("span", {}, "Choose a video or a picture from your computer, or drop it here or onto the canvas")));
@@ -308,11 +322,11 @@ function pickerBody(shot) {
 const MASK = "Track follows the object mask (hands, bodies)", SCENE = "Sticks to scene (off = object)", OWN = "Own object mask (off = click)",
   ALIKE = "Object word: all alike objects (e.g. all sticks of a crown; off = the clicked one)", STILL = "Fixed on screen (Follows: Screen)";
 const whereKey = (e) => JSON.stringify([S.getShot().clip?.name, e.where, e.adv?.[SCENE], e.adv?.[MASK], e.adv?.[STILL], e.adv?.[OWN] ? e.paint?.mask : null, P.objectWord(e),
-  ...(R.maskSet(e) ? [e.adv?.[R.LEAVE_PTS] || "", e.adv?.[R.LEAVE_WORDS] || "", R.maskFrame(e), e.adv?.[R.ADD_PTS] || "", e.adv?.[R.ADD_WORDS] || ""] : [])]);
+  ...(R.maskSet(e) ? [e.adv?.[R.LEAVE_PTS] || "", e.adv?.[R.LEAVE_WORDS] || "", R.maskFrame(e), e.adv?.[R.ADD_PTS] || "", e.adv?.[R.ADD_WORDS] || "", e.adv?.[R.MASK_FIXES] || ""] : [])]);
 const TRACK_KEYS = ["Clip", "Still image (a picture in the input folder instead of the clip)", "Still image length (s)", "Frames", "Point A x", "Point A y", "Point B x", "Point B y", "Object word (optional, helps the click)", ALIKE, OWN,
   "Own object mask: first frame, paint the object (mask editor)", SCENE, MASK, STILL, "Follows motion", "Inpaint (off = on black)", "On black: more room",
   "Window A-B automatic", "Window width (plate px)", "Window height (plate px)", "Emitter x in window", "Emitter y in window", "Generate width", "Generate height",
-  R.LEAVE_PTS, R.LEAVE_WORDS, R.MASK_FRAME, R.ADD_PTS, R.ADD_WORDS, R.MASK_STEADY];
+  R.LEAVE_PTS, R.LEAVE_WORDS, R.MASK_FRAME, R.ADD_PTS, R.ADD_WORDS, R.MASK_FIXES, R.MASK_STEADY];
 const CHECK_PHASE = { SAM3_Detect: "Finding the object", EFSaveTrack: "Keeping the track", EFFollowCrop: "Drawing the mask",
   EFMaskTrack: "Drawing the mask", EFTrackPreview: "Drawing the mask", CreateVideo: "Saving the video", SaveVideo: "Saving the video" };
 function checkPhase(e, ck, phase) {
@@ -410,9 +424,10 @@ function checkBlock(e) {
   else if (keptHere) kids.push(note("ok", "This place has a kept track: the run takes it and does not track again."));
   if (!fresh || ck.status !== "running") {
     const ownMissing = e.adv?.[OWN] && !e.paint?.mask?.length;
-    kids.push(h("div", { class: "row gap" }, h("button", { class: "btn small", disabled: !e.where.a || ownMissing ? "" : null,
+    const again = (fresh && ck.status === "done") || keptHere;
+    kids.push(h("div", { class: "row gap" }, h("button", { class: again ? "btn small" : "btn primary", disabled: !e.where.a || ownMissing ? "" : null,
       title: ownMissing ? "Paint over the object first" : "Only the track and the mask, without the AI: about a minute",
-      onclick: () => runCheck(e) }, (fresh && ck.status === "done") || keptHere ? "Track it again" : "Track it"),
+      onclick: () => runCheck(e) }, again ? null : icon("target"), again ? "Track it again" : "Track it"),
     keptHere ? h("button", { class: "btn ghost small", title: "The kept track of this place goes; the run tracks again",
       onclick: () => clearTrack(c, tk.key) }, "Clear track") : null));
   }
@@ -434,7 +449,7 @@ function savedTracks(e) {
       h("div", { class: "row gap" }, here ? null : h("button", { class: "btn ghost small", title: w.own ? "Puts back the points and the word; the painted mask stays as you have it now" : "Puts back the points and the word",
         onclick: () => useTrack(w) }, "Use"),
       h("button", { class: "icon-btn", title: "Clear this kept track", "aria-label": "Clear this kept track", onclick: () => clearTrack(c, tr.key) }, icon("close"))));
-  }), { hint: cur && cur !== "loading" && cur.kept ? "this place is kept" : "" });
+  }), { preview: "tracks to use again" });
 }
 function useTrack(w) {
   S.change((sh) => {
@@ -461,12 +476,22 @@ function scheduleFirstMask(e) {
   if (e.adv?.[OWN] && (S.ui.firstMask || firstMask.key)) { firstMask = { ...firstMask, key: null }; if (S.ui.firstMask) S.setUI({ firstMask: null }); }
   if (!c || !e.where.a || e.adv?.[OWN] || key === firstMask.key) return;
   firstMask = { key, status: "waiting", promptId: firstMask.status === "running" ? firstMask.promptId : null, ms: null, error: null };
+  loadTrackKey(e);
   clearTimeout(firstTimer);
   firstTimer = setTimeout(() => runFirstMask(key), 500);
 }
-async function runFirstMask(key) {
+function stopFirstMask() {
+  clearTimeout(firstTimer);
+  if (firstMask.promptId) C.cancel(firstMask.promptId).catch(() => {});
+  firstMask = { ...firstMask, status: "stopped", promptId: null };
+  render();
+}
+async function runFirstMask(key, tries = 0) {
   const e = S.activeEffect(), c = S.getShot().clip;
-  if (!e || !c || whereKey(e) !== key) return;
+  if (!e || !c || whereKey(e) !== key || firstMask.key !== key || firstMask.status === "stopped") return;
+  const tk = trackKeys.get(key);
+  if (tk === "loading" && tries < 8) { firstTimer = setTimeout(() => runFirstMask(key, tries + 1), 400); return; }
+  if (tk && tk !== "loading" && tk.kept) { firstMask = { key, status: "kept", promptId: null, ms: null, error: null }; render(); return; }
   if (firstMask.promptId) C.cancel(firstMask.promptId).catch(() => {});
   const fm = firstMask = { key, status: "running", promptId: null, ms: null, error: null, t0: performance.now(), urls: {}, frame: R.maskFrame(e) };
   render();
@@ -501,8 +526,11 @@ async function runFirstMask(key) {
 function firstMaskNote(e) {
   if (!e.where.a || e.adv?.[OWN] || firstMask.key !== whereKey(e)) return null;
   const on = firstMask.frame ? `the mask frame (${firstMask.frame})` : "the first frame";
-  if (firstMask.status === "waiting" || firstMask.status === "running") return h("p", { class: "muted small" }, `Finding the object on ${on}…`);
-  if (firstMask.status === "done") return h("p", { class: "muted small" }, `Blue on ${on}: what will be tracked (${(firstMask.ms / 1000).toFixed(1)} s)${
+  if (firstMask.status === "waiting" || firstMask.status === "running") return h("div", { class: "busy" }, h("span", { class: "spinner" }),
+    h("span", { role: "status" }, `Finding the object on ${on}… `, link("Stop", stopFirstMask)));
+  if (firstMask.status === "kept") return note("ok", "A kept track of this place: its mask is used, nothing to find again.");
+  if (firstMask.status === "stopped") return note("hint", "Stopped. Click the object again to find it, or Track it for the whole clip.");
+  if (firstMask.status === "done") return note("ok", `Blue on ${on}: what will be tracked (${(firstMask.ms / 1000).toFixed(1)} s)${
     firstMask.urls?.left ? ", red: the parts left out" : ""}. Not right? Add or leave out parts under Object.`);
   if (firstMask.status === "failed") return note("err", `The first frame's mask failed: ${firstMask.error || "unknown error"}`);
   return null;
@@ -525,17 +553,16 @@ function boxWarnings(e, st, shot) {
 function followsBlock(st) {
   const own = ownFollows(), cur = own || styleFollows(st);
   const expl = FOLLOWS.find(([k]) => k === cur)?.[2] || "";
-  return h("div", { class: "field" }, h("div", { class: "label" }, "Follows"),
+  return h("div", { class: "field" }, h("div", { class: "label" }, "Follows", info("Follows", `${expl}${own ? "" : " As tested for this style."}`)),
     seg("Follows", FOLLOWS.map(([v, t, tip]) => [v, t, tip]), cur, (v) => api.setFx("sticks_to", v)),
-    h("p", { class: "muted small follows-expl" }, expl, own ? null : h("span", { class: "muted" }, " · as tested for this style")),
-    own && own !== styleFollows(st) ? h("p", { class: "muted small" }, link(`Back to the style default (${followsName(styleFollows(st))})`, () => api.setFx("sticks_to", "style default"))) : null);
+    own && own !== styleFollows(st) ? h("p", { class: "small" }, link(`Back to the style default (${followsName(styleFollows(st))})`, () => api.setFx("sticks_to", "style default"))) : null);
 }
 function lockBaseRow(st) {
   if (fx().mode !== "advanced" || st.cost !== "gen" || st.placement !== "point") return null;
   return h("div", { class: "field" },
     toggle("Base stays on the point", fx().lock_base, (v) => api.setFx("lock_base", v),
-      "The AI draws the effect a little differently in every frame, so its base can jitter. On: the base stays fixed on the tracked point, the effect still moves above it"),
-    h("p", { class: "muted small" }, "For a flame or ball that jitters at its base. Off: only slow drift is smoothed."));
+      "The AI draws the effect a little differently in every frame, so its base can jitter. On: the base stays fixed on the tracked point, the effect still moves above it. "
+      + "For a flame or ball that jitters at its base. Off: only slow drift is smoothed."));
 }
 const STEADY = [[0, "Off", "The mask as the track made it"], [2, "Light", "Two frames on each side; keeps fast, small parts"],
   [4, "Strong", "Four frames on each side; smoothest on large, soft objects"]];
@@ -569,28 +596,27 @@ function maskFields(e) {
   };
   return [
     h("div", { class: "field mask" },
-      h("div", { class: "label", title: "The frame the mask is set on; the track runs from it to the start and to the end of the clip" }, "Mask frame"),
+      h("div", { class: "label" }, "Mask frame", info("Mask frame", "The frame the mask is set on; the track runs from it to the start and to the end of the clip. "
+        + "Where all of the object is in view (a drawn blade): move the playhead there and press Use this frame. Parts below are clicked on this frame.")),
       h("p", { class: "small" }, mf ? `${fmtSec(mf / fps)} · frame ${mf}` : "The first frame"),
       h("div", { class: "row gap" },
         h("button", { class: "btn small", title: "The frame at the playhead becomes the mask frame (points set on another frame are cleared)",
           onclick: useHere }, "Use this frame"),
-        mf ? h("button", { class: "btn ghost small", title: "The playhead goes to the mask frame", onclick: () => seekTo(mf / fps) }, "Go there") : null),
-      h("p", { class: "muted small" }, "Where all of the object is in view (a drawn blade): move the playhead there and press Use this frame. Parts below are clicked on this frame.")),
+        mf ? h("button", { class: "btn ghost small", title: "The playhead goes to the mask frame", onclick: () => seekTo(mf / fps) }, "Go there") : null)),
     h("div", { class: "field mask" },
-      h("div", { class: "label", title: "More of the object: tracked with it" }, "Add (optional)"),
+      h("div", { class: "label" }, "Add (optional)", info("Add", "More of the object, tracked with it: words, or a click on each part (green ring).")),
       words(R.ADD_WORDS, "e.g. blade; tip", "Add: words"),
-      clicks("add", R.ADD_PTS, "Click to add", "Ctrl"),
-      h("p", { class: "muted small" }, "Words, or a click on each part (green ring).")),
+      clicks("add", R.ADD_PTS, "Click to add", "Ctrl")),
     h("div", { class: "field mask" },
-      h("div", { class: "label", title: "These parts are tracked and taken out of the object's mask: they give off nothing. The depth and the rest of the clip stay as they are" }, "Leave out (optional)"),
+      h("div", { class: "label" }, "Leave out (optional)", info("Leave out", "These parts are tracked and taken out of the object's mask: they give off nothing. The depth and "
+        + "the rest of the clip stay as they are. Words, or a click on each part (red ring); the mask frame shows them in red.")),
       words(R.LEAVE_WORDS, "e.g. hand; handle", "Leave out: words"),
-      clicks("leave", R.LEAVE_PTS, "Click to leave out", "Alt"),
-      h("p", { class: "muted small" }, "Words, or a click on each part (red ring). The mask frame shows them in red.")),
+      clicks("leave", R.LEAVE_PTS, "Click to leave out", "Alt")),
     fixesField(e, fps),
     h("div", { class: "field mask" },
-      h("div", { class: "label", title: "Averages each frame's mask with its neighbours, aligned to the motion" }, "Steady mask"),
-      seg("Steady mask", STEADY, +(e.adv?.[R.MASK_STEADY] ?? STEADY_DEFAULT), (v) => edit((a) => { if (v === STEADY_DEFAULT) delete a[R.MASK_STEADY]; else a[R.MASK_STEADY] = v; })),
-      h("p", { class: "muted small" }, "Less flicker where the object blurs or the light is poor. Strong can round off fast, thin parts.")),
+      h("div", { class: "label" }, "Steady mask", info("Steady mask", "Averages each frame's mask with its neighbours, aligned to the motion: less flicker where the object "
+        + "blurs or the light is poor. Strong can round off fast, thin parts.")),
+      seg("Steady mask", STEADY, +(e.adv?.[R.MASK_STEADY] ?? STEADY_DEFAULT), (v) => edit((a) => { if (v === STEADY_DEFAULT) delete a[R.MASK_STEADY]; else a[R.MASK_STEADY] = v; }))),
   ];
 }
 function fixesField(e, fps) {
@@ -603,42 +629,47 @@ function fixesField(e, fps) {
     if (t) x.adv[R.MASK_FIXES] = t; else delete x.adv[R.MASK_FIXES];
   }, "mask-fix");
   return h("div", { class: "field mask" },
-    h("div", { class: "label", title: "Where the track goes wrong: the mask is mended on that frame and tracked from it up to the fixes next to it" }, "Fixes on other frames"),
+    h("div", { class: "label" }, "Fixes on other frames", info("Fixes", "Where the track goes wrong: the mask is mended on that frame and tracked from it up to the fixes next to it.")),
     ...list.map((f) => h("div", { class: "row gap fix-row" },
       h("span", { class: "small" }, `${fmtSec(f.frame / fps)} · frame ${f.frame}`),
       h("span", { class: "muted small" }, [f.add.length ? `+${f.add.length}` : null, f.leave.length ? `−${f.leave.length}` : null].filter(Boolean).join(" ")),
       h("span", { class: "spacer" }),
       h("button", { class: "btn ghost small", title: "The playhead goes to this frame", onclick: () => seekTo(f.frame / fps) }, "Go there"),
-      h("button", { class: "btn ghost small", title: "Remove this fix", "aria-label": `Remove the fix on frame ${f.frame}`, onclick: () => drop(f.frame) }, "×"))),
-    h("p", { class: "muted small" }, list.length ? "Each fix is tracked from its frame up to the fixes next to it. Track again to see them."
+      h("button", { class: "btn ghost small icon", title: "Remove this fix", "aria-label": `Remove the fix on frame ${f.frame}`, onclick: () => drop(f.frame) }, icon("close")))),
+    note("hint", list.length ? "Track again to see the fixes."
       : "Where the track loses a part or takes too much: move the playhead there, Ctrl-click what is missing, Alt-click what is too much."));
 }
 function objectGroup() {
+  const frontRows = (e) => [[R.FRONT_STRENGTH, "How much it hides", 0, 1, 0.05, 1, "",
+    "1: none of the effect on the object, it looks cut out. 0.8: a fifth of the effect stays on it, a glow over the object"],
+  [R.FRONT_EDGE, "Soft edge", 0, 24, 0.5, 2, "px", "How far outside the object the effect fades in"]].map(([k, label, min, max, step, base, unit, tip]) =>
+    valRow({ key: k, label, tip, unit, value: e.adv?.[k] ?? base, base, min, max, step,
+      onset: (v) => setAdv(k, Math.abs(v - base) < 1e-9 ? undefined : v), onreset: () => setAdv(k, undefined) }));
   const f = fx(), word = wordOf(), e = effect(), left = e && R.leaveSet(e), masked = e && R.maskSet(e);
   const set = word || f.own_mask || f.all_alike || masked;
   return group("object", "Object", () => [
-    h("p", { class: "muted small" }, "What is tracked: the mask the AI builds from your click. Only needed when it does not fit."),
-    h("div", { class: "field" }, h("div", { class: "label", title: "A word for the click. Clicking a crown, the AI often takes the whole head without it" }, "What is it? (optional)"),
-      fxText("object_word", "e.g. crown"),
-      h("p", { class: "muted small" }, "The effect description uses the word too.")),
+    note("hint", "What is tracked: the mask the AI builds from your click. Only needed when it does not fit."),
+    h("div", { class: "field" }, h("div", { class: "label" }, "What is it? (optional)", info("What is it", "A word for the click. Clicking a crown, the AI often takes the whole "
+      + "head without it. The effect description uses the word too.")),
+      fxText("object_word", "e.g. crown")),
     toggle("All alike (e.g. all candles, all points of a crown)", f.all_alike, (v) => api.setFx("all_alike", v), "With the word: every object of this kind instead of the clicked one"),
     f.all_alike && !word ? note("hint", "All alike needs the word above.") : null,
     toggle("Paint it yourself (brush in the canvas)", f.own_mask, (v) => api.setFx("own_mask", v), "When the click misses parts (a raised arm, a crown): paint the object in the first frame, the track follows your mask"),
-    f.own_mask ? h("p", { class: "muted small" }, effect()?.paint?.maskHidden
-      ? ["Your mask is put away after the track; it still counts. ", link("Edit brush", () => editBrush(true))]
-      : "Paint over the object in the first frame of the canvas; the track follows your mask.") : null,
+    f.own_mask ? (effect()?.paint?.maskHidden ? note("hint", "Your mask is put away after the track; it still counts. ", link("Edit brush", () => editBrush(true)))
+      : note("hint", "Paint over the object in the first frame of the canvas; the track follows your mask.")) : null,
     ...(e ? maskFields(e) : []),
     toggle("In front of the effect (its mask hides it)", f.object_in_front, (v) => api.setFx("object_in_front", v), "The object's mask cuts the effect out wherever the object is, whatever the depth says: a person in front of a portal"),
     f.object_in_front && left ? toggle("The parts left out are in front too", e.adv?.[R.FRONT_ALL] ?? true, (v) => setAdv(R.FRONT_ALL, v ? undefined : false),
       "On: the whole object hides the effect (the hand on the handle too). Off: only what is left") : null,
-  ], { open: !!(set || f.object_in_front), hint: word ? `“${word}”` : f.own_mask ? "painted" : masked ? "mask set" : f.object_in_front ? "in front" : "optional" });
+    ...(f.object_in_front && e ? frontRows(e) : []),
+  ], { open: !!(set || f.object_in_front), preview: "optional: what is tracked" });
 }
 function positionBody() {
   const e = effect(), st = placed(), shot = S.getShot();
   if (!e || !st) return [h("p", { class: "muted" }, "Loading the effects…")];
-  const kids = [h("p", { class: "muted small" }, PLACE_HINT[st.placement] || PLACE_HINT.point)];
+  const kids = [note("hint", PLACE_HINT[st.placement] || PLACE_HINT.point)];
   if (!needsPoint(st)) return kids;
-  kids.push(e.where.a ? note("ok", `Your point is set${e.where.b ? " (A and B)" : ""}. Click again to move it.`) : note("hint", "No point yet: click the clip in the canvas."));
+  if (e.where.a) kids.push(note("ok", `Your point is set${e.where.b ? " (A and B)" : ""}. Click again to move it.`));
   if (shot.clip) for (const w of boxWarnings(e, st, shot)) kids.push(note("hint", w));
   if (shot.clip && open === "position") scheduleFirstMask(e);
   kids.push(firstMaskNote(e));
@@ -670,12 +701,12 @@ function shapeBlock(e, st) {
   const cur = shapeOf(e, st), dflt = st.settings?.[SHAPE] || "point A";
   const pick = (v) => setAdv(SHAPE, v === dflt ? undefined : v);
   const needs = shapeNeeds(e, cur);
-  return h("div", { class: "field shape" }, h("div", { class: "label" }, "Shape", h("span", { class: "muted small" }, " · where the particles come from")),
+  return h("div", { class: "field shape" }, h("div", { class: "label" }, "Shape", info("Shape", "Where the particles come from; each shape says what it needs.")),
     h("select", { class: "text", "aria-label": "Shape", onchange: (ev) => pick(ev.target.value) },
       ...SHAPES.map(([v, t, need]) => h("option", { value: v, selected: v === cur }, `${t}${v === dflt ? " (style default)" : ""} · needs ${need}`))),
     needs ? note("hint", ...needs) : null,
     cur === "groups" ? groupsField(e) : null,
-    cur !== dflt ? h("p", { class: "muted small" }, link(`Back to the style default (${SHAPES.find(([k]) => k === dflt)?.[1] || dflt})`, () => pick(dflt))) : null);
+    cur !== dflt ? h("p", { class: "small" }, link(`Back to the style default (${SHAPES.find(([k]) => k === dflt)?.[1] || dflt})`, () => pick(dflt))) : null);
 }
 function groupsField(e) {
   const ta = h("textarea", { class: "text area", rows: 3, placeholder: "0.3, 0.6, 0.2\n0.7, 0.5, 0.8", "aria-label": "Groups in depth",
@@ -684,7 +715,7 @@ function groupsField(e) {
       S.change((sh) => { const x = sh.effects.find((y) => y.id === sh.active); if (x) x.groups = rows.map((r) => r.slice(0, 4)); }, "emitter");
     } });
   ta.value = (e.groups || []).map((g) => g.join(", ")).join("\n");
-  return h("div", {}, ta, h("p", { class: "muted small" }, "One place per line: x, y (share of the picture), depth (0 far, 1 near), size."));
+  return h("div", { class: "field" }, ta, note("hint", "One place per line: x, y (share of the picture), depth (0 far, 1 near), size."));
 }
 
 function chooseStyle(kind, sid) {
@@ -716,29 +747,38 @@ function promptGroup(e, st, p, adv) {
   const long = words > 200;
   return group("prompt", "Description", () => {
     const kids = [];
+    const own = String(fx().prompt_override || "");
     for (const [k, w, label, tip] of BLOCKS) {
       const chips = p.chips?.[k] || [];
-      if (!chips.length && !p[k] && p.what) continue;
-      const cur = typed.get(w)?.value ?? String(fx()[w] ?? "");
+      if (!chips.length) continue;
+      const cur = String(fx()[w] ?? "");
       const word = P.objectWord(e);
-      kids.push(h("div", { class: "field" }, h("div", { class: "label", title: tip }, label),
-        chips.length ? h("div", { class: "chips" }, ...chips.map((c) => {
+      const pick = (c) => {
+        typed.delete(w); typed.delete("prompt_override");
+        const next = cur === c ? "" : c;
+        const from = P.fillWord(cur || p[k] || "", word), to = P.fillWord(next || p[k] || "", word);
+        if (own.trim() && from && own.includes(from)) api.setFx("prompt_override", own.replace(from, to));
+        api.setFx(w, next);
+      };
+      kids.push(h("div", { class: "field" }, h("div", { class: "label" }, label, tip ? info(label, tip) : null),
+        h("div", { class: "chips" }, ...chips.map((c) => {
           const on = cur === c || (!cur && p[k] === c);
-          return h("button", { class: "chip" + (on ? " on" : ""), "aria-pressed": String(on), onclick: () => { typed.delete(w); api.setFx(w, cur === c ? "" : c); } }, P.fillWord(c, word));
-        })) : null,
-        fxText(w, p[k] ? `or in your words (now: ${P.fillWord(p[k], word)})` : "in your words")));
+          return h("button", { class: "chip" + (on ? " on" : ""), "aria-pressed": String(on), onclick: () => pick(c) }, P.fillWord(c, word));
+        }))));
     }
-    if (adv) kids.push(h("div", { class: "field" }, h("div", { class: "label", title: "Empty = the description from the fields above" }, "Description by hand"),
-      fxText("prompt_override", final, { area: true, label: "Description by hand" })));
-    kids.push(h("p", { class: "small " + (long ? "warn" : "muted"), title: "The AI follows best below 200 words" },
-      long ? `${words} words: the AI follows best below 200.` : `${words} words`));
-    kids.push(...enhanceRows(e, final));
+    kids.push(h("div", { class: "field", title: "The chips put their words in here; change anything by hand" },
+      fxText("prompt_override", "", { area: true, label: "Description", shown: final })));
+    const mine = own.trim() && own !== usedText;
+    const count = h("span", { class: "small " + (long ? "warn" : "muted"), title: "The AI follows best below 200 words" },
+      long ? `${words} words: the AI follows best below 200.` : `${words} words`);
+    kids.push(...enhanceRows(e, final, count));
+    if (mine) kids.push(note("hint", "Your own text · ", link("back to the chips' text", () => { typed.delete("prompt_override"); api.setFx("prompt_override", ""); })));
     return kids;
-  }, { open: adv, hint: long ? `${words} words` : "", preview: final });
+  }, { open: false, hint: long ? `${words} words` : "", preview: "your words for the AI" });
 }
 let enh = null;
 let usedText = null;
-function enhanceRows(e, final) {
+function enhanceRows(e, final, lead = null) {
   const f = fx(), mine = enh && enh.effect === e.id ? enh : null;
   const used = !!String(f.prompt_override || "").trim() && f.prompt_override === usedText;
   const start = () => {
@@ -749,10 +789,10 @@ function enhanceRows(e, final) {
       .then((after) => { if (enh?.effect === e.id) enh = { effect: e.id, status: "ready", before, after }; render(); },
         (err) => { if (enh?.effect === e.id) enh = { effect: e.id, status: "failed", before, error: err.message }; render(); });
   };
-  const rows = [h("div", { class: "row gap" },
-    h("button", { class: "chip", disabled: mine?.status === "busy" || !final, title: `Rewrites the description with ${enhancer().label}; you see before and after`,
-      onclick: start }, mine?.status === "busy" ? `Enhancing… ${mine.phase || ""}` : "✦ Enhance"),
-    used ? h("span", { class: "muted small" }, "Enhanced · ", link("back to your words", () => { enh = null; api.setFx("prompt_override", ""); })) : null)];
+  const rows = [h("div", { class: "row between" }, lead || h("span", {}),
+    h("button", { class: "btn small", disabled: mine?.status === "busy" || !final, title: `Rewrites the description with ${enhancer().label}; you see before and after`,
+      onclick: start }, icon("gen"), mine?.status === "busy" ? `Enhancing… ${mine.phase || ""}` : "Enhance")),
+    used ? note("hint", "Enhanced · ", link("back to your words", () => { enh = null; api.setFx("prompt_override", ""); })) : null].filter(Boolean);
   rows.push(...bonsaiRows());
   if (mine?.status === "failed") rows.push(note("err", `Enhance did not work: ${mine.error}`));
   if (mine?.status === "ready") {
@@ -791,7 +831,7 @@ function bonsaiRows() {
   if (!plan.length) return [];
   const size = plan.reduce((a, x) => a + x.bytes, 0);
   const rows = setup.state === "failed" ? [note("err", `The install stopped: ${setup.error}`)] : [];
-  if (!setupAsk) rows.push(h("p", { class: "muted small" }, "Bonsai 2 writes better descriptions and can look at your clip. ",
+  if (!setupAsk) rows.push(note("hint", "Bonsai 2 writes better descriptions and can look at your clip. ",
     link(`Install Bonsai 2 (${gb(size)})`, () => { setupAsk = true; render(); })));
   else rows.push(h("div", { class: "field" }, h("p", { class: "muted small" },
     `Downloads ${plan.map((x) => `${x.name} (${gb(x.bytes)})`).join(", ")} from GitHub (PrismML's llama.cpp, MIT) and Hugging Face `
@@ -813,7 +853,7 @@ async function loadLibrary() {
 }
 const canUseLibrary = (e, st) => !!st && (st.variant || "app") === "app" && !P.inScene(e);
 const MADE_BY = [["ai", "AI", "The AI makes a new element at Run (particles, if set, guide it)"],
-  ["particles", "Particles only", "The particles alone, drawn without an AI run (about a minute)"],
+  ["particles", "Particles", "The particles alone, drawn without an AI run (about a minute)"],
   ["library", "Library", "An element you kept with Save the element: placed again, no new AI run"]];
 function libraryBlock(e, st) {
   const on = !!e.adv?.[P.LIBRARY] && canUseLibrary(e, st), name = e.adv?.[P.LIBRARY_ELEMENT] || "";
@@ -839,7 +879,7 @@ function libraryBlock(e, st) {
     seg("Made by", MADE_BY.map(([k, t, tip]) => [k, t, k === own ? `${tip} · as the style has it` : tip]), now, pick))];
   if (e.adv?.[P.LIBRARY] && !on) kids.push(note("hint", "The library keeps AI elements made on black: this effect cannot place one."));
   if (!on) return kids;
-  if (library === null) { loadLibrary(); kids.push(h("p", { class: "muted small" }, "Reading the library…")); return kids; }
+  if (library === null) { loadLibrary(); kids.push(note("hint", "Reading the library…")); return kids; }
   if (libraryErr) kids.push(note("err", `The library could not be read: ${libraryErr}`));
   if (!library.length) {
     kids.push(note("hint", "No saved elements yet. Turn on Save the element (Output, Passes) for an Overlay run; its element lands here."));
@@ -849,7 +889,7 @@ function libraryBlock(e, st) {
     h("option", { value: "", selected: !name, disabled: true }, "Pick a saved element"),
     ...library.map((n) => h("option", { value: n, selected: n === name }, n))),
     name && !library.includes(name) ? note("err", `"${name}" is not in the library on this computer.`) : null,
-    h("p", { class: "muted small" }, "Placed like this style's element: position, size, light and glow as set here. The words are not used. ",
+    note("hint", "Placed like this style's element: position, size, light and glow as set here. The words are not used. ",
       link("Look again", () => { library = null; loadLibrary(); })));
   return kids.filter(Boolean);
 }
@@ -868,13 +908,12 @@ function fromPanel(key, widget) {
 function placeBlock(e, st) {
   if (P.placeFixed(st)) return [];
   const own = P.placeOwn(st), cur = P.placeOf(e, st);
-  const out = [h("div", { class: "field" }, h("div", { class: "label" }, "Placement"),
+  const out = [h("div", { class: "field" }, h("div", { class: "label" }, "Placement", info("Placement", PLACE_LINE[cur])),
     seg("Placement", P.PLACES.map(([k, t, tip]) => [k, t, k === own ? `${tip} · as the style has it` : tip]), cur,
-      (v) => { fromPanel(P.PLACEMENT, "placement"); setAdv(P.PLACEMENT, v === own ? undefined : v); }),
-    h("p", { class: "muted small" }, PLACE_LINE[cur]))];
+      (v) => { fromPanel(P.PLACEMENT, "placement"); setAdv(P.PLACEMENT, v === own ? undefined : v); }))];
   if (cur === "point") {
     const side0 = st.settings?.[P.SIDE] || "bottom", side = P.sideOf(e, st);
-    out.push(h("div", { class: "field" }, h("div", { class: "label" }, "Sits on A by"),
+    out.push(inlineChoice("Sits on A by",
       seg("Sits on A by", [["bottom", "Bottom", "Its bottom edge stands on A (a flame, a plant)"], ["centre", "Centre", "Its middle is on A (a glow, a swirl)"]]
         .map(([k, t, tip]) => [k, t, k === side0 ? `${tip} · as the style has it` : tip]), side === "centre" ? "centre" : "bottom",
       (v) => { fromPanel(P.SIDE, "sits_on"); setAdv(P.SIDE, v === side0 ? undefined : v); })));
@@ -896,10 +935,11 @@ function quickBlock(e, run) {
   const ai = !P.fromLibrary(e) && run?.cost === "gen" && !(e.adv?.[P.DIRECT_LOOK] ?? run?.settings?.[P.DIRECT_LOOK]);
   const words = P.quickWords(e);
   const own = q.colour && !P.QUICK_COLOURS.some(([, c]) => c === q.colour);
-  const out = [h("div", { class: "field" }, h("div", { class: "label", title: "The colour it is made in. Scene & finish tints it after the run." }, "Colour"),
-    h("div", { class: "swatches compact", role: "radiogroup", "aria-label": "Colour" },
-      h("button", { class: "swatch none" + (!q.colour ? " on" : ""), role: "radio", "aria-checked": String(!q.colour), title: "The style's own colours",
-        onclick: () => set("colour", null) }, "As is"),
+  const out = [h("div", { class: "field", role: "radiogroup", "aria-label": "Colour" },
+    h("div", { class: "label" }, "Colour", info("Colour", "The colour it is made in. Scene & finish tints it after the run.")),
+    h("div", { class: "swatches compact" },
+      h("button", { class: "swatch none" + (!q.colour ? " on" : ""), role: "radio", "aria-checked": String(!q.colour), title: "As is: the style's own colours",
+        "aria-label": "As is", onclick: () => set("colour", null) }, icon("close")),
       ...P.QUICK_COLOURS.map(([n, c]) => h("button", { class: "swatch" + (q.colour === c ? " on" : ""), role: "radio", "aria-checked": String(q.colour === c),
         title: n, "aria-label": `Colour ${n}`, style: { background: c }, onclick: () => set("colour", c) })),
       own ? h("button", { class: "swatch on", role: "radio", "aria-checked": "true", title: `Your colour (${P.colourName(q.colour)} for the AI)`,
@@ -907,19 +947,19 @@ function quickBlock(e, run) {
       h("label", { class: "swatch pick", title: "Any colour" }, icon("plus"), h("input", { type: "color", value: q.colour || "#ff7a1a", "aria-label": "Any colour",
         onchange: (ev) => set("colour", ev.target.value) }))))];
   for (const [k, label, opts] of QUICK_ROWS) {
-    out.push(h("div", { class: "field" }, h("div", { class: "label" }, label), seg(label, opts, q[k] || "", (v) => set(k, v))));
+    out.push(inlineChoice(label, seg(label, opts, q[k] || "", (v) => set(k, v))));
   }
   const how = [ai && words ? `For the AI: “${words}”.` : ai ? "For the AI they are words in its description." : null,
     parts ? "They set the particles too." : null].filter(Boolean).join(" ");
-  if (how) out.push(h("p", { class: "muted small" }, how));
+  if (how) out.push(note("hint", how));
   return out;
 }
+const howOf = (st) => { const f = fx(); return f.how_it_goes_in && f.how_it_goes_in !== "style default" ? f.how_it_goes_in : (st.settings?.[P.INPAINT] ? "inpaint" : "overlay"); };
 function howBlock(e, st) {
-  const f = fx();
-  const how = f.how_it_goes_in && f.how_it_goes_in !== "style default" ? f.how_it_goes_in : (st.settings?.[P.INPAINT] ? "inpaint" : "overlay");
-  const kids = [h("div", { class: "field" }, h("div", { class: "label" }, "How it goes in"),
+  const how = howOf(st);
+  const kids = [inlineChoice("How it goes in",
     seg("How it goes in", [["overlay", "Overlay", HOW.overlay], ["inpaint", "Inpaint", HOW.inpaint]], how, (v) => api.setFx("how_it_goes_in", v)),
-    h("p", { class: "muted small" }, P.styleOf(e)?.cost === "gen" ? HOW[how] : "Counts when the AI makes the element; particles alone are drawn over the clip."))];
+    P.styleOf(e)?.cost === "gen" ? HOW[how] : "Counts when the AI makes the element; particles alone are drawn over the clip.")];
   if (how === "inpaint") {
     kids.push(sentenceField());
     if (fx().mode === "advanced") kids.push(keepRow());
@@ -947,13 +987,34 @@ function sentenceField() {
 function keepRow() {
   const k = Math.min(1, Math.max(0, +fx().keep_original || 0));
   const set = (v) => api.setFx("keep_original", Math.round(Math.min(1, Math.max(0, +v || 0)) * 20) / 20);
-  return h("div", { class: "field" }, h("div", { class: "label" }, "Keep the original",
-    h("span", { class: "muted small" }, k ? ` · ${Math.round(k * 100)} %` : " · off")),
-  h("div", { class: "row gap" },
-    h("input", { type: "range", min: "0", max: "1", step: "0.05", value: String(k), "aria-label": "Keep the original", onchange: (ev) => set(ev.target.value) }),
-    k ? link("Off", () => set(0)) : null),
-  h("p", { class: "muted small" }, "Repaints less of the area, so it stays closer to the clip. The effect gets less room; a thin one like lightning can vanish."));
+  return h("div", { class: "field" },
+    valRow({ key: "keep_original", label: "Keep the original", unit: "%", scale: 100, value: k, base: 0, min: 0, max: 1, step: 0.05, onset: set, onreset: () => set(0),
+      resetTitle: "Off: repaint as tested", tip: "Repaints less of the area, so it stays closer to the clip. The effect gets less room; a thin one like lightning can vanish." }));
 }
+function styleSum(e, st) {
+  const made = !!e.adv?.[P.LIBRARY] && canUseLibrary(e, st) ? "library" : P.styleOf(e)?.cost === "gen" ? "ai" : "particles";
+  const place = P.placeFixed(st) ? null : P.PLACES.find(([k]) => k === P.placeOf(e, st))?.[1];
+  return [st.name, MADE_BY.find(([k]) => k === made)?.[1], place].filter(Boolean).join(" · ");
+}
+const STRENGTH = { subtle: "Subtle", strong: "Strong" };
+function lookSum(e, p, adv) {
+  const f = fx(), q = e.quick || {};
+  const colour = q.colour ? P.QUICK_COLOURS.find(([, c]) => c === q.colour)?.[0] || "own colour" : null;
+  const words = String(typed.get("describe")?.value ?? f.describe ?? "").trim();
+  return [p ? STRENGTH[f.strength] : null, colour ? colour[0].toUpperCase() + colour.slice(1) : null,
+    ...QUICK_ROWS.map(([k, , opts]) => (q[k] ? opts.find(([v]) => v === q[k])?.[1] : null)),
+    p && !p.what && words ? `“${midTrim(words, 20)}”` : null,
+    p && (adv || !p.what) && String(f.prompt_override || "").trim() ? "Own description" : null].filter(Boolean).join(" · ") || "as the style has it";
+}
+function aiSum(e, st, adv) {
+  if (P.styleOf(e)?.cost !== "gen") return "Not used: Made by Particles";
+  const f = fx(), on = (k) => e.adv?.[k] ?? (st.settings?.[k] === true);
+  const seed = String(typed.get("seed")?.value ?? f.seed ?? "");
+  return [P.canPaintIn(st) ? { overlay: "Overlay", inpaint: "Inpaint" }[howOf(st)] : null,
+    adv && seed ? `Seed ${seed}${f.control_after_generate === "fixed" ? " kept" : ""}` : null,
+    adv && on(SOLID) ? "Solid element" : null, adv && on(START_VIDEO) ? "Particles start it" : null].filter(Boolean).join(" · ");
+}
+let styleOpen = false;
 function effectBody() {
   const data = P.presets();
   if (!data) return [h("p", { class: "muted" }, "Loading the effects…")];
@@ -968,59 +1029,73 @@ function effectBody() {
       onclick: () => {
         if (e?.kind === f.id && def && !e.fresh) { showTiles = false; render(); return; }
         const first = f.styles.find((s) => s.prompt_tested !== false) || f.styles[0];
+        styleOpen = true;
         chooseStyle(f.id, first.id);
       } },
-    h("span", { class: "tile-art", "data-kind": f.id, "aria-hidden": "true" }, GLYPH[f.id] || "•"),
+    h("span", { class: "tile-art", "data-kind": f.id, "aria-hidden": "true" }, kindIcon(f.id)),
     h("span", { class: "tile-name" }, f.name), h("span", { class: "tile-text" }, f.text)))), ...myTiles(mx)];
   }
-  const kids = [...strip, h("div", { class: "picked" }, h("span", { class: "tile-art small", "data-kind": def.id, "aria-hidden": "true" }, GLYPH[def.id] || "•"),
-    h("span", { class: "strong" }, def.name), h("span", { class: "spacer" }),
-    h("button", { class: "btn ghost small", onclick: () => { showTiles = true; render(); } }, "Change"))];
-  const tested = (s) => (s.prompt_tested === false ? 1 : 0);
-  kids.push(...myTiles(mx, def.id));
-  const styleButton = (s) => h("button", { class: "style" + (s.id === e.style ? " on" : ""), role: "radio", "aria-checked": String(s.id === e.style), onclick: () => chooseStyle(def.id, s.id) },
-    h("span", { class: "style-top" }, h("span", { class: "style-name" }, s.name), timeTag(e, def.id, s)),
-    s.id === e.style ? h("span", { class: "style-text" }, s.text) : null);
-  const exp = def.styles.filter((s) => tested(s));
-  kids.push(h("div", { class: "styles", role: "radiogroup", "aria-label": "Style" }, ...def.styles.filter((s) => !tested(s)).map(styleButton),
-    ...(exp.length ? [h("p", { class: "muted small styles-sub", title: "Not tested by us yet" }, "Experimental · results may vary"), ...exp.map(styleButton)] : [])));
-  if (!st) return kids;
-  if (st.prompt_tested === false) kids.push(note("hint", EXPERIMENTAL));
-  kids.push(...positionHints(e, placed()));
-  kids.push(...libraryBlock(e, st));
-  kids.push(...placeBlock(e, st));
+  const top = [h("div", { class: "picked" }, h("span", { class: "tile-art", "data-kind": def.id, "aria-hidden": "true" }, kindIcon(def.id)),
+    h("span", { class: "picked-name" }, h("span", { class: "picked-title" }, def.name, st ? timeTag(e, def.id, st) : null),
+      st ? h("span", { class: "picked-style" }, st.name) : null),
+    h("button", { class: "btn small", "aria-expanded": String(styleOpen || !st), title: "Another style of this effect, or another effect",
+      onclick: () => { styleOpen = !styleOpen; render(); } }, "Change"))];
+  if (styleOpen || !st) {
+    const tested = (s) => (s.prompt_tested === false ? 1 : 0);
+    top.push(...myTiles(mx, def.id));
+    const styleButton = (s) => h("button", { class: "style" + (s.id === e.style ? " on" : ""), role: "radio", "aria-checked": String(s.id === e.style),
+      onclick: () => { styleOpen = false; chooseStyle(def.id, s.id); } },
+      h("span", { class: "style-top" }, h("span", { class: "style-name" }, s.name), timeTag(e, def.id, s)),
+      s.id === e.style ? h("span", { class: "style-text" }, s.text) : null);
+    const exp = def.styles.filter((s) => tested(s));
+    top.push(h("div", { class: "styles", role: "radiogroup", "aria-label": "Style" }, ...def.styles.filter((s) => !tested(s)).map(styleButton),
+      ...(exp.length ? [h("p", { class: "muted small styles-sub", title: "Not tested by us yet" }, "Experimental · results may vary"), ...exp.map(styleButton)] : [])),
+    h("p", { class: "small" }, link("Another effect", () => { showTiles = true; styleOpen = false; render(); })));
+  }
+  if (!st) return [...strip, ...top];
+  if (st.prompt_tested === false) top.push(note("hint", EXPERIMENTAL));
+  top.push(...positionHints(e, placed()), ...libraryBlock(e, st), ...placeBlock(e, st));
   const lib = P.fromLibrary(e) || (!!e.adv?.[P.LIBRARY] && canUseLibrary(e, st));
+  const look = [], ai = [];
   if (!lib) {
     const p = P.promptOf(e);
-    if (p) kids.push(h("div", { class: "field" }, h("div", { class: "label" }, "Strength"),
+    if (p) look.push(inlineChoice("Strength",
       seg("Strength", [["subtle", "Subtle"], ["normal", "Normal"], ["strong", "Strong"]], fx().strength || "normal", (v) => api.setFx("strength", v))));
-    kids.push(...pictureRows(wx));
-    kids.push(...quickBlock(e, effStyle(st, e)));
-    if (p && !p.what) kids.push(h("div", { class: "field" }, h("div", { class: "label" }, "Your effect in words"),
+    look.push(...quickBlock(e, effStyle(st, e)));
+    if (p && !p.what) look.push(h("div", { class: "field" }, h("div", { class: "label" }, "Your effect in words"),
       h("div", { class: "row gap" }, fxText("describe", "e.g. a glowing blue crystal"), suggestButton(wx, typed.get("describe")?.value ?? fx().describe)),
       ...wishResults(wx)));
-    if (p && (adv || !p.what)) kids.push(promptGroup(e, st, p, adv));
+    if (p && (adv || !p.what)) look.push(promptGroup(e, st, p, adv));
+    const pics = pictureRows(wx, { label: false });
+    if (pics.length) look.push(group("picture", "From a picture", () => pics, { preview: "an effect to copy" }));
   }
-  if (P.canPaintIn(st) && !lib) kids.push(...howBlock(e, st));
+  if (P.canPaintIn(st) && !lib) ai.push(...howBlock(e, st));
   if (adv && !lib) {
     const f = fx(), keep = f.control_after_generate === "fixed";
-    kids.push(h("div", { class: "field" }, h("div", { class: "label" }, "AI seed"),
-      h("div", { class: "row gap" }, fxText("seed", "0", { label: "AI seed", num: true }),
-        toggle("Keep it", keep, (v) => api.setFx("control_after_generate", v ? "fixed" : "randomize"), "Off: a new seed for every run"))));
+    ai.push(h("div", { class: "field" }, ...seedRow("AI seed", "seed", keep, (v) => api.setFx("control_after_generate", v ? "fixed" : "randomize"),
+      "On: this seed for every run. Off: a new seed after every run")));
     const sw = (k, label, tip) => {
       const own = st.settings?.[k] === true, cur = e.adv?.[k] ?? own;
       return toggle(label, cur, (v) => setAdv(k, v === own ? undefined : v), `${tip}${own ? " · on in this style" : ""}`);
     };
-    kids.push(h("div", { class: "field stack" }, h("div", { class: "label" }, "AI element"),
-      sw(SOLID, "Solid element", "Cut out with its own matte instead of its brightness: liquid, dust, stones (Alpha Gen)"),
-      sw(START_VIDEO, "Particles start the AI's video", "The AI starts from the particles' picture as well as being guided by it")));
+    ai.push(sw(SOLID, "Solid element", "Cut out with its own matte instead of its brightness: liquid, dust, stones (Alpha Gen)"),
+      sw(START_VIDEO, "Particles start the AI's video", "The AI starts from the particles' picture as well as being guided by it"));
   }
   const run = effStyle(st, e);
-  if (livePreviews(run) && S.getShot().clip) kids.push(...liveBlock(e, adv, run));
-  if (!adv && livePreviews(run) && S.getShot().clip) kids.push(...basicFill(emitterCtx(e, run)));
-  if (adv) kids.push(h("div", { class: "field emitter" }, ...emitterPanel({ ...emitterCtx(e, run), st0: st })));
-  kids.push(...saveRows(mx));
-  return kids;
+  const ctx = adv ? { ...emitterCtx(e, run), st0: st } : null;
+  const end = [];
+  if (livePreviews(run) && S.getShot().clip) end.push(...liveBlock(e, adv, run));
+  if (!adv && livePreviews(run) && S.getShot().clip) end.push(...basicFill(emitterCtx(e, run)));
+  if (adv) end.push(...emitterFill(ctx));
+  end.push(...saveRows(mx));
+  let n = 0;
+  try { n = adv ? changedCount(ctx) : 0; } catch { n = 0; }
+  return [blk(strip), ...section(e, "style", "Style", top, { sum: styleSum(e, st), first: true }),
+    ...section(e, "look", "Look", look, { sum: lookSum(e, lib ? null : P.promptOf(e), adv) }),
+    ...section(e, "ai", "AI", ai, { sum: aiSum(e, st, adv) }),
+    ...(adv ? section(e, "particles", "Particles", emitterPanel(ctx), { sum: n ? `${n} changed` : "as the style has it",
+      right: ctx.P && ctx.B ? emitterHead(ctx) : null }) : []),
+    blk(end)];
 }
 
 function finishBody() {
@@ -1030,51 +1105,51 @@ function finishBody() {
     ...finishRows({ h, seg, toggle, note, link, group, fx }),
     group("in-run", "In the run", () => [
       toggle("Night or dark clip", f.night, (v) => api.setFx("night", v), "Darkens the clip for night and lets the effect light it"),
-      h("p", { class: "muted small" }, "The AI and the light pass are made on the darkened clip: run again to see a change."),
-    ], { open: !made }),
+      note("hint", "The AI and the light pass are made on the darkened clip: run again to see a change."),
+    ], { open: !made, preview: "night or dark clip" }),
   ];
 }
 
 const LEFT_OUT = [["VideoDepthAnything", "No depth yet, so nothing in the clip hides the particles: Analysis in Clip gives the depth."],
   ["SAM3", "No kept track of the object yet: the particles hang on your point. Track it (Position) for the object's motion."]];
 function liveBlock(e, adv, st) {
-  const ls = S.ui.liveSim, c = S.getShot().clip, f = fx();
+  const ls = S.ui.liveSim, c = S.getShot().clip;
   const mine = ls && ls.effect === e.id && ls.clip === c?.name;
   const hd = mine ? ls.data?.header : null;
-  const kids = [h("div", { class: "label" }, "Live preview")];
-  if (!mine || ls.status === "running") kids.push(note("ok", `Simulating the particles${e.where.a ? "" : " at the centre"}…`));
-  else if (ls.status === "failed" && /needs the object mask/.test(ls.error || "")) kids.push(note("err",
+  const line = (lead, text, tip) => h("div", { class: "preview" }, lead, h("span", { class: "pv-t" }, text, tip ? info("Live preview", tip) : null));
+  const kids = [];
+  if (!mine || ls.status === "running") kids.push(line(h("span", { class: "spinner" }), `Live preview · simulating${e.where.a ? "" : " at the centre"}…`));
+  else if (ls.status === "failed" && /needs (the|an) object mask/.test(ls.error || "")) kids.push(note("err",
     "The live preview needs the object's track, and the mask has changed since it was last checked. ",
     link("Check the track in Position", () => setOpen("position"))));
   else if (ls.status === "failed") kids.push(note("err", `The live preview failed: ${ls.error || "unknown error"}`));
-  else if (hd) kids.push(note("ok", `The particles as the run makes them (same engine, particle seed ${hd.seed}), `
-    + `${hd.mode === "hold" ? `${fmtSec(hd.n / hd.fps)} on frame ${hd.frame + 1}` : `${hd.n} frames`} · ${((ls.server?.total ?? ls.ms) / 1000).toFixed(1)} s.`));
-  if (mine && ls.status === "ready") {
-    for (const [cls, text] of LEFT_OUT) if ((ls.leftOut || []).some((x) => x.startsWith(cls))) kids.push(h("p", { class: "muted small" }, text));
+  else if (hd) {
     const guided = guideNow(P.styleDef(e.kind, e.style), e) === "particles";
-    kids.push(h("p", { class: "muted small" }, st.cost !== "gen" ? "Made by the particles alone: the run draws them as they show here."
-      : guided ? "How the AI turns them into sparks, smoke or flames shows only in the run."
-        : "Drawn over the AI's element as they show here; the element itself shows only in the run."));
+    const how = st.variant === "dissolve" ? "Dark where the object is gone: the run fills it with the scene."
+      : st.cost !== "gen" ? "Made by the particles alone: the run draws them as they show here."
+        : guided ? "How the AI turns them into sparks, smoke or flames shows only in the run."
+          : "Drawn over the AI's element as they show here; the element itself shows only in the run.";
+    kids.push(line(h("span", { class: "pv-dot" }), "Live preview · up to date", `The particles as the run makes them (same engine, particle seed ${hd.seed}), `
+      + `${hd.mode === "hold" ? `${fmtSec(hd.n / hd.fps)} on frame ${hd.frame + 1}` : `${hd.n} frames`} · ${((ls.server?.total ?? ls.ms) / 1000).toFixed(1)} s. ${how}`));
+    for (const [cls, text] of LEFT_OUT) if ((ls.leftOut || []).some((x) => x.startsWith(cls))) kids.push(note("hint", text));
   }
-  if (st.variant === "dissolve") {
-    if (mine && ls.status === "ready") kids.push(h("p", { class: "muted small" }, "Dark where the object is gone: the run fills it with the scene."));
-    return [h("div", { class: "field live" }, ...kids.filter(Boolean))];
-  }
+  if (st.variant === "dissolve") return kids;
   kids.push(seg("Live preview", [["play", "Play with clip", "The clip plays, the particles with it (as in the run)"],
     ["hold", "Hold frame", "The clip stands on the frame at the playhead, the emitter keeps running on it"]], liveMode(), setLiveMode));
   if (!adv) kids.push(...prerollRows(hd));
-  return [h("div", { class: "field live" }, ...kids.filter(Boolean))];
+  return kids;
 }
 function prerollRows(hd) {
   const f = fx(), pre = Number.isFinite(+f.preroll) ? +f.preroll : -2;
   const own = pre >= 0;
-  return [h("div", { class: "label" }, "Pre-roll", h("span", { class: "muted small" }, hd?.preroll_s ? ` · ${(+hd.preroll_s).toFixed(1)} s now` : "")),
+  return [h("div", { class: "field" }, h("div", { class: "label" }, "Pre-roll", info("Pre-roll", "The particles run this long before the clip starts, so the first frame is already full "
+      + "(snow, rain). Preset: as the style has it. Auto: long enough for the particles to cross the frame. Seconds: your own length."),
+    h("span", { class: "muted small" }, hd?.preroll_s ? ` · ${(+hd.preroll_s).toFixed(1)} s now` : "")),
     seg("Pre-roll", [["preset", "Preset", "As the style has it"], ["auto", "Auto", "Long enough for the particles to cross the frame"],
       ["own", "Seconds", "Your own length"]], pre === -2 ? "preset" : pre === -1 ? "auto" : "own",
     (v) => api.setFx("preroll", v === "preset" ? -2 : v === "auto" ? -1 : own ? pre : 2)),
     own ? h("input", { class: "text", type: "number", min: "0", max: "60", step: "0.5", value: String(pre), "aria-label": "Pre-roll in seconds",
-      onchange: (ev) => api.setFx("preroll", Math.min(60, Math.max(0, +ev.target.value || 0))) }) : null,
-    h("p", { class: "muted small" }, "The particles run this long before the clip starts, so the first frame is already full (snow, rain).")].filter(Boolean);
+      onchange: (ev) => api.setFx("preroll", Math.min(60, Math.max(0, +ev.target.value || 0))) }) : null)];
 }
 function emitterCtx(e, st) {
   const c = S.getShot().clip;
@@ -1092,16 +1167,18 @@ function emitterCtx(e, st) {
 }
 const SOLID = "Solid element (Alpha Gen cut-out)", START_VIDEO = "Particles: start video (seed)";
 function particleSeed(e) {
-  const locked = !!e.seedLocked;
   const lock = (v) => S.change((sh) => { const x = sh.effects.find((y) => y.id === e.id); x.seedLocked = v; }, "seed-lock");
-  const pseed = fxText("particle_seed", "42", { label: "Particle seed", num: true });
-  pseed.disabled = locked;
-  return [h("div", { class: "label" }, "Particle seed"),
-    h("div", { class: "row gap" }, pseed,
-      h("button", { class: "btn small", disabled: locked, title: "A new seed: other particles, the same settings",
-        onclick: () => api.setFx("particle_seed", Math.floor(Math.random() * 2 ** 31)) }, "New seed"),
-      toggle("Lock", locked, lock, "Keep this seed: the dice and the field are locked")),
-    h("p", { class: "muted small" }, "The same seed gives the same particles in the preview and in the run. Apart from the AI seed.")];
+  return [h("div", { class: "field" }, ...seedRow("Particle seed", "particle_seed", !!e.seedLocked, lock, "On: this seed stays, New and the field are locked",
+    "The same seed gives the same particles in the preview and in the run. Apart from the AI seed."))];
+}
+function seedRow(label, name, keep, onKeep, keepTip, tip = "") {
+  const field = fxText(name, "42", { label, num: true });
+  field.disabled = keep;
+  return [h("div", { class: "label" }, label, tip ? info(label, tip) : null),
+    h("div", { class: "seed-row" }, field,
+      h("button", { class: "btn small", disabled: keep, title: "A new seed: something new with the same settings",
+        onclick: () => api.setFx(name, Math.floor(Math.random() * 2 ** 31)) }, icon("shuffle"), "New"),
+      h("button", { class: "btn small", "aria-pressed": String(keep), title: keepTip, onclick: () => onKeep(!keep) }, icon("lock"), "Keep"))];
 }
 
 const setOutput = (fn) => S.change((sh) => { sh.output = { ...outputOf(sh) }; sh.output.passes = { ...sh.output.passes }; fn(sh.output); }, "output");
@@ -1109,33 +1186,33 @@ function outputBody() {
   const e = effect(), st = style(), f = fx();
   const kids = [];
   if (!st) {
-    kids.push(h("p", { class: "muted small" }, "Choose an effect in Effect for a run. Without one, Export gives the clip alone: its passes, NVIDIA × 2 or HDR."));
+    kids.push(note("hint", "Choose an effect in Effect for a run. Without one, Export gives the clip alone: its passes, NVIDIA × 2 or HDR."));
     kids.push(group("export", "Export", () => exportRows({ h, seg, toggle, note, link, render, say: (t) => api.say(t) }),
-      { open: true, preview: "the clip alone, with its passes" }));
+      { open: true, preview: "files for your edit" }));
     return kids;
   }
   const o = outputOf(S.getShot());
   const gen = st?.cost === "gen";
   const preview = o.quality === "preview" && canPreview(st, e);
   if (gen) {
-    for (const n of systemNotes()) kids.push(n.kind === "err" ? note("hint", n.text) : h("p", { class: "muted small" }, n.text));
+    for (const n of systemNotes()) kids.push(note("hint", n.text));
     const can = canPreview(st, e);
-    kids.push(h("div", { class: "field" }, h("div", { class: "label" }, "Quality"),
+    kids.push(inlineChoice("Quality",
       seg("Quality", [["preview", "Preview (fast)", can ? "Half the size, without light, glow and normals: a quick look. Make it final afterwards from the same run."
-        : "Preview works for AI elements in Overlay (not with Inpaint)"], ["full", "Full", "Full size with all passes"]], preview ? "preview" : "full",
+        : "Preview works for AI elements of the full workflow"], ["full", "Full", "Full size with all passes"]], preview ? "preview" : "full",
       (v) => { if (v === "preview" && !can) return; setOutput((x) => { x.quality = v; }); })));
-    if (!can && o.quality === "preview") kids.push(h("p", { class: "muted small" }, "Preview needs an AI element in Overlay: this one runs at full size."));
+    if (!can && o.quality === "preview") kids.push(note("hint", "Preview needs an AI element of the full workflow: this one runs at full size."));
     const up = f.sharper_2x ? "ltx" : o.upscale === "nvidia" && hasRtx() ? "nvidia" : "off";
     const pick = (v) => {
       if (v === "nvidia" && !hasRtx()) return;
       if (!!f.sharper_2x !== (v === "ltx")) api.setFx("sharper_2x", v === "ltx");
       setOutput((x) => { x.upscale = v === "nvidia" ? "nvidia" : "off"; });
     };
-    kids.push(h("div", { class: "field" }, h("div", { class: "label" }, "Upscale"),
+    kids.push(inlineChoice("Upscale",
       seg("Upscale", [["off", "Off"], ["ltx", "LTX × 2", "A second LTX pass at twice the size: more detail, takes longer"],
         ["nvidia", "NVIDIA × 2", hasRtx() ? "NVIDIA RTX Super Resolution: fast, draws nothing new (with the HDR core of TrueHDR)"
           : "Needs an NVIDIA RTX card and ComfyUI's NVIDIA nodes"]], up, pick)));
-    if (!hasRtx()) kids.push(h("p", { class: "muted small" }, "NVIDIA × 2 needs an NVIDIA RTX card and ComfyUI's NVIDIA nodes."));
+    if (!hasRtx()) kids.push(note("hint", "NVIDIA × 2 needs an NVIDIA RTX card and ComfyUI's NVIDIA nodes."));
   }
   const on = (k) => e?.adv?.[k] ?? lightDefault(st, k);
   const setAdv = (k, v) => S.change((sh) => {
@@ -1144,26 +1221,25 @@ function outputBody() {
     if (v === lightDefault(st, k)) delete x.adv[k]; else x.adv[k] = v;
   }, "look");
   if (e && st) kids.push(group("passes", "Passes", () => [
-    preview ? h("p", { class: "muted small" }, "A preview writes plate, element and depth only; Make final adds the rest.") : null,
+    preview ? note("hint", "A preview writes plate, element and depth only; Make final adds the rest.") : null,
     toggle("Light (on the scene)", on("Light"), (v) => setAdv("Light", v), "The light the effect throws on the clip (light pass); needed for Light on the scene"),
     toggle("Glow", on("Glow"), (v) => setAdv("Glow", v), "The glow as its own pass"),
     toggle("Depth", o.passes.depth, (v) => setOutput((x) => { x.passes.depth = v; }), "Depth of the clip: depth blur and haze in Scene & finish need it"),
     toggle("Normals", o.passes.normals, (v) => setOutput((x) => { x.passes.normals = v; }), "Surface normals of the clip, for relighting in compositing (made with the light pass)"),
     toggle("Mask", o.passes.mask, (v) => setOutput((x) => { x.passes.mask = v; }), "The mask of the object the effect sits on, per frame (from the track), for compositing"),
-    h("p", { class: "muted small" }, "Plate and element (with its alpha) are always written, as EXR (half, linear) in ComfyUI's output folder, element-forge/<run>/."),
+    note("hint", "Plate and element (with its alpha) are always written, as EXR (half, linear) in ComfyUI's output folder, element-forge/<run>/."),
     R.canSaveElement(st, e) ? toggle("Save the element", !!o.saveElement, (v) => setOutput((x) => { x.saveElement = v; }),
       "Also keeps the AI element with its alpha in the element library (output/element-forge/elements/<run>/), to place it again without a new run") : null,
-  ], { open: S.ui.mode === "advanced", preview: [on("Light") ? "light" : null, on("Glow") ? "glow" : null, o.passes.depth ? "depth" : null,
-    o.passes.normals && on("Light") ? "normals" : null, o.passes.mask ? "mask" : null].filter(Boolean).join(" · ") }));
+  ], { open: S.ui.mode === "advanced", preview: "what the run writes" }));
   const est = e && st ? estimate(e, S.getShot()) : null;
   const c = S.getShot().clip, anaRec = c ? keptOf(c) : null;
-  if (est) kids.push(h("p", { class: "muted small" }, `Run makes it: about ${est.lo}–${est.hi} min` +
+  if (est) kids.push(note("hint", `Run makes it: about ${est.lo}–${est.hi} min` +
     (anaRec?.loaded && !anaRec.analysis && !c.still ? `, plus about ${anaMinutes(c)} min for depth and normals (the clip is not analysed yet).` : ".")))
   kids.push(...versionRows({ h, link, note, fx, setFx: (k, v) => api.setFx(k, v), chooseStyle, render,
     say: (t, err) => (err ? api.say(t) : (api.info || api.say)(t)) }));
   if (e && st) kids.push(group("export", "Export", () => exportRows({ h, seg, toggle, note, link, render, say: (t) => api.say(t) }),
     { open: S.getShot().effects.some((y) => S.shownOf(y.id)?.status === "done"),
-      preview: S.getShot().effects.some((y) => S.shownOf(y.id)?.status === "done") ? "the comp as you see it, at full size" : "the clip alone, with its passes" }));
+      preview: "files for your edit" }));
   if (lastResult) kids.push(note("ok", `Last run: ${lastResult.label}`));
   const d = api.docked?.(), made = S.getShot().effects.some((y) => S.shownOf(y.id)?.status === "done");
   if (d && (made || d !== "canvas")) kids.push(h("button", { class: "btn small", onclick: () => api.show(d === "canvas" ? "result" : "canvas") },
@@ -1198,8 +1274,9 @@ function paint() {
       h("button", { class: "card-head", "aria-expanded": "true", onclick: () => { gearOpen = false; render(); } },
         h("span", { class: "num", "aria-hidden": "true" }, icon("gear")), h("span", { class: "title" }, "This computer and the models"),
         h("span", { class: "sum" }, "Back to the steps")),
-      h("div", { class: "card-body" }, ...gearRows({ h, seg, toggle, note, link, render })))]
+      h("div", { class: "card-body" }, ...surfaces(gearRows({ h, seg, toggle, note, link, render }))))]
       : STEPS.map(([id, t], i) => card(id, i + 1, t, { clip: clipBody, position: positionBody, effect: effectBody, finish: finishBody, output: outputBody }[id]))));
+  settle(el);
   if (key) {
     const back = el.querySelector(`[data-key="${CSS.escape(key)}"]`);
     if (back) { back.focus({ preventScroll: true }); if (sel) try { back.setSelectionRange(sel[0], sel[1]); } catch {  } }
@@ -1213,6 +1290,7 @@ export function render() {
 export function mountPanel(target, a) {
   el = target;
   api = a;
+  new ResizeObserver(() => settle(el)).observe(el);
   initLive({ fx });
   initEffects({ fx, setAll: (values) => api.setFxAll?.(values) });
   initShotLine({ fx, setFx: (k, v) => api.setFx(k, v) });

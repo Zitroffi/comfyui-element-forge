@@ -543,9 +543,9 @@ def use_ltx(graph, ltx):
     return graph
 
 
-STAGES = {"pass1": {"plain": ("273", 0, "274"), "guided": ("281", 2, "282")},
-          "final": {"plain": ("290", 0, "291"), "guided": ("298", 2, "299")}}
-UPSAMPLERS = {"plain": "284", "guided": "285"}
+STAGES = {"pass1": {"plain": ("273", 0, "274"), "guided": ("281", 2, "282"), "with": ("384", 2, "385"), "ctrl": ("392", 2, "393")},
+          "final": {"plain": ("290", 0, "291"), "guided": ("298", 2, "299"), "with": ("1009", 2, "1010"), "ctrl": ("1017", 2, "1018")}}
+UPSAMPLERS = {"plain": "284", "guided": "285", "with": "1001", "ctrl": "1002"}
 UPSCALE = "LTX upscale x2 (latent upscaler + second pass, test)"
 PASS_SAVES = {"plate": "489", "element": "490", "light": "491", "glow": "492", "depth": "493", "normals": "494",
               "mask": "852",
@@ -724,8 +724,6 @@ def use_kept(graph, settings):
         s = json.dumps(w)
         graph[KEPT_MASK] = {"class_type": "EFLoadTrack", "inputs": {"where": s, "which": "a"}, "_meta": {"title": "Kept object mask"}}
         _rewire(graph, [KEPT_WHOLE, 0], [KEPT_MASK, 0])
-        if tr.get("b") and w["b"]:
-            graph[KEPT_MASK_B] = {"class_type": "EFLoadTrack", "inputs": {"where": s, "which": "b"}, "_meta": {"title": "Kept object mask B"}}
         if graph.get(KEPT_CLEAN, {}).get("class_type") == "EFLeaveOutTrack":
             if tr.get("left") and AN.leave_of(w):
                 graph["kept_left"] = {"class_type": "EFLoadTrack", "inputs": {"where": s, "which": "left"},
@@ -738,19 +736,25 @@ def use_kept(graph, settings):
         if fix and fix.get("class_type") == "EFMaskFixes":
             _rewire(graph, [MASK_FIXES, 0], fix["inputs"]["whole"])
             _rewire(graph, [MASK_FIXES, 1], fix["inputs"]["clean"])
+    if AN.track_b_info(w):
+        graph[KEPT_MASK_B] = {"class_type": "EFLoadTrack", "inputs": {"where": json.dumps(w), "which": "b"},
+                              "_meta": {"title": "Kept object mask B"}}
     return graph
 
 
 def keep_track(graph, settings):
     w = where_of(graph, settings)
-    if not w or graph.get(KEPT_MASK, {}).get("class_type") != "ComfySwitchNode":
+    a_new = graph.get(KEPT_MASK, {}).get("class_type") == "ComfySwitchNode"
+    b_new = bool(w and w["b"]) and graph.get(KEPT_MASK_B, {}).get("class_type") == "SAM3_TrackToMask"
+    if not w or not (a_new or b_new):
         return graph
-    left = AN.leave_of(w) and graph.get(KEPT_CLEAN, {}).get("class_type") == "EFLeaveOutTrack"
-    whole = [MASK_FIXES, 0] if w.get("fixes") and graph.get(MASK_FIXES, {}).get("class_type") == "EFMaskFixes"         else [KEPT_WHOLE if KEPT_WHOLE in graph else KEPT_MASK, 0]
-    graph["track_keep"] = {"class_type": "EFSaveTrack", "inputs": {"mask": whole, "where": json.dumps(w),
-                                                                    **({"mask_b": [KEPT_MASK_B, 0]} if w["b"] else {}),
-                                                                    **({"left_out": [KEPT_CLEAN, 1]} if left else {})},
-                           "_meta": {"title": "Keep the track"}}
+    ins = {"where": json.dumps(w), **({"mask_b": [KEPT_MASK_B, 0]} if b_new else {})}
+    if a_new:
+        left = AN.leave_of(w) and graph.get(KEPT_CLEAN, {}).get("class_type") == "EFLeaveOutTrack"
+        ins["mask"] = [MASK_FIXES, 0] if w.get("fixes") and graph.get(MASK_FIXES, {}).get("class_type") == "EFMaskFixes"             else [KEPT_WHOLE if KEPT_WHOLE in graph else KEPT_MASK, 0]
+        if left:
+            ins["left_out"] = [KEPT_CLEAN, 1]
+    graph["track_keep"] = {"class_type": "EFSaveTrack", "inputs": ins, "_meta": {"title": "Keep the track"}}
     return graph
 
 
@@ -869,13 +873,9 @@ def _app_job(body, out_dir):
     if variant != "app":
         raise ValueError(f"{mode} works with the app workflow only")
 
-    def inpaint(v):
-        return v.get("Inpaint (off = on black)", _load_json(VARIANTS["app"])["103"]["inputs"]["value"])
     if mode == "preview":
         intended = values
         values = {**values, UPSCALE: False, "Light": False, "Glow": False}
-        if inpaint(values):
-            raise ValueError("Preview and final are not ready for inpaint styles yet")
 
         def edit(g):
             for name in PREVIEW_SKIPS:
@@ -902,8 +902,6 @@ def _app_job(body, out_dir):
             raise ValueError(f"run {src} has no kept latent")
         intended = {**rec["values"], **{k: values[k] for k in ("Light", "Glow") if k in values}}
         values = {**intended, UPSCALE: True}
-        if inpaint(values):
-            raise ValueError("Preview and final are not ready for inpaint styles yet")
 
         def edit(g):
             load_latents(g, src, "pass1", "upsample")
@@ -1096,7 +1094,8 @@ async def ef_track_key(request):
         return web.json_response({"error": str(e)}, status=400)
     w = where_of(graph, _load_json("element_forge.settings.json")["settings"])
     info = AN.track_info(w) if w else None
-    return web.json_response({"key": AN.track_key(w) if w else None, "kept": bool(info)})
+    b_kept = not (w and w["b"]) or bool(AN.track_b_info(w))
+    return web.json_response({"key": AN.track_key(w) if w else None, "kept": bool(info) and b_kept, "kept_a": bool(info)})
 
 
 @routes.get("/element-forge/api/run-files")

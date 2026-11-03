@@ -14,6 +14,7 @@ export function blankShot() {
 export function blankEffect(kind, style) {
   return {
     id: uid(), kind, style,
+    seen: false,
     where: { a: null, b: null, word: "" },
     box: null,
     dir: null,
@@ -69,6 +70,7 @@ function upgrade(s) {
   out.effects = (s.effects || []).map((e) => {
     const d = blankEffect(e.kind, e.style);
     const m = { ...d, ...e, id: e.id };
+    if (!("seen" in e)) m.seen = true;
     for (const k of ["where", "timing", "look", "place", "keys", "seed", "paint", "text", "quick"]) m[k] = { ...d[k], ...(e[k] || {}) };
     return m;
   });

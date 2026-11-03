@@ -1783,7 +1783,8 @@
    "padding": 1.0,
    "smoothing": 3.0,
    "keep_inside": true,
-   "mask_grow": 0
+   "mask_grow": 0,
+   "still_if_fits": true
   },
   "_meta": {
    "title": "Window following the mask"
@@ -1933,7 +1934,8 @@
    "padding": 1.0,
    "smoothing": 3.0,
    "keep_inside": true,
-   "mask_grow": 0
+   "mask_grow": 0,
+   "still_if_fits": true
   },
   "_meta": {
    "title": "Window following masks A + B"
@@ -5300,6 +5302,370 @@
    "title": "LTX control (no effect)"
   }
  },
+ "1001": {
+  "class_type": "LTXVLatentUpsampler",
+  "inputs": {
+   "samples": [
+    "384",
+    2
+   ],
+   "upscale_model": [
+    "283",
+    0
+   ],
+   "vae": [
+    "241",
+    0
+   ]
+  }
+ },
+ "1002": {
+  "class_type": "LTXVLatentUpsampler",
+  "inputs": {
+   "samples": [
+    "392",
+    2
+   ],
+   "upscale_model": [
+    "283",
+    0
+   ],
+   "vae": [
+    "241",
+    0
+   ]
+  }
+ },
+ "1003": {
+  "class_type": "LTXAddVideoICLoRAGuide",
+  "inputs": {
+   "positive": [
+    "363",
+    0
+   ],
+   "negative": [
+    "363",
+    1
+   ],
+   "vae": [
+    "241",
+    0
+   ],
+   "latent": [
+    "1001",
+    0
+   ],
+   "image": [
+    "377",
+    0
+   ],
+   "frame_idx": 0,
+   "strength": 1.0,
+   "latent_downscale_factor": [
+    "239",
+    1
+   ],
+   "crop": "disabled",
+   "use_tiled_encode": true,
+   "tile_size": 256,
+   "tile_overlap": 64,
+   "use_streaming": false,
+   "tile_frames": 97
+  }
+ },
+ "1004": {
+  "class_type": "LTXVConcatAVLatent",
+  "inputs": {
+   "video_latent": [
+    "1003",
+    2
+   ],
+   "audio_latent": [
+    "245",
+    0
+   ]
+  }
+ },
+ "1005": {
+  "class_type": "CFGGuider",
+  "inputs": {
+   "cfg": 1.0,
+   "model": [
+    "239",
+    0
+   ],
+   "positive": [
+    "1003",
+    0
+   ],
+   "negative": [
+    "1003",
+    1
+   ]
+  }
+ },
+ "1006": {
+  "class_type": "ManualSigmas",
+  "inputs": {
+   "sigmas": "0.909375, 0.725, 0.421875, 0.0"
+  }
+ },
+ "1007": {
+  "class_type": "SamplerCustomAdvanced",
+  "inputs": {
+   "noise": [
+    "246",
+    0
+   ],
+   "guider": [
+    "1005",
+    0
+   ],
+   "sampler": [
+    "247",
+    0
+   ],
+   "sigmas": [
+    "1006",
+    0
+   ],
+   "latent_image": [
+    "1004",
+    0
+   ]
+  }
+ },
+ "1008": {
+  "class_type": "LTXVSeparateAVLatent",
+  "inputs": {
+   "av_latent": [
+    "1007",
+    0
+   ]
+  }
+ },
+ "1009": {
+  "class_type": "LTXVCropGuides",
+  "inputs": {
+   "positive": [
+    "1003",
+    0
+   ],
+   "negative": [
+    "1003",
+    1
+   ],
+   "latent": [
+    "1008",
+    0
+   ]
+  }
+ },
+ "1010": {
+  "class_type": "VAEDecodeTiled",
+  "inputs": {
+   "samples": [
+    "1009",
+    2
+   ],
+   "vae": [
+    "241",
+    0
+   ],
+   "tile_size": 512,
+   "overlap": 64,
+   "temporal_size": 64,
+   "temporal_overlap": 16
+  },
+  "_meta": {
+   "title": "LTX with the effect, upscaled x2"
+  }
+ },
+ "1011": {
+  "class_type": "LTXAddVideoICLoRAGuide",
+  "inputs": {
+   "positive": [
+    "364",
+    0
+   ],
+   "negative": [
+    "364",
+    1
+   ],
+   "vae": [
+    "241",
+    0
+   ],
+   "latent": [
+    "1002",
+    0
+   ],
+   "image": [
+    "358",
+    1
+   ],
+   "frame_idx": 0,
+   "strength": 1.0,
+   "latent_downscale_factor": [
+    "239",
+    1
+   ],
+   "crop": "disabled",
+   "use_tiled_encode": true,
+   "tile_size": 256,
+   "tile_overlap": 64,
+   "use_streaming": false,
+   "tile_frames": 97
+  }
+ },
+ "1012": {
+  "class_type": "LTXVConcatAVLatent",
+  "inputs": {
+   "video_latent": [
+    "1011",
+    2
+   ],
+   "audio_latent": [
+    "245",
+    0
+   ]
+  }
+ },
+ "1013": {
+  "class_type": "CFGGuider",
+  "inputs": {
+   "cfg": 1.0,
+   "model": [
+    "239",
+    0
+   ],
+   "positive": [
+    "1011",
+    0
+   ],
+   "negative": [
+    "1011",
+    1
+   ]
+  }
+ },
+ "1014": {
+  "class_type": "ManualSigmas",
+  "inputs": {
+   "sigmas": "0.909375, 0.725, 0.421875, 0.0"
+  }
+ },
+ "1015": {
+  "class_type": "SamplerCustomAdvanced",
+  "inputs": {
+   "noise": [
+    "246",
+    0
+   ],
+   "guider": [
+    "1013",
+    0
+   ],
+   "sampler": [
+    "247",
+    0
+   ],
+   "sigmas": [
+    "1014",
+    0
+   ],
+   "latent_image": [
+    "1012",
+    0
+   ]
+  }
+ },
+ "1016": {
+  "class_type": "LTXVSeparateAVLatent",
+  "inputs": {
+   "av_latent": [
+    "1015",
+    0
+   ]
+  }
+ },
+ "1017": {
+  "class_type": "LTXVCropGuides",
+  "inputs": {
+   "positive": [
+    "1011",
+    0
+   ],
+   "negative": [
+    "1011",
+    1
+   ],
+   "latent": [
+    "1016",
+    0
+   ]
+  }
+ },
+ "1018": {
+  "class_type": "VAEDecodeTiled",
+  "inputs": {
+   "samples": [
+    "1017",
+    2
+   ],
+   "vae": [
+    "241",
+    0
+   ],
+   "tile_size": 512,
+   "overlap": 64,
+   "temporal_size": 64,
+   "temporal_overlap": 16
+  },
+  "_meta": {
+   "title": "LTX control (no effect), upscaled x2"
+  }
+ },
+ "1019": {
+  "class_type": "ComfySwitchNode",
+  "inputs": {
+   "switch": [
+    "140",
+    0
+   ],
+   "on_false": [
+    "385",
+    0
+   ],
+   "on_true": [
+    "1010",
+    0
+   ]
+  },
+  "_meta": {
+   "title": "LTX upscale x2 (inpaint)?"
+  }
+ },
+ "1020": {
+  "class_type": "ComfySwitchNode",
+  "inputs": {
+   "switch": [
+    "140",
+    0
+   ],
+   "on_false": [
+    "393",
+    0
+   ],
+   "on_true": [
+    "1018",
+    0
+   ]
+  },
+  "_meta": {
+   "title": "LTX upscale x2 (inpaint control)?"
+  }
+ },
  "394": {
   "class_type": "ComfyMathExpression",
   "inputs": {
@@ -5358,11 +5724,11 @@
   "class_type": "EFEffectLayer",
   "inputs": {
    "with_element": [
-    "385",
+    "1019",
     0
    ],
    "reference": [
-    "393",
+    "1020",
     0
    ],
    "warm_key": false,
@@ -8432,7 +8798,8 @@
    ],
    "grow_pixels": 1,
    "feather_pixels": 2.0,
-   "threshold": 0.5
+   "threshold": 0.5,
+   "strength": 1.0
   },
   "_meta": {
    "title": "Object in front: the effect only outside the object"

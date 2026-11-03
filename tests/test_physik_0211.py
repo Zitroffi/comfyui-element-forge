@@ -147,6 +147,10 @@ miss = [k for k in KEYS + ("strike_hold", "strike_hold_level", "strike_new_groun
         if f'"{k}"' not in live or not re.search(rf'key\("{k}"', js)]
 check(not miss, f"the panel shows and sends every new key ({miss})")
 check('splash("at_age"' in js and 'splash("chance"' in js, "the panel has the splash's mid-air burst")
+uses = json.loads(re.sub(r"(\w+):", r'"\1":', re.search(r"const COLLIDE_USES = (\{.*?\});", js).group(1)))
+check(uses == {"restitution": ["bounce"], "friction": ["bounce", "slide"], "land_fade": ["stick", "bounce"]},
+      "collision: bounce shows bounce, friction and lying time, slide friction, stick lying time, none and die none of them")
+check(js.count("forCollide(P, G.contact.") == 2, "collision: both rows of Contact & depth go through the filter")
 src = open(os.path.join(PACK, "element_forge/simulation/dissolve.py"), encoding="utf-8").read()
 ns = {"math": math, "json": json, "cv2": cv2, "np": np}
 exec(src[src.index("def soft_uncrop"):src.index("class EFCleanPlateUncrop")], ns)

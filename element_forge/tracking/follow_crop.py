@@ -14,6 +14,30 @@ def smooth(x, sigma):
     return np.stack([np.convolve(xp[:, j], k, mode="valid") for j in range(x.shape[1])], 1) if x.ndim > 1 else np.convolve(xp, k, mode="valid")
 
 
+def lazy_path(box, cw, ch, sigma, w, h, keep_inside):
+    half = np.array([cw, ch]) / 2
+    lo = box[:, :2] + box[:, 2:] / 2 - half
+    hi = box[:, :2] - box[:, 2:] / 2 + half
+    lo, hi = np.minimum(lo, hi), np.maximum(lo, hi)
+    if keep_inside:
+        for j, size in enumerate((w, h)):
+            lo[:, j] = np.clip(lo[:, j], half[j], size - half[j])
+            hi[:, j] = np.clip(hi[:, j], half[j], size - half[j])
+    mid = (np.max(lo, 0) + np.min(hi, 0)) / 2
+    c = np.clip(mid, lo[-1], hi[-1])
+    back = np.empty_like(lo)
+    for i in range(len(box) - 1, -1, -1):
+        c = np.clip(c, lo[i], hi[i])
+        back[i] = c
+    out, c = np.empty_like(lo), back[0]
+    for i in range(len(box)):
+        c = np.clip(c, lo[i], hi[i])
+        out[i] = c
+    for _ in range(6):
+        out = np.clip(smooth(out, max(sigma, 1.0)), lo, hi)
+    return smooth(out, max(sigma, 1.0))
+
+
 def pick_object(masks, which):
     out, last = [], None
     for m in masks:
@@ -51,7 +75,10 @@ class EFFollowCrop:
                 "smoothing": ("FLOAT", {"default": 3.0, "min": 0.0, "max": 30.0, "step": 0.5, "tooltip": "Gaussian smoothing of the crop path over frames (sigma in frames). Higher = calmer crop, follows fast moves later."}),
                 "keep_inside": ("BOOLEAN", {"default": True, "tooltip": "Keep the crop inside the plate (no mirrored edges in the ROI); the object may then sit off-centre at the border."}),
                 "mask_grow": ("INT", {"default": 24, "min": 0, "max": 512, "tooltip": "Grows the object mask in the ROI output (plate px), e.g. as the inpainting area."}),
-            }
+            },
+            "optional": {
+                "still_if_fits": ("BOOLEAN", {"default": False, "tooltip": "size fixed: the window stands still and moves only as far as the object's box would otherwise leave it (when all boxes fit: one still window for the whole clip). Off: it follows the box's centre. A moving window is a camera move the generation sees but the clip does not have (Katana hero 03.11.: the hand mask's box moved it 68 px and back)."}),
+            },
         }
 
     RETURN_TYPES = ("IMAGE", "MASK", "EF_TRACK", "IMAGE", "STRING")
@@ -61,7 +88,8 @@ class EFFollowCrop:
     DESCRIPTION = ("Cuts a crop that follows an object mask (SAM3) through the shot and scales it for generation. For moving hands "
                    "and people, where a point track loses the object. EF Place Layer puts the result back along the track.")
 
-    def crop(self, plate, mask, object, frames, crop_width, crop_height, roi_width, roi_height, size, padding, smoothing, keep_inside, mask_grow):
+    def crop(self, plate, mask, object, frames, crop_width, crop_height, roi_width, roi_height, size, padding, smoothing, keep_inside, mask_grow,
+             still_if_fits=False):
         imgs = to_np(plate[:frames])[..., :3]
         n, h, w = imgs.shape[:3]
         if n < frames:
@@ -98,6 +126,10 @@ class EFFollowCrop:
         ch = cw / aspect
         cen = smooth(box[:, :2], smoothing)
         obj_pt = cen.copy()
+        still = False
+        if still_if_fits and size == "fixed":
+            cen = lazy_path(box, cw[0], ch[0], smoothing, w, h, keep_inside)
+            still = bool(np.ptp(cen, 0).max() < 0.5)
         if keep_inside:
             cen[:, 0] = np.clip(cen[:, 0], cw / 2, w - cw / 2)
             cen[:, 1] = np.clip(cen[:, 1], ch / 2, h - ch / 2)
@@ -119,6 +151,6 @@ class EFFollowCrop:
                  "roi_size": [roi_width, roi_height], "crop_origin_plate_px": origins.round(3).tolist(),
                  "point_track_px": obj_pt.round(3).tolist(), "point_scale": (scales[0] / scales).round(5).tolist(),
                  "mapping": "plate = crop_origin + roi / scale (scale per frame: scale_per_frame)", "source": f"mask box ({object}, {size})"}
-        report = (f"{n} frames, {missing} without mask, crop {cw.min():.0f}-{cw.max():.0f} px wide, centre x {cen[:, 0].min():.0f}..{cen[:, 0].max():.0f} "
+        report = (f"{n} frames, {missing} without mask, crop {cw.min():.0f}-{cw.max():.0f} px wide, {'still, ' if still else ''}centre x {cen[:, 0].min():.0f}..{cen[:, 0].max():.0f} "
                   f"y {cen[:, 1].min():.0f}..{cen[:, 1].max():.0f}, jitter {jit:.2f} px/frame^2")
         return (to_t(np.clip(np.stack(rois), 0, 1)), to_t(np.clip(np.stack(rmask), 0, 1)), track, plate[:frames], report)

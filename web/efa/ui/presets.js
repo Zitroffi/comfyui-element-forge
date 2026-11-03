@@ -35,7 +35,7 @@ function withPlace(st, e) {
   const s0 = st.settings || {}, sets = { ...s0 };
   if (!e.adv?.["Particle emitter"]) {
     if (PL_SHAPE[want]) sets["Particle emitter"] = PL_SHAPE[want];
-    else if (["whole frame", "line A-B", "object mask", "object contour", "object bottom edge"].includes(s0["Particle emitter"])) delete sets["Particle emitter"];
+    else if (["whole frame", "line A-B", "object mask", "object contour", "object edge + area", "object bottom edge"].includes(s0["Particle emitter"])) delete sets["Particle emitter"];
   }
   if (want === "frame") {
     sets["Sticks to scene (off = object)"] = s0["Sticks to scene (off = object)"] ?? true;

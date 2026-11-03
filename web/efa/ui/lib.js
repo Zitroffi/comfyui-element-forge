@@ -1,8 +1,28 @@
 export const $ = (s, el = document) => el.querySelector(s);
 export const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 
+function numberField(el, attrs) {
+  const step = +attrs.step || 0, whole = step > 0 && Number.isInteger(step), lo = attrs.min != null ? +attrs.min : -Infinity, hi = attrs.max != null ? +attrs.max : Infinity;
+  el.type = "text"; el.inputMode = whole ? "numeric" : "decimal"; el.autocomplete = "off";
+  const clean = (t) => {
+    let v = +String(t).trim().replace(",", ".");
+    if (!Number.isFinite(v)) return null;
+    if (whole) v = Math.round(v / step) * step;
+    return String(+Math.min(hi, Math.max(lo, v)).toFixed(6));
+  };
+  el.addEventListener("focus", () => { el.dataset.last = el.value; });
+  el.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") { el.value = el.dataset.last ?? el.value; ev.preventDefault(); ev.stopPropagation(); el.blur(); }
+    else if ((ev.key === "ArrowUp" || ev.key === "ArrowDown") && step) {
+      const v = clean(el.value); if (v == null) return;
+      el.value = clean(+v + (ev.key === "ArrowUp" ? step : -step)); ev.preventDefault(); el.dispatchEvent(new Event("change"));
+    }
+  });
+  el.addEventListener("change", (ev) => { const v = clean(el.value); if (v == null) { el.value = el.dataset.last ?? ""; ev.stopImmediatePropagation(); } else el.value = v; });
+}
 export function h(tag, attrs = {}, ...kids) {
   const el = document.createElement(tag);
+  if (tag === "input" && attrs?.type === "number") { numberField(el, attrs); attrs = { ...attrs, type: null }; }
   for (const [k, v] of Object.entries(attrs || {})) {
     if (v == null || v === false) continue;
     if (k === "class") el.className = v;

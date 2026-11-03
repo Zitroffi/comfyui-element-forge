@@ -275,7 +275,7 @@ def fixes_of(where):
 
 def track_key(where):
     parts = [os.path.basename(str(where.get("clip", ""))), clip_source(where.get("clip")), int(where.get("frames", 0)),
-             [int(v) for v in where.get("a") or []], [int(v) for v in where.get("b") or []], str(where.get("word") or "").strip().lower(),
+             [int(v) for v in where.get("a") or []], [], str(where.get("word") or "").strip().lower(),
              bool(where.get("alike")), bool(where.get("own")), own_mask_hash(where.get("own_mask")) if where.get("own") else ""]
     if leave_of(where):
         parts.append(leave_of(where))
@@ -284,6 +284,26 @@ def track_key(where):
     if fixes_of(where):
         parts.append(["fixes", fixes_of(where)])
     return hashlib.sha1(json.dumps(parts).encode()).hexdigest()[:16]
+
+
+def track_key_b(where):
+    parts = ["b", os.path.basename(str(where.get("clip", ""))), clip_source(where.get("clip")), int(where.get("frames", 0)),
+             [int(v) for v in where.get("b") or []]]
+    if mask_frame_of(where):
+        parts.append(["at", *mask_frame_of(where)])
+    return hashlib.sha1(json.dumps(parts).encode()).hexdigest()[:16]
+
+
+def track_b_info(where):
+    if not where.get("b"):
+        return None
+    key = track_key_b(where)
+    try:
+        d = os.path.join(clip_folder(where.get("clip")), "tracks", key)
+    except ValueError:
+        return None
+    info = _read_json(os.path.join(d, "track.json"))
+    return {"key": key, **info} if info and os.path.isfile(os.path.join(d, "mask_b.npz")) else None
 
 
 def tracks_of(clip):
@@ -296,7 +316,7 @@ def tracks_of(clip):
     out = []
     for k in sorted(os.listdir(d)):
         info = _read_json(os.path.join(d, k, "track.json")) if TRACK_KEY.match(k) else None
-        if info and info.get("where", {}).get("source") == clip_source(clip):
+        if info and info.get("kind") != "b" and info.get("where", {}).get("source") == clip_source(clip):
             out.append({"key": k, **info})
     return sorted(out, key=lambda t: -t.get("time", 0))
 
@@ -325,10 +345,10 @@ class EFSaveTrack:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "mask": ("MASK", {"tooltip": "The object mask of point A through the clip (SAM3)."}),
                 "where": ("STRING", {"default": "{}", "tooltip": "JSON: clip, frames, a, b, word, alike, own, own_mask, follows."}),
             },
-            "optional": {"mask_b": ("MASK", {"tooltip": "The object mask of point B (A to B)."}),
+            "optional": {"mask": ("MASK", {"tooltip": "The object mask of point A through the clip (SAM3); without it only B is kept."}),
+                         "mask_b": ("MASK", {"tooltip": "The object mask of point B (A to B), kept on its own."}),
                          "left_out": ("MASK", {"tooltip": "The parts left out of the object, through the clip (EF Leave Out (track))."})},
         }
 
@@ -338,22 +358,30 @@ class EFSaveTrack:
     CATEGORY = "Element Forge"
     DESCRIPTION = "Keeps the object masks of a track in output/element-forge/clips/<clip>/tracks/ for later runs (EF Load Track)."
 
-    def save(self, mask, where, mask_b=None, left_out=None):
+    def save(self, where, mask=None, mask_b=None, left_out=None):
         w = json.loads(where or "{}")
         w["source"] = clip_source(w.get("clip"))
-        key = track_key(w)
-        d = os.path.join(clip_folder(w.get("clip"), make=True), "tracks", key)
-        os.makedirs(d, exist_ok=True)
-        for name, m in (("mask_a", mask), ("mask_b", mask_b), ("mask_left", left_out)):
-            if m is None:
-                continue
-            q = np.round(np.clip(m.detach().cpu().float().numpy(), 0, 1) * 255).astype(np.uint8)
-            part = os.path.join(d, f"{name}.{os.getpid()}.part.npz")
-            np.savez_compressed(part, q=q)
-            os.replace(part, os.path.join(d, f"{name}.npz"))
-        _write_json(os.path.join(d, "track.json"), {"where": w, "time": time.time(), "frames": int(mask.shape[0]),
-                                                    "b": mask_b is not None, "left": left_out is not None})
-        return {"ui": {"text": [json.dumps({"track": key})]}}
+        base = os.path.join(clip_folder(w.get("clip"), make=True), "tracks")
+
+        def keep(key, masks, info):
+            d = os.path.join(base, key)
+            os.makedirs(d, exist_ok=True)
+            for name, m in masks:
+                q = np.round(np.clip(m.detach().cpu().float().numpy(), 0, 1) * 255).astype(np.uint8)
+                part = os.path.join(d, f"{name}.{os.getpid()}.part.npz")
+                np.savez_compressed(part, q=q)
+                os.replace(part, os.path.join(d, f"{name}.npz"))
+            _write_json(os.path.join(d, "track.json"), {"where": w, "time": time.time(), **info})
+
+        out = {}
+        if mask is not None:
+            out["track"] = track_key(w)
+            keep(out["track"], [(n, m) for n, m in (("mask_a", mask), ("mask_left", left_out)) if m is not None],
+                 {"frames": int(mask.shape[0]), "b": False, "left": left_out is not None})
+        if mask_b is not None and w.get("b"):
+            out["track_b"] = track_key_b(w)
+            keep(out["track_b"], [("mask_b", mask_b)], {"frames": int(mask_b.shape[0]), "kind": "b"})
+        return {"ui": {"text": [json.dumps(out)]}}
 
 
 class EFLoadTrack:
@@ -371,13 +399,14 @@ class EFLoadTrack:
 
     @classmethod
     def IS_CHANGED(s, where, which):
-        info = track_info(json.loads(where or "{}"))
+        w = json.loads(where or "{}")
+        info = track_b_info(w) if which == "b" else track_info(w)
         return f"{info and info.get('time')}"
 
     def load(self, where, which):
         import torch
         w = json.loads(where or "{}")
-        key = track_key(w)
+        key = track_key_b(w) if which == "b" else track_key(w)
         p = os.path.join(clip_folder(w.get("clip")), "tracks", key, f"mask_{which}.npz")
         if not os.path.isfile(p):
             raise ValueError("this track is not kept any more: track it again")

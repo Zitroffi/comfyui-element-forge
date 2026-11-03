@@ -80,7 +80,7 @@ export function frameBox(effect, clip) {
 
 export const quality = () => (S.getShot()?.output?.quality === "preview" ? "preview" : "full");
 export const setQuality = (q) => store.set("quality", q === "preview" ? "preview" : "full");
-export const canPreview = (st, effect) => !!st && st.cost === "gen" && st.variant === "app" && !inScene(effect) && !fromLibrary(effect);
+export const canPreview = (st, effect) => !!st && st.cost === "gen" && st.variant === "app" && !fromLibrary(effect);
 const PREVIEW_PASSES = ["plate", "element", "depth", "mask"], ALL_PASSES = ["plate", "element", "light", "glow", "depth", "normals", "mask"];
 export const ADDABLE = ["light", "glow", "normals"];
 const VARIANT_PASSES = { dissolve: ["plate", "element", "depth", "light", "normals", "mask"] };
@@ -94,7 +94,8 @@ const passesOf = (mode, effect, values, variant) => ((mode === "preview" && !VAR
 const previewScale = (st, effect) => (canPreview(st, effect) && quality() === "preview" ? 0.5 : 1);
 
 export const LEAVE_PTS = "Leave out: points (x, y; Alt-click in the app)", LEAVE_WORDS = "Leave out: words (e.g. hand; handle)",
-  FRONT_ALL = "Object in front: also the parts left out";
+  FRONT_ALL = "Object in front: also the parts left out",
+  FRONT_STRENGTH = "Object in front: strength", FRONT_EDGE = "Object in front: soft edge (px)";
 export const MASK_FRAME = "Mask frame (the frame the mask is set on; 0 = the first)", ADD_PTS = "Mask: add points (x, y; Ctrl-click in the app)",
   ADD_WORDS = "Mask: add words (e.g. blade; tip)";
 export const ptsOf = (e, k) => String(e?.adv?.[k] || "").split(";").map((s) => s.split(",").map((v) => +v.trim()))
@@ -318,7 +319,7 @@ export async function generate(effect, opts = {}) {
     const { prompt } = await C.build(st.variant, values, run, { effect: recipe, clip: from ? null : shot.clip, ...(ltx ? { ltx } : {}), mode }, ltx, extra);
     version = { id: uid(), run, variant: st.variant, seed: from ? from.seed : values.Seed, prompt: from ? from.prompt : values["Effect prompt"] || null,
       clip: from ? from.clip : shot.clip.name, started: Date.now(), status: "queued", recipe, files: [], comp: null,
-      quality: mode, exact: true, ...(from ? { from: from.id } : {}), passes: from ? ALL_PASSES : passesOf(mode, effect, values, st.variant),...(!from && inScene(effect) ? { paint: true } : {}) };
+      quality: mode, exact: true, ...(from ? { from: from.id } : {}), passes: from ? ALL_PASSES : passesOf(mode, effect, values, st.variant),...((from ? from.paint : inScene(effect)) ? { paint: true } : {}) };
     S.addVersion(effect.id, version);
     state.phase = "Waiting in the queue";
     state.promptId = await C.queue(prompt, handlers(effect.id, version, state, setVersion, prompt));

@@ -62,7 +62,7 @@ def with_place(st, effect):
     if not a.get("Particle emitter"):
         if want in PL_SHAPE:
             sets["Particle emitter"] = PL_SHAPE[want]
-        elif s0.get("Particle emitter") in ("whole frame", "line A-B", "object mask", "object contour", "object bottom edge"):
+        elif s0.get("Particle emitter") in ("whole frame", "line A-B", "object mask", "object contour", "object edge + area", "object bottom edge"):
             sets.pop("Particle emitter", None)
     if want == "frame":
         sets["Sticks to scene (off = object)"] = s0.get("Sticks to scene (off = object)", True)
@@ -439,7 +439,10 @@ def run_id(variant, mode, values, look):
 def tune_look(graph, look):
     s, e = float(look.get("light_strength", 1.0)), float(look.get("glow_exposure", 0.0))
     a, col = float(look.get("albedo_exposure", 0.0)), str(look.get("light_color") or "")
+    g = float(look.get("element_gain", 1.0))
     for nd in graph.values():
+        if nd["class_type"] in ("EFPlaceLayer", "EFPlaceElement", "EFPlaceBetween") and g != 1.0 and isinstance(nd["inputs"].get("gain"), (int, float)):
+            nd["inputs"]["gain"] = nd["inputs"]["gain"] * g
         if nd["class_type"] == "EFDepthLight" and a != 0.0:
             nd["inputs"]["albedo_exposure"] = a
         if nd["class_type"] == "EFDepthLight" and col:

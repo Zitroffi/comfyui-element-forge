@@ -43,14 +43,15 @@ LOOK_SENT = ("colors", "color_var", "glow", "sprite", "trail", "blob", "blob_cho
              "plate_color", "shutter", "blend", "look")
 PANEL = ("rate", "rate_curve", "burst", "burst_at", "burst_every", "max_particles", "life", "life_var", "size", "size_var", "size_start", "size_end", "speed",
          "speed_var", "spread", "direction", "direction_mode", "lift", "inherit", "motion_carry", "gravity", "wind", "drag",
-         "turbulence", "turb_scale", "turb_speed", "vortex", "attract", "flock", "collide", "restitution", "friction",
-         "depth_offset", "depth_spread", "fade_in", "fade_out", "opacity", "flicker", "flicker_hz", "flicker_size", "fine_share",
+         "turbulence", "turb_scale", "turb_speed", "vortex", "attract", "centres_follow", "flock", "collide", "restitution", "friction",
+         "depth_offset", "depth_spread", "flow_around", "obstacle_depth", "edge_share", "fade_in", "fade_in_max", "fade_out", "opacity", "flicker", "flicker_hz", "flicker_size", "fine_share",
          "fine_size", "fine_speed", "fine_life", "sprite", "trail", "glow",
          "shutter", "colors", "blob", "blob_choke", "blob_soft", "blob_fill", "blob_life", "path", "roughness", "branches", "width",
          "reroll_frames", "preroll", "radius", "spread_falloff", "speed_end", "max_speed", "color_var", "spin", "flock_radius",
          "flock_cohesion", "turb_fade", "turb_drag", "land_fade",
          "grow_seconds", "fine_rough", "strike_leader", "strike_strokes", "strike_gap", "strike_decay", "strike_hold",
-         "strike_hold_level", "strike_new_ground", "strike_streamer", "strike_lean", "strike_spread", "climb_seconds", "climb_pitch", "climb_rough", "climb_head", "climb_short", "fork_depth",
+         "strike_hold_level", "strike_new_ground", "strike_streamer", "strike_lean", "strike_spread",
+         "rand_rate", "rand_length", "rand_length_var", "rand_life", "rand_aim", "climb_seconds", "climb_pitch", "climb_rough", "climb_head", "climb_short", "fork_depth",
          "climb_zigzag", "crack_speed", "crack_length", "crack_branch", "crack_turn", "crack_step", "crack_seeds", "crack_taper",
          "crack_angle", "crack_angle_var", "crack_pairs", "relief",
          "scale", "scene_height", "gravity_end", "speed_by_size", "sway", "sway_hz", "flicker_duty", "roll",
@@ -604,7 +605,7 @@ async def compute(body, check):
     t0 = time.time()
     mode = "hold" if body.get("mode") == "hold" else "play"
     variant = body.get("variant", "app")
-    graph = AR.build_graph(variant, dict(body.get("values") or {}), "live")
+    graph = AR.build_graph(variant, dict(body.get("values") or {}), "live", ltx=body.get("ltx"))
     if body.get("kind") == "motion":
         return await compute_ai(graph, body, {"sigs": signatures(graph), "check": check, "left_out": [], "times": {}}, t0)
     node = next((k for k in DISSOLVE if k in graph), None) if variant == "dissolve" else None

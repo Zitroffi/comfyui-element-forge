@@ -29,13 +29,14 @@ PLACEMENT = "Placement (auto / point / area / object / frame / between)"
 PLACE_CHOICES = ["style default", "point", "area", "object", "frame", "between"]
 PL_OF = {"point": "point", "window": "area", "object": "object", "frame": "frame", "ab": "between"}
 PL_SHAPE = {"frame": "whole frame", "object": "object mask", "between": "line A-B"}
-OBJECT_SHAPES = ("whole frame", "line A-B", "object mask", "object contour", "object bottom edge")
+OBJECT_SHAPES = ("whole frame", "line A-B", "object mask", "object contour", "object edge + area", "object bottom edge")
 SIDE = "Emitter side"
 CRUMBLE = "Object crumbles under the effect (the dissolve is the plate)"
 CRUMBLE_STYLE = "Dissolve style (plain / fire (LTX) / gold dust)"
 CRUMBLE_DIR = "Dissolve direction (0 up, 90 right)"
 GUIDE_PRESETS = ["fire", "embers", "sparks", "grinding sparks", "smoke", "dust burst", "magic dust", "aura", "liquid", "debris",
-                 "snow", "rain", "fireflies", "lightning", "cracks", "frost", "lightning climb", "lightning strike", "energy A-B", "explosion", "explosion side"]
+                 "snow", "rain", "fireflies", "lightning", "cracks", "frost", "lightning climb", "lightning strike", "energy A-B", "explosion", "explosion side",
+                 "spirit threads", "spirit ribbons", "spirit veil"]
 
 _FALLBACK_STYLES = [
     "fire/flame", "fire/burst", "lightning/between", "lightning/climb", "lightning/climb_arcs",
@@ -125,6 +126,34 @@ def load_style_settings():
 
 
 STYLE_SETTINGS = load_style_settings()
+
+
+NEUTRAL_LOOK = {"light_strength": 1.0, "glow_exposure": 0.0, "albedo_exposure": 0.0, "light_color": "", "element_gain": 1.0}
+
+
+def load_style_looks():
+    for path in _preset_candidates():
+        try:
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+            out = {}
+            for e in data.get("effects", []):
+                for s in e.get("styles", []):
+                    tune = s.get("look_tune") if isinstance(s.get("look_tune"), dict) else {}
+                    look = {"light_strength": float(s.get("light_gain", e.get("light_gain", 1.0))) * float(tune.get("light_strength", 1.0)),
+                            "glow_exposure": float(tune.get("glow_exposure", 0.0)),
+                            "albedo_exposure": float(s.get("light_albedo_exposure", e.get("light_albedo_exposure", 0.0))),
+                            "light_color": str(s.get("light_color", e.get("light_color", "")) or ""),
+                            "element_gain": float(tune.get("element_gain", 1.0))}
+                    if look != NEUTRAL_LOOK:
+                        out[f"{e['id']}/{s['id']}"] = look
+            return out
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    return {}
+
+
+STYLE_LOOKS = load_style_looks()
 
 
 def start_preset(style):
@@ -392,9 +421,12 @@ class EFAppValues:
         settings = apply_effect(values, effect)
         if settings.get("Element from library") and not str(settings.get("Library element") or "").strip():
             raise ValueError("Element Forge: pick a saved element under Effect (From the library), or switch back to Made by the AI.")
-        app = data.get("app")
-        if isinstance(app, dict) and app:
-            settings[APP_KEY] = {k: app[k] for k in ("mode", "skip", "effect", "ltx", "save_element") if k in app}
+        app = dict(data.get("app") or {}) if isinstance(data.get("app"), dict) else {}
+        tune = STYLE_LOOKS.get(str(effect.get("effect_style") or ""))
+        if tune and "look" not in app:
+            app["look"] = {**tune, **({"albedo_exposure": 0.0} if effect.get("night") else {})}
+        if app:
+            settings[APP_KEY] = {k: app[k] for k in ("mode", "skip", "effect", "ltx", "save_element", "look") if k in app}
         return (settings, f"element-forge/{run_id(settings)}")
 
 

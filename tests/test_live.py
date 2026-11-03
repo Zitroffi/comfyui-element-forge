@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 import json
 import os
@@ -189,4 +190,21 @@ for b in got:
 ids.append(rest["id"])
 check(np.array_equal(np.concatenate(ids), whole["id"]), "stream: the parts and the rest are the whole answer")
 check(int(rest["offs"][0]) == 0 and len(rest["offs"]) == N - sent + 1, "stream: the rest starts at its first frame")
+seen = {}
+
+
+def _bg(variant, values, run, ltx=None, edit=None, kept=True):
+    seen["ltx"] = ltx
+    raise ValueError("stop here")
+
+
+was, LV.AR.build_graph = LV.AR.build_graph, _bg
+try:
+    asyncio.run(LV.compute({"values": {}, "ltx": {"depth": "depthcrafter"}}, lambda: None))
+except ValueError:
+    pass
+LV.AR.build_graph = was
+check(seen.get("ltx") == {"depth": "depthcrafter"}, "live: the gear's depth model goes into the live graph")
+js = open(os.path.join(PACK, "web", "efa", "live.js"), encoding="utf-8").read()
+check(js.count("ltx: ltxForBuild()") == 3, "live.js: every live request carries the gear's choice")
 print(f"{ok} checks passed")

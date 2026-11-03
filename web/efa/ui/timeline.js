@@ -379,8 +379,8 @@ function onKey(ev) {
 export function mountTimeline(el) {
   (el.closest(".efa-root") || el).addEventListener("keydown", onKey, true);
   root = el;
-  playBtn = h("button", { class: "icon-btn", onclick: () => togglePlay() }, icon("play"));
-  loopBtn = h("button", { class: "icon-btn", title: "Repeat", "aria-label": "Repeat", onclick: () => { const v = media(); if (v) v.loop = !v.loop; paintHead(); } }, icon("loop"));
+  playBtn = h("button", { class: "icon-btn small", onclick: () => togglePlay() }, icon("play"));
+  loopBtn = h("button", { class: "icon-btn small", title: "Repeat", "aria-label": "Repeat", onclick: () => { const v = media(); if (v) v.loop = !v.loop; paintHead(); } }, icon("loop"));
   timeLabel = h("span", { class: "tl-time" }, "0.0 s");
   actions = h("div", { class: "tl-actions" });
   ruler = h("div", { class: "tl-ruler", onpointerdown: (ev) => startDrag(ev, "head") });

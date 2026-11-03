@@ -123,7 +123,7 @@ Click where the effect belongs, then choose under **Follows**:
 - **Leave out**<br>Parts of the object that should not give off the effect: a hand on a handle, a sheath. Words (*hand; handle*), or **Click to leave out** and click each part; **Alt-click** works at any time on the mask frame. Red rings. The mask frame shows what is tracked in blue and the parts left out in red. They are tracked through the clip and taken out of the object's mask; the depth and the rest of the clip stay as they are, so particles still fly over the hand.
 - **Fixes on other frames**<br>Where the track loses a part or takes too much, move the playhead there and **Ctrl-click** what is missing or **Alt-click** what is too much; the same clicks as on the mask frame, no mode to switch. Each frame with clicks is one fix in the list, with **Go there** and **×**. The run finds the parts on that frame and tracks them both ways, but only up to the fixes next to it, so the rest of the clip keeps its track. **Track it** again to see them; the kept track holds the fixes.
 - **Steady mask**<br>Off, **Light** (the default) or **Strong**: each frame's mask is averaged with its neighbours along the motion, so it flickers less where the object blurs or the light is poor, and a frame that loses the object takes it from its neighbours. Less sure edges stay where they touch the sure part of the object, so a fast hand does not fall apart. **Light** suits fast, small objects; **Strong** smooths large, soft ones most (a fluttering dress) but can lose a fast, small part for a frame. The kept track stays as it was tracked.
-- **In front of the effect**<br>The object's mask cuts the effect out wherever the object is, whatever the depth says: a person in front of a portal. Works for every placement; in the area the effect fades out over a few pixels outside the object. With parts left out, **The parts left out are in front too** decides whether the whole object hides the effect (on) or only what is left (off).
+- **In front of the effect**<br>The object's mask cuts the effect out wherever the object is, whatever the depth says: a person in front of a portal. Works for every placement; in the area the effect fades out over a few pixels outside the object. With parts left out, **The parts left out are in front too** decides whether the whole object hides the effect (on) or only what is left (off). **How much it hides**: 1 cuts the effect out of the object completely; 0.8 leaves a fifth of it on the object as a glow. **Soft edge**: how far outside the object the effect fades in (2 px by default).
 - **Base stays on the point** <sub>Advanced</sub><br>The AI draws an effect a little differently in every frame, so its base can jitter. On, the base stays fixed on the tracked point while the effect still moves above it.
 
 ### Two points
@@ -151,7 +151,7 @@ Particle styles also ask where the particles start. Some need a click, others th
 | Drawn path | The brush (Advanced) |
 | Area | The area dragged in the canvas |
 | Whole frame | Nothing |
-| On the object · Object outline · Object bottom edge | The object's mask: track it first |
+| On the object · Object outline · Object outline + inside · Object bottom edge | The object's mask: track it first. With **Object outline + inside**, **On the outline** sets how many particles are born on the outline; the rest start inside the object |
 | Groups in depth | A list of places, one per line: x, y (share of the picture), depth (0 far, 1 near), size |
 
 ## 3 Effect
@@ -161,18 +161,18 @@ Particle styles also ask where the particles start. Some need a click, others th
 - **Style**<br>Choose an effect and a style from the tiles. Styles marked **Experimental** have no tested description yet; see [Effects and styles](#effects-and-styles).
 - **Strength**<br>Subtle, Normal or Strong.
 - **Colour, Amount, Speed, Size**<br>Every style, Basic and Advanced. For the AI they become words in its description (*mainly blue, dense and abundant, fast and energetic*); where particles run (a particle style, particles guiding the AI, or **Particles only**) they also set the particles' colour, amount, speed and size. **As is** keeps the style's own. A colour from **+** gets the nearest named colour as its word. **Colour** in Scene & finish tints the result after the run instead.
-- **Your effect in words**<br>The description, split into **Look**, **Motion** and **Contact** with suggestions to click. The AI follows best below 200 words.
+- **Description**<br>One text for the AI. The suggestions under **Look**, **Motion** and **Where it touches** put their words into it with a click; anything in it can be changed by hand. In your own text a suggestion swaps only its own words; **back to the chips' text** returns to the suggestions. The AI follows best below 200 words.
 - **✦ Enhance**<br>Rewrites your words with the text model.
 - **Describe what you want** <sub>Bonsai</sub><br>Type a sentence such as *blue sparks flying off the skateboard*. Bonsai reads it with the clip's first frame and proposes a style and its words. You see each change and **Apply** it as one undo step, or **Discard** it.
 - **From a picture** <sub>Bonsai</sub><br>Add up to three pictures of an effect you like: **Add picture**, drop them on the field or paste one. Set the place in the clip first. **✦ Make it like this** shows Bonsai your pictures beside the clip's frame with the place marked, about 30 s; it proposes the style and the words for that effect at that place. **Apply** sets them (one undo step) and Bonsai then sets the particles from the same pictures: colour, amount, size, speed, life and spread, shown like **✦ Fill in** with a reason for each value. **What Bonsai saw** shows the pictures beside the clip as it read them. If the effect already fits, **Set the particles** goes straight to the particles.
 - **Particles in your words** <sub>Bonsai</sub><br>Basic, particle styles: type how the particles should behave, such as *slow green sparks that spiral up*, and press **✦ Fill in**. The proposal shows each value with its reason; **Apply** sets the ticked ones, **Undo** takes them back. In Advanced the set values are marked in the emitter.
-- **AI seed**<br>**Keep it** to repeat a result; off, every run uses a new seed.
+- **AI seed**<br>**Keep** to repeat a result; off, every run uses a new seed. **New** picks another one.
 - **Night or dark clip**<br>Darkens the clip for night and lets the effect light it. The AI and the light pass are made on the darkened clip, so run again to see a change.
 
 ### Where the element comes from
 
 - **Made by: AI**<br>The AI makes a new element at **Run**. Particles, if the style or the guide has them, steer it.
-- **Made by: Particles only**<br>Every style can be drawn by its particles alone, without an AI run, in about a minute. They start from the style's particles; in Advanced, **Particles** in the emitter's Source picks others (snow, sparks, smoke …).
+- **Made by: Particles**<br>Every style can be drawn by its particles alone, without an AI run, in about a minute. They start from the style's particles; in Advanced, **Particles** in the emitter's Source picks others (snow, sparks, smoke …).
 - **Made by: Library**<br>An element you kept with **Save the element** is placed again, without a new AI run. Position, size, light and glow follow this style; the words are not used. Only on black.
 
 ### Placement
@@ -191,7 +191,7 @@ Particle styles also ask where the particles start. Some need a click, others th
 
 **Guide strength** <sub>Advanced</sub> sets how closely the AI follows. Each style brings the guide it was tested with; every style can take any guide.
 
-- **The same emitter for every style** <sub>Advanced</sub><br>The emitter shows the same groups and controls whatever the style: a preset only sets their values. An AI element shows the particles it would start from; they come in when they guide the AI, are drawn over its element (**Also draw the particles**) or make it (**Made by: Particles only**). **Let them guide the AI** switches the guide in one click.
+- **The same emitter for every style** <sub>Advanced</sub><br>The emitter shows the same groups and controls whatever the style: a preset only sets their values. An AI element shows the particles it would start from; they come in when they guide the AI, are drawn over its element (**Also draw the particles**) or make it (**Made by: Particles**). **Let them guide the AI** switches the guide in one click.
 - **AI element** <sub>Advanced</sub><br>**Solid element** cuts the element out with its own matte (liquid, dust, stones) instead of its brightness. **Particles start the AI's video** lets the AI start from the particles' picture as well as be guided by it. Both for every style.
 - **Paths** <sub>Advanced</sub><br>Any style can draw a path over its particles: a **Bolt** from A to B (without B it strikes down), a charge that **Climbs** the thin parts of the tracked object, or **Cracks** spreading from A. Each path's own values are under **More path settings**.
 
@@ -201,7 +201,7 @@ For particle styles, the **live preview** simulates the particles on your clip w
 
 - **Play with clip** · **Hold frame**<br>The particles play with the clip, or the clip stands on the playhead while the emitter keeps running.
 - **Pre-roll**<br>**Preset**, **Auto** (long enough for the particles to cross the frame) or your own **Seconds**. The particles run this long before the clip starts, so snow or rain already fills the first frame.
-- **Particle seed**<br>The same seed gives the same particles in the preview and in the run. **New seed** tries others; **Lock** keeps it.
+- **Particle seed**<br>The same seed gives the same particles in the preview and in the run. **New** tries others; **Keep** locks it.
 
 Without an analysis, nothing in the clip hides the particles yet; without a kept track, they hang on your point. The particles show in the **Clip** view; when another view hides them, the canvas says so and offers **Back to the clip**.
 
@@ -213,7 +213,7 @@ After a run, these controls change the result at once, without a new run. A chan
 
 | Control | What it does |
 |:---|:---|
-| **Light on the scene** | Off, Low, Medium or High: the light the effect throws onto the clip. It falls off with the distance in the scene: a wall right behind the effect gets more than a background far away (the shot's depth range and field of view are measured from the clip). A lightning strike throws more light than its thin line suggests (**Light strength (scene)** 6 instead of 0.9 in the workflow). Needs a light pass; with Inpaint the light is already part of the picture. |
+| **Light on the scene** | Off, Low, Medium or High: the light the effect throws onto the clip. It falls off with the distance in the scene: a wall right behind the effect gets more than a background far away (the shot's depth range and field of view are measured from the clip). Lightning throws far more light than its thin line suggests: its styles light the scene about 40 times stronger, in blue-white, and brighten the lit surfaces by two stops (not at night), in the app and in the nodes alike; a strike also starts from **Light strength (scene)** 6 instead of 0.9. Needs a light pass; with Inpaint the light is already part of the picture. |
 | **Glow** | Soft glow around the bright parts of the effect. |
 | **Lit by the other effects** | The light of the other effects brightens this one where it falls, e.g. smoke near a flame. Shown with several effects. |
 | **Colour** | Original, a swatch, your own colour, or a colour taken from your clip (E). Tints the effect, its light and its glow. |
@@ -236,8 +236,8 @@ Light controls use the passes of the selected version. If they are missing, add 
 
 | Setting | Choices |
 |:---|:---|
-| **Quality** | **Preview (fast)**: half the size, without light, glow and normals, for AI elements in Overlay. **Full**: full size with all passes. |
-| **Upscale** | Off · **LTX × 2** (a second LTX pass at twice the size: more detail, takes longer) · **NVIDIA × 2** (RTX Super Resolution: fast, draws nothing new). |
+| **Quality** | **Preview (fast)**: half the size, without light, glow and normals, for AI elements in Overlay and Inpaint. **Full**: full size with all passes. |
+| **Upscale** | Off · **LTX × 2** (a second LTX pass at twice the size: more detail, takes longer; with Inpaint both of its runs get it) · **NVIDIA × 2** (RTX Super Resolution: fast, draws nothing new). |
 | **Passes** | Light · Glow · Depth · Normals · Mask (the object's mask per frame). Plate and element with its alpha are always written. A preview writes plate, element and depth only. |
 | **Save the element** | Also keeps an AI element with its alpha in the element library, to place it again without a new run. |
 
@@ -259,7 +259,7 @@ Then **Run**. The result lands in the versions of the effect; see [Versions](#ve
 | **Lightning** | Between two points · Strike from the sky · Strike: particles only *(no AI)* · Climbs an object: fine filaments · Climbs an object: blue arcs ⚗ · Climbs an object: particles only *(no AI)* |
 | **Sparks** | From a moving object ⚗ · Burst from a point |
 | **Smoke** | Rises from a point · Rises from a point: particles only *(no AI)* |
-| **Magic & energy** | Aura around a figure · Aura: particles only *(no AI)* · Energy between two points ⚗ · Energy ball |
+| **Magic & energy** | Aura around a figure · Aura: particles only *(no AI)* · Spirit ribbons from an object (depth guide) ⚗ · Spirit threads from an object (depth guide) ⚗ · Spirit veil rising from an object (depth guide) ⚗ · Energy between two points ⚗ · Energy ball |
 | **Snow, rain & fireflies** | Snow · Rain · Fireflies *(no AI)* |
 | **Dust & debris** | Debris burst · Debris burst: particles only *(no AI)* · Dust burst |
 | **Liquid** | Drips from a point |
@@ -272,6 +272,7 @@ Then **Run**. The result lands in the versions of the effect; see [Versions](#ve
   softly into the clip); switched off, with the Clean Plate LoRA. Works well for held objects, small figures and parts of an
   object. Limits: the mask has to cover the whole object (what it leaves out, such as a stem or a sword's grip, is carried
   on); shadows the object casts stay; a large, fast figure whose shadow stays on the wall can come back as another person.
+- **Spirit styles**<br>Ribbons, threads or a veil of light come off an object you click, such as a blade or a staff. The particles are born inside the object at its own depth, and the AI gets the object's depth as its guide, only a thin inner edge of it. The energy can then flow through the object and around the hand holding it. Keep the mask on the part that should carry the energy: in the katana test, a mask on the drawn blade gave thin lines and ribbons, a mask over the whole sword still turned it into a glowing bar. Each style brings its own light on the scene, element strength and glow. Tested on a katana; the descriptions are not tested on other objects yet.
 - **Climbs an object**<br>Runs its own graph. Click the thin object and give a word (*thin stick*, *staff*, *snake*). For all sticks of a crown, turn on **All alike**.
 
 ## Overlay or Inpaint
@@ -283,7 +284,7 @@ Then **Run**. The result lands in the versions of the effect; see [Versions](#ve
 | **How** | The effect is made alone on black and laid over your clip. | The AI repaints that part of your clip with the effect. |
 | **Afterwards** | Light, glow, colour and placement stay adjustable. | Light and place are part of the picture. |
 | **Best for** | Glowing effects. Start here. | Contact with surfaces; the effect takes on the light of the scene. |
-| **Preview quality** | Yes | No, always full size |
+| **Preview quality** | Yes | Yes: both of its runs keep their latent, **Make final** sharpens both |
 
 - **Scene sentence**<br>For Inpaint, the text model writes one sentence about the area around the effect when you run, or you type it yourself. It keeps the repainted area the same scene.
 - **Keep the original** <sub>Advanced</sub><br>Repaints less of the area, so it stays closer to the clip. The effect gets less room; a thin one like lightning can vanish.
@@ -413,6 +414,8 @@ together, the time stays. 0.3 = an explosion seen from far away. For one **from 
 canvas) to where it bursts out.
 
 **Paths → Strike** draws a lightning strike at every burst (Emission: *Burst at*, *Burst every*), with any preset: a faint, branched leader steps down from the sky in *Leader* seconds, the return stroke lights the whole channel at the burst's moment, then *Strokes* more flashes run down the same channel without the branches, *Between strokes* apart, each fading in *Fades in*. The particles of the same burst go off at the same moment, for sparks or dust where it hits. B, if set, is the cloud's point.
+
+**Paths → Random bolts** shoots short bolts from random places of the emitter (the object's mask or outline, the line, the area) at random times; each flashes and is gone. **Aim** sets which way they shoot: *Anywhere*, *As the particles* (Direction and Spread in Motion) or *Outward*, off the object's outline.
 
 Lightning paths have their own look (width, glow, jaggedness, branches, new shape every few frames); Dissolve has its own emission, motion, particle and force controls.
 

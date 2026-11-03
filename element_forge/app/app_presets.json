@@ -1,5 +1,5 @@
 {
- "about": "Effects and styles of the Element Forge app (22.10.2026). Every style is a set of values for the one workflow, by setting name (element_forge.settings.json); the canvas and the timeline add the clip, the points, the frame, the direction and the timing. Values come from the test runs named in ref (one_tests.py). placement: point = element on black hanging on point A (frame = element size), window = crop window around point A (frame = window, origin inside it), ab = between point A and B, frame = the whole picture, object = follows the clicked object by itself, none = no frame. win and emitter are fractions (window of the clip's shorter side, origin inside the window). prompt.what_plain: the same thing without colour or size words, used once the user changes the Look block (so a chosen look never contradicts the fixed part).",
+ "about": "Effects and styles of the Element Forge app (22.10.2026; spirit styles 03.11.). Every style is a set of values for the one workflow, by setting name (element_forge.settings.json); the canvas and the timeline add the clip, the points, the frame, the direction and the timing. Values come from the test runs named in ref (one_tests.py). placement: point = element on black hanging on point A (frame = element size), window = crop window around point A (frame = window, origin inside it), ab = between point A and B, frame = the whole picture, object = follows the clicked object by itself, none = no frame. win and emitter are fractions (window of the clip's shorter side, origin inside the window). prompt.what_plain: the same thing without colour or size words, used once the user changes the Look block (so a chosen look never contradicts the fixed part). look_tune: the style's light on the scene, element strength and glow (EF App Run shot app look; spirit styles 03.11.).",
  "tail_on_black": " Filmed on a pure black background, live-action, realistic, high detail.",
  "effects": [
   {
@@ -754,6 +754,183 @@
       0.5
      ],
      "prompt": null
+    },
+    {
+     "id": "spirit_ribbons",
+     "name": "Spirit ribbons from an object (depth guide)",
+     "text": "Wide soft ribbons of light trail from the object you click. The particles are born inside the object at its depth, so the energy flows through it instead of turning it into a glowing slab.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "window",
+     "ref": "hero test n03 (the final): the depth guide on a katana; prompt tested with the katana words only. Since probe n15: particles born inside the object (object mask), the guide an inner edge of 2 px, a prompt without a light body",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "spirit ribbons",
+      "Particle emitter": "object mask",
+      "Particles: start video (seed)": false,
+      "Guide for the AI (particles / drawn path / object shape / none)": "particles",
+      "Guide strength (on black)": 0.85,
+      "Particle depth offset": 0.02,
+      "Track follows the object mask (hands, bodies)": true
+     },
+     "look_tune": {
+      "light_strength": 8.0,
+      "element_gain": 0.65,
+      "glow_exposure": -1.5
+     },
+     "gen": [
+      704,
+      512
+     ],
+     "win": [
+      1.28,
+      0.93
+     ],
+     "emitter": [
+      0.45,
+      0.6
+     ],
+     "prompt": {
+      "preset": "An isolated VFX pass of violet spirit energy on an object: thin bright violet lines trace its edges and faint wisps of violet light cling to its surface and flow along it, with dark gaps between them, so the object never becomes a solid glowing body. A few long wide ribbons of soft violet light unfurl from it and trail far back like silk in slow wind, smooth translucent folds with gentle lavender highlights, calm and elegant, no solid light body, no straight beams, no hand, no person, no blown-out white core, no fog or large halo. Pure black background. Static camera. Silent.",
+      "what": "A few long wide ribbons of soft violet light",
+      "what_plain": "A few long wide ribbons of soft light",
+      "look": "smooth translucent folds with gentle lavender highlights, calm and elegant",
+      "motion": "unfurl from the object and trail far back like silk in slow wind",
+      "contact": "",
+      "chips": {
+       "look": [
+        "smooth translucent folds with gentle lavender highlights, calm and elegant",
+        "cold blue and silver",
+        "golden and warm",
+        "deep red and smoky"
+       ],
+       "motion": [
+        "unfurl from the object and trail far back like silk in slow wind"
+       ],
+       "contact": [
+        "it lights the object and the hand holding it"
+       ]
+      }
+     },
+     "prompt_tested": false
+    },
+    {
+     "id": "spirit_threads",
+     "name": "Spirit threads from an object (depth guide)",
+     "text": "Fine glowing threads peel off the object you click and curl around it. The particles are born inside the object at its depth, so the threads pass in front of and behind a hand.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "window",
+     "ref": "hero test n01: the depth guide on a katana; prompt tested with the katana words only. Since probe n15: particles born inside the object (object mask), the guide an inner edge of 2 px, a prompt without a light body",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "spirit threads",
+      "Particle emitter": "object mask",
+      "Particles: start video (seed)": false,
+      "Guide for the AI (particles / drawn path / object shape / none)": "particles",
+      "Guide strength (on black)": 0.85,
+      "Particle depth offset": 0.02,
+      "Track follows the object mask (hands, bodies)": true
+     },
+     "look_tune": {
+      "light_strength": 8.0,
+      "element_gain": 0.65,
+      "glow_exposure": -1.5
+     },
+     "gen": [
+      704,
+      512
+     ],
+     "win": [
+      1.28,
+      0.93
+     ],
+     "emitter": [
+      0.45,
+      0.6
+     ],
+     "prompt": {
+      "preset": "An isolated VFX pass of violet spirit energy on an object: thin bright violet lines trace its edges and faint wisps of violet light cling to its surface and flow along it, with dark gaps between them, so the object never becomes a solid glowing body. Fine luminous violet and lavender filaments peel away from it, curl in loose layered loops and flow around the hand holding it, some passing in front of it and some behind it. Delicate detailed threads with dark gaps between them, restrained brightness, no solid light body, no straight beams, no hand, no person, no blown-out white core, no fog or large halo. Pure black background. Static camera. Silent.",
+      "what": "Fine luminous violet and lavender filaments",
+      "what_plain": "Fine luminous and lavender filaments",
+      "look": "delicate detailed threads with dark gaps between them, restrained brightness",
+      "motion": "peel away from the object, curl in loose layered loops and flow around the hand holding it",
+      "contact": "",
+      "chips": {
+       "look": [
+        "delicate detailed threads with dark gaps between them, restrained brightness",
+        "cold blue and silver",
+        "golden and warm",
+        "deep red and smoky"
+       ],
+       "motion": [
+        "peel away from the object, curl in loose layered loops and flow around the hand holding it"
+       ],
+       "contact": [
+        "it lights the object and the hand holding it"
+       ]
+      }
+     },
+     "prompt_tested": false
+    },
+    {
+     "id": "spirit_veil",
+     "name": "Spirit veil rising from an object (depth guide)",
+     "text": "Thin veils of light rise from the object you click and fold upward like smoke silk. The particles are born inside the object at its depth.",
+     "cost": "gen",
+     "variant": "app",
+     "placement": "window",
+     "ref": "hero test n07: the depth guide on a katana; prompt tested with the katana words only. Since probe n15: particles born inside the object (object mask), the guide an inner edge of 2 px, a prompt without a light body",
+     "settings": {
+      "Particles": true,
+      "Particle preset": "spirit veil",
+      "Particle emitter": "object mask",
+      "Particles: start video (seed)": false,
+      "Guide for the AI (particles / drawn path / object shape / none)": "particles",
+      "Guide strength (on black)": 0.85,
+      "Particle depth offset": 0.02,
+      "Track follows the object mask (hands, bodies)": true
+     },
+     "look_tune": {
+      "light_strength": 8.0,
+      "element_gain": 0.65,
+      "glow_exposure": -1.5
+     },
+     "gen": [
+      704,
+      512
+     ],
+     "win": [
+      1.28,
+      0.93
+     ],
+     "emitter": [
+      0.45,
+      0.6
+     ],
+     "prompt": {
+      "preset": "An isolated VFX pass of violet spirit energy on an object: thin bright violet lines trace its edges and faint wisps of violet light cling to its surface and flow along it, with dark gaps between them, so the object never becomes a solid glowing body. Thin translucent veils of violet light rise from it and fold upward like smoke silk, layered see-through sheets with fine edges, slowly drifting up, restrained and soft, no solid light body, no straight beams, no hand, no person, no blown-out white core, no fog or large halo. Pure black background. Static camera. Silent.",
+      "what": "Thin translucent veils of violet light",
+      "what_plain": "Thin translucent veils of light",
+      "look": "layered see-through sheets with fine edges, restrained and soft",
+      "motion": "rise from the object and fold upward like smoke silk",
+      "contact": "",
+      "chips": {
+       "look": [
+        "layered see-through sheets with fine edges, restrained and soft",
+        "cold blue and silver",
+        "golden and warm",
+        "deep red and smoky"
+       ],
+       "motion": [
+        "rise from the object and fold upward like smoke silk"
+       ],
+       "contact": [
+        "it lights the object and the hand holding it"
+       ]
+      }
+     },
+     "prompt_tested": false
     },
     {
      "id": "flow",

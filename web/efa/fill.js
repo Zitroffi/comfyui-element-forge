@@ -1,3 +1,5 @@
+import { note } from "./ui/ds.js";
+import { icon } from "./ui/icons.js";
 import { h, postJSON } from "./ui/lib.js";
 import * as S from "./ui/state.js";
 import * as P from "./ui/presets.js";
@@ -76,33 +78,33 @@ export function fillRows(ctx, controls, applyAll, basic = false) {
   const pic = pictures.get(e.id);
   const go = () => ask(ctx, controls, words.trim(), basic);
   if (pic?.auto && !mine) { pic.auto = false; queueMicrotask(go); }
-  const pill = h("button", { class: "chip", disabled: busy || (!pr && !words.trim() && !pic),
+  const pill = h("button", { class: pr || pic ? "btn" : "btn small", disabled: busy || (!pr && !words.trim() && !pic),
     title: pic ? "Bonsai looks at your pictures again and sets the particles so they look and move like them"
       : pr ? `Bonsai reads the prompt and sets the values its words ask for: "${pr.now.slice(0, 160)}"` : "Bonsai sets the values your words ask for",
-    onclick: go }, busy ? (pic ? "Looking at your pictures…" : pr ? "Reading the prompt…" : "Reading your words…")
-    : pic ? "✦ Fill from the pictures" : pr ? "✦ Fill from the prompt" : "✦ Fill in");
+    onclick: go }, icon("gen"), busy ? (pic ? "Looking at your pictures…" : pr ? "Reading the prompt…" : "Reading your words…")
+    : pic ? "Fill from the pictures" : pr ? "Fill from the prompt" : "Fill in");
   const rows = [];
   if (basic) rows.push(h("div", { class: "label" }, "Particles in your words"));
-  if (pr) rows.push(h("div", { class: "row gap fill-row" }, pill, busy ? h("span", { class: "muted small" }, "about 20 s") : null));
+  if (pr) rows.push(h("div", { class: "actions" }, pill, busy ? h("span", { class: "muted small" }, "about 20 s") : null));
   else {
     const input = h("input", { class: "text", placeholder: "e.g. slow green sparks that spiral up", "aria-label": "Describe the particles", value: words,
       oninput: (ev) => { words = ev.target.value; pill.disabled = busy || !words.trim(); },
       onkeydown: (ev) => { if (ev.key === "Enter" && words.trim() && !busy) { ev.preventDefault(); go(); } } });
     rows.push(h("div", { class: "row gap fill-row" }, input, pill));
-    if (busy) rows.push(h("p", { class: "muted small" }, "Bonsai sets the particles, about 20 s."));
+    if (busy) rows.push(note("hint", "Bonsai sets the particles, about 20 s."));
   }
   if (mine?.status === "failed") rows.push(ctx.ui.note("err", `Fill did not work: ${mine.error}`));
   if (mine?.status === "ready") {
     const n = count(), k = picked();
     rows.push(h("div", { class: "field fill-result" }, h("div", { class: "label" }, n ? "This is what I would set" : "Nothing to change"),
-      n ? h("ul", { class: "small fill-list" }, ...proposalList()) : h("p", { class: "muted small" }, pic ? "The values already fit your pictures." : pr ? "The values already fit the prompt." : "The values already fit your words."),
-      mine.note && n ? h("p", { class: "muted small" }, mine.note) : null,
+      n ? h("ul", { class: "small fill-list" }, ...proposalList()) : note("hint", pic ? "The values already fit your pictures." : pr ? "The values already fit the prompt." : "The values already fit your words."),
+      mine.note && n ? note("hint", mine.note) : null,
       h("div", { class: "row gap" },
         n ? h("button", { class: "btn small", disabled: !k, onclick: () => { const undo = applyAll(chosen(mine)); state = { effect: e.id, status: "done", undo, n: k }; S.setUI({}); } },
           k === n ? `Apply all ${n}` : `Apply ${k} of ${n}`) : null,
         h("button", { class: "btn ghost small", onclick: () => { state = null; S.setUI({}); } }, n ? "Discard" : "OK"))));
   }
-  if (mine?.status === "done") rows.push(h("p", { class: "muted small" }, basic ? `${mine.n} particle values set. In Advanced they show marked. ` : `${mine.n} values set, marked below. `,
+  if (mine?.status === "done") rows.push(note("hint", basic ? `${mine.n} particle values set. In Advanced they show marked. ` : `${mine.n} values set, marked below. `,
     ctx.ui.link("Undo", () => { state = null; mine.undo(); S.setUI({}); }), " · ", ctx.ui.link("OK", () => { state = null; S.setUI({}); })));
   return rows;
 }

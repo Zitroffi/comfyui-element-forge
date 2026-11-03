@@ -175,6 +175,25 @@ class SteadyTests(unittest.TestCase):
         self.assertEqual(float(out[5, 8:24, 10:12].min()), 1.0)
         self.assertEqual(float(out[:, :8].max()), 0.0)
 
+    def test_a_slip_of_the_track_goes_before_the_average(self):
+        t = importlib.import_module(package.__name__ + '.compositing.temporal')
+        plate = torch.rand((9, 32, 40, 3))
+        plate[:] = plate[:1]
+        mask = torch.zeros((9, 32, 40))
+        mask[1:3, 26:, 5:35] = 1
+        mask[5:, 6:16, 10:30] = 1
+        out, = t.EFMaskSteady().steady(mask, plate, 2, 0.3)
+        self.assertEqual(float(out[:5].max()), 0.0)
+        self.assertEqual(float(out[6:, 6:16, 10:30].min()), 1.0)
+
+    def test_islands_only_between_empty_frames(self):
+        t = importlib.import_module(package.__name__ + '.compositing.temporal')
+        on = np.zeros((8, 4, 4), bool)
+        on[0, :, :] = True
+        on[2, :, :] = True
+        on[4:7, :, :] = True
+        self.assertEqual(t.islands(on, empty=1).tolist(), [False, False, True, False, False, False, False, False])
+
     def test_hysteresis_keeps_weak_parts_touching_the_core(self):
         t = importlib.import_module(package.__name__ + '.compositing.temporal')
         avg = np.zeros((1, 10, 20), np.float32)

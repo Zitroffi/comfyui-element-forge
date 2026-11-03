@@ -48,6 +48,7 @@ def build(settings, effect, exr_passes=True, track_check=True, run_name=None, mo
     skip = [p for p in (app.get("skip") or []) if p in ("depth", "normals", "mask")]
     eid = str(app.get("effect") or "")[:64]
     ltx = app.get("ltx") if isinstance(app.get("ltx"), dict) else None
+    look = app.get("look") if isinstance(app.get("look"), dict) else None
     swaps = {}
     if isinstance(models, dict):
         ltx, swaps = _models().run_choice(models)
@@ -58,6 +59,8 @@ def build(settings, effect, exr_passes=True, track_check=True, run_name=None, mo
 
     def edit_all(g):
         edit(g)
+        if look:
+            cv.tune_look(g, look)
         for p in skip:
             g.pop(ar.PASS_SAVES[p], None)
             if p == "normals":

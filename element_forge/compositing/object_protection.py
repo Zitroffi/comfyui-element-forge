@@ -5,7 +5,7 @@ import torch
 from ..tracking.mask_controls import fit_mask
 
 
-def visibility_outside(mask, grow_pixels=1, feather_pixels=2.0, threshold=0.5):
+def visibility_outside(mask, grow_pixels=1, feather_pixels=2.0, threshold=0.5, strength=1.0):
     result = []
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (grow_pixels * 2 + 1, grow_pixels * 2 + 1))
     for frame in mask.detach().cpu().numpy():
@@ -17,7 +17,7 @@ def visibility_outside(mask, grow_pixels=1, feather_pixels=2.0, threshold=0.5):
             distance = cv2.distanceTransform(outside, cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
             t = np.clip(distance / feather_pixels, 0, 1)
             outside = t * t * (3 - 2 * t)
-        result.append(outside.astype(np.float32))
+        result.append((1 - strength * (1 - outside)).astype(np.float32))
     return torch.from_numpy(np.stack(result))
 
 
@@ -29,21 +29,24 @@ class EFObjectProtection:
             'grow_pixels': ('INT', {'default': 1, 'min': 0, 'max': 128}),
             'feather_pixels': ('FLOAT', {'default': 2.0, 'min': 0.0, 'max': 128.0, 'step': 0.5}),
             'threshold': ('FLOAT', {'default': 0.5, 'min': 0.001, 'max': 1.0, 'step': 0.01}),
-        }, 'optional': {'visibility': ('MASK',)}}
+        }, 'optional': {'visibility': ('MASK',),
+            'strength': ('FLOAT', {'default': 1.0, 'min': 0.0, 'max': 1.0, 'step': 0.05,
+                                   'tooltip': 'How much of the effect the object hides: 1 = all of it, 0.8 = a fifth of the effect '
+                                              'stays on the object (a glow on it instead of a cut-out look).'})}}
 
     RETURN_TYPES = ('MASK', 'MASK')
     RETURN_NAMES = ('effect_visibility', 'protected')
     FUNCTION = 'run'
     CATEGORY = 'Element Forge/Tools'
-    DESCRIPTION = ('Zero effect inside the original object. Feathering is outside only. '
+    DESCRIPTION = ('No effect inside the original object (strength 1; less hides only part of it). Feathering is outside only. '
                    'Connect effect_visibility to EF Place Layer holdout. Optional visibility multiplies '
                    'the particle region and depth visibility. This does not repair inaccurate input masks.')
 
-    def run(self, object_mask, grow_pixels=1, feather_pixels=2.0, threshold=0.5, visibility=None):
+    def run(self, object_mask, grow_pixels=1, feather_pixels=2.0, threshold=0.5, visibility=None, strength=1.0):
         mask = object_mask if object_mask.ndim == 3 else object_mask[None]
         n = max(len(mask), len(visibility) if visibility is not None and visibility.ndim == 3 else 1)
         h, w = mask.shape[-2:]
-        outside = visibility_outside(fit_mask(mask, n, h, w), grow_pixels, feather_pixels, threshold)
+        outside = visibility_outside(fit_mask(mask, n, h, w), grow_pixels, feather_pixels, threshold, float(strength))
         protected = 1 - outside
         if visibility is not None:
             outside *= fit_mask(visibility, n, h, w)

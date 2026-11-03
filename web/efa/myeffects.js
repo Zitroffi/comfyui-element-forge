@@ -1,3 +1,4 @@
+import { note } from "./ui/ds.js";
 import * as S from "./ui/state.js";
 import * as P from "./ui/presets.js";
 import { FOLLOW_STRENGTH, FOLLOW_LAG, PREMASK, GUIDE_STRENGTH } from "./emitter.js";
@@ -116,7 +117,7 @@ export function myTiles(x, kind = null) {
 export function saveRows(x) {
   const { h, link } = x;
   if (!store) return [];
-  if (saving === null) return [h("div", { class: "row gap" }, h("button", { class: "btn small", title: "Keeps the style, its words, the emitter values and the switches, without clip and position",
+  if (saving === null) return [h("div", { class: "actions" }, h("button", { class: "btn ghost", title: "Keeps the style, its words, the emitter values and the switches, without clip and position",
     onclick: () => { const st = P.styleDef(...String(x.fx().effect_style || "").split("/")); saving = st ? st.name : "My effect"; render(); } }, "Save as my effect"))];
   const inp = h("input", { class: "text", value: saving, "aria-label": "Name of my effect",
     oninput: (ev) => { saving = ev.target.value; },
@@ -124,5 +125,5 @@ export function saveRows(x) {
   setTimeout(() => { inp.focus(); inp.select(); }, 0);
   return [h("div", { class: "field" }, h("div", { class: "label" }, "Save as my effect"),
     h("div", { class: "row gap my-name" }, inp, h("button", { class: "btn small", onclick: () => save(x) }, "Save"), link("Cancel", () => { saving = null; render(); })),
-    h("p", { class: "muted small" }, "Keeps the style, its words, the emitter values and the switches. Clip, position and track stay with the shot."))];
+    note("hint", "Keeps the style, its words, the emitter values and the switches. Clip, position and track stay with the shot."))];
 }

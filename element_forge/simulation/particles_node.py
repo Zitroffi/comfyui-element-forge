@@ -250,7 +250,7 @@ class EFParticles:
             "required": {
                 "plate": ("IMAGE", {"tooltip": "The clip (frame count, size; camera motion is measured from it)."}),
                 "preset": (list(pt.PRESETS), {"tooltip": "What the particles do. The prompt still decides what LTX makes of them."}),
-                "emitter": (pt.EMITTERS, {"tooltip": "Where particles are born: the tracked point A, the line between A and B (e.g. magic between two hands), a drawing (see line_attach), the object mask (area, contour or bottom edge: where it meets the ground, e.g. sparks under the wheels), a fixed area, the whole frame (snow, rain), or groups: one particle per entry of the setting 'groups' (x, y, depth, scale, offset), with the preset groups and the element as own sprite (groups in depth)."}),
+                "emitter": (pt.EMITTERS, {"tooltip": "Where particles are born: the tracked point A, the line between A and B (e.g. magic between two hands), a drawing (see line_attach), the object mask (area, contour, both (edge + area, edge_share on the outline) or bottom edge: where it meets the ground, e.g. sparks under the wheels), a fixed area, the whole frame (snow, rain), or groups: one particle per entry of the setting 'groups' (x, y, depth, scale, offset), with the preset groups and the element as own sprite (groups in depth)."}),
                 "amount": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 20.0, "step": 0.05, "tooltip": "Times the preset's number of particles."}),
                 "speed": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 20.0, "step": 0.05, "tooltip": "Times the preset's speed."}),
                 "size": ("FLOAT", {"default": 1.0, "min": 0.05, "max": 20.0, "step": 0.05, "tooltip": "Times the preset's particle size."}),

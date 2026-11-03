@@ -1,3 +1,4 @@
+import { icon } from "./ui/icons.js";
 import * as S from "./ui/state.js";
 import * as P from "./ui/presets.js";
 import { suggest, changes, stillToDo, fromPictures, smallPicture } from "./ui/assist.js";
@@ -99,7 +100,7 @@ function applyPictures(x) {
   x.render();
 }
 
-export function pictureRows(x) {
+export function pictureRows(x, { label = true } = {}) {
   if (!canWish()) return [];
   const { h, link, note } = x;
   const busy = pic?.status === "busy";
@@ -110,15 +111,15 @@ export function pictureRows(x) {
     h("img", { src: p.url, alt: p.name }),
     h("button", { class: "ref-x", "aria-label": `Remove ${p.name}`, title: "Remove", disabled: busy,
       onclick: () => { pics.splice(i, 1); pic = null; x.render(); } }, "×")));
-  const rows = [h("div", { class: "label" }, "From a picture"),
+  const rows = [label ? h("div", { class: "label" }, "From a picture") : null,
     h("div", { class: "row gap ref-row" }, ...thumbs,
       pics.length < MAX_PICS ? h("button", { class: "btn ghost small", disabled: busy, title: "Add a picture of an effect you like (or drop or paste one here)",
         onclick: () => input.click() }, pics.length ? "+ Picture" : "Add picture") : null, input),
     pics.length ? h("div", { class: "row gap fill-row" },
-      h("button", { class: "chip", disabled: busy, title: "Bonsai looks at your pictures beside the clip and proposes the style, its words and then the particles",
-        onclick: () => askPictures(x) }, busy ? "Looking at your pictures…" : "✦ Make it like this"),
+      h("button", { class: "btn small", disabled: busy, title: "Bonsai looks at your pictures beside the clip and proposes the style, its words and then the particles",
+        onclick: () => askPictures(x) }, icon("gen"), busy ? "Looking at your pictures…" : "Make it like this"),
       busy ? h("span", { class: "muted small" }, "about 30 s") : null)
-      : h("p", { class: "muted small" }, "A picture of an effect you like: Bonsai makes it at your place in the clip."),
+      : note("hint", "A picture of an effect you like: Bonsai makes it at your place in the clip."),
     pics.length && !e?.where?.a ? h("p", { class: "muted small" }, "Click the place in the preview first, so Bonsai sees where it goes.") : null];
   if (pic?.status === "failed") rows.push(note("err", pic.error));
   if (pic?.status === "ready") {
@@ -138,7 +139,7 @@ export function pictureRows(x) {
   return [h("div", { class: "field ref-field", tabindex: "-1",
     ondragover: (ev) => { if (!busy) ev.preventDefault(); },
     ondrop: (ev) => { ev.preventDefault(); if (!busy) addPictures(x, ev.dataTransfer?.files); },
-    onpaste: (ev) => { const fs = [...(ev.clipboardData?.files || [])]; if (fs.length && !busy) { ev.preventDefault(); addPictures(x, fs); } } }, ...rows)];
+    onpaste: (ev) => { const fs = [...(ev.clipboardData?.files || [])]; if (fs.length && !busy) { ev.preventDefault(); addPictures(x, fs); } } }, ...rows.filter(Boolean))];
 }
 
 export function suggestButton(x, text) {

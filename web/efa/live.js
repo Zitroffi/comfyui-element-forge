@@ -1,6 +1,7 @@
 import * as S from "./ui/state.js";
 import * as P from "./ui/presets.js";
 import { efaValues } from "./ui/run.js";
+import { ltxForBuild } from "./ui/machine.js";
 import { playhead } from "./ui/stage.js";
 import { decodeLive } from "./ui/livesim.js";
 import { effStyle, guideStyle, guideNow, emitterKind } from "./emitter.js";
@@ -118,7 +119,7 @@ async function request() {
   if (f.mode === "advanced" && f.emitter_values) values[st.variant === "dissolve" ? DISSOLVE_EXTRA : PARTICLE_EMITTER] = f.emitter_values;
   const mode = st.variant === "dissolve" ? "play" : liveMode();
   const frame = mode === "hold" ? Math.round(playhead() * (c.fps || 25)) : 0;
-  const body = { values, variant: st.variant || "app", mode, frame };
+  const body = { values, variant: st.variant || "app", mode, frame, ltx: ltxForBuild() };
   const sig = JSON.stringify(body);
   if (sig === lastSig) return;
   if (busy) { queued = true; return; }
@@ -164,7 +165,10 @@ async function request() {
     S.setUI({ liveSim: { clip: c.name, effect: e.id, data, look: { ...d.header.look, kind: d.header.kind || "particles" }, status: "ready", lookOnly: false, error: null, partial: null,
       ms: Math.round(performance.now() - t0), server: d.header.ms, leftOut: d.header.left_out || [], fallbacks: d.header.fallbacks || [] } });
   } catch (err) {
-    S.setUI({ liveSim: { ...(S.ui.liveSim || {}), clip: c.name, effect: e.id, status: "failed", error: err.message } });
+    const want = f.guide_particles && f.guide_particles !== "style default" ? f.guide_particles : P.startPreset(P.styleDef(e.kind, e.style));
+    const old = S.ui.liveSim, keep = old?.data?.header?.preset === want;
+    S.setUI({ liveSim: { ...(keep ? old : {}), clip: c.name, effect: e.id, status: "failed", error: err.message } });
+    if (!keep) requestValues();
   } finally {
     busy = null;
     if (queued) { queued = false; poke(true); }
@@ -184,7 +188,7 @@ async function requestValues() {
   values[PARTICLE_SEED] = Number.isFinite(+f.particle_seed) ? +f.particle_seed : 42;
   values[PREROLL] = Number.isFinite(+f.preroll) ? +f.preroll : -2;
   if (f.mode === "advanced" && f.emitter_values) values[PARTICLE_EMITTER] = f.emitter_values;
-  const body = { values, variant: st0.variant || "app", mode: "play", frame: 0 };
+  const body = { values, variant: st0.variant || "app", mode: "play", frame: 0, ltx: ltxForBuild() };
   const sig = JSON.stringify(body);
   const lv = S.ui.liveValues;
   if (sig === lastValSig && lv?.effect === e.id && lv?.clip === c.name) return;
@@ -215,7 +219,7 @@ async function requestValues() {
 async function requestMotion({ shot, e, c, parts }) {
   const { values, pending } = efaValues(shot);
   if (pending) Object.assign(values, await pending);
-  const body = { values, variant: "app", kind: "motion", parts };
+  const body = { values, variant: "app", kind: "motion", parts, ltx: ltxForBuild() };
   const sig = JSON.stringify(body);
   if (sig === lastSig) return;
   if (busy) { queued = true; return; }
