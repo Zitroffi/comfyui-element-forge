@@ -22,7 +22,7 @@ The particles also work without AI, as a finished effect of their own. Use the g
 
 https://github.com/user-attachments/assets/2e9b92fa-7758-4093-b8c6-7188493c9419
 
-<p align="center"><em>The final release video · 1080p.</em> <a href="https://github.com/user-attachments/assets/2e9b92fa-7758-4093-b8c6-7188493c9419">Open video</a><br><sub>AI-generated effects; stock footage.</sub></p>
+<p align="center"><em>The final release video · 1080p.</em><br><sub>AI-generated effects; stock footage.</sub></p>
 
 <br>
 
