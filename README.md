@@ -20,9 +20,9 @@ A prompt alone decides little: the AI guesses where an effect goes, how big it i
 
 The particles also work without AI, as a finished effect of their own. Use the guided app or the same nodes in your own graph.
 
-https://github.com/user-attachments/assets/468b014c-f544-41fe-b26f-fd6da37d78a3
+https://github.com/user-attachments/assets/2e9b92fa-7758-4093-b8c6-7188493c9419
 
-<p align="center"><em>The release video.</em> <a href="https://youtu.be/Cz7dW70VSNg">Watch it on YouTube</a><br><sub>AI-generated effects; stock footage.</sub></p>
+<p align="center"><em>The final release video · 1080p.</em> <a href="https://github.com/user-attachments/assets/2e9b92fa-7758-4093-b8c6-7188493c9419">Open video</a><br><sub>AI-generated effects; stock footage.</sub></p>
 
 <br>
 
